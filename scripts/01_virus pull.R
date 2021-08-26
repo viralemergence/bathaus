@@ -18,6 +18,9 @@ virion=vroom("Virion.csv.gz")
 bats=virion %>% 
   filter(HostOrder == "chiroptera")
 
+## trim to host and virus names NCBI resolved
+bats=bats[bats$HostNCBIResolved==T & bats$VirusNCBIResolved==T,]
+
 ## virus richness 
 bats$virus=1
 species=aggregate(virus~Host,data=bats,sum)
