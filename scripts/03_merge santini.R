@@ -22,6 +22,6 @@ u <- unique(rbind(d,v))
 table(u$UrbanStatus)
 
 # Write as csv
-write.csv(u, "Santini et al 2018/Chiroptera_dwellers&visitors.csv")
+write.csv(u, "Santini et al 2018/Santini_dwellers and visitors.csv")
 
 
