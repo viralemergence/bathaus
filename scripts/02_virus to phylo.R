@@ -53,4 +53,23 @@ species$species=revalue(species$species,
                           "Chaerephon pusillus"="Chaerephon pumilus",
                           "Dasypterus ega"="Lasiurus ega",
                           "Dasypterus intermedius"="Lasiurus intermedius",
-                          "Dasypterus xanthinus"="Lasiurus xanthinus"))
+                          "Dasypterus xanthinus"="Lasiurus xanthinus",
+                          "Dobsonia andersoni"="Dobsonia anderseni",
+                          "Dobsonia magna"="Dobsonia moluccensis",
+                          "Doryrhina cyclops"="Hipposideros cyclops",
+                          "Eptesicus regulus"="Vespadelus regulus",
+                          "Eptesicus vulturnus"="Vespadelus vulturnus",
+                          "Gardnerycteris crenulatum"="Mimon crenulatum",
+                          "Hipposideros cf. ruber"="Hipposideros ruber",
+                          "Hipposideros terasensis"="Hipposideros armiger",
+                          "Hypsugo alaschanicus"="Pipistrellus alaschanicus",
+                          "Hypsugo pulveratus"="Pipistrellus pulveratus",
+                          "Hypsugo savii"="Pipistrellus savii",
+                          "Laephotis capensis"="Eptesicus capensis",
+                          "Lissonycteris angolensis"="Myonycteris angolensis",
+                          "Macronycteris commersoni"=""
+                          
+                          
+                          
+                          
+                          ))
