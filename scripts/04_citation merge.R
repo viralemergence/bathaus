@@ -46,4 +46,4 @@ rm(cites,vcites,x,i,counts)
 
 ## write flat file
 setwd("~/Desktop/bathaus/flat files")
-write.csv(data,"bathaus citations.csv")
+write.csv(cdata,"bathaus citations.csv")
