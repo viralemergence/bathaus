@@ -10,7 +10,6 @@ library(tidyverse)
 library(ape)
 library(Hmisc)
 library(plyr)
-library(easyPubMed)
 
 ## load species-level virus data
 setwd("~/Desktop/bathaus/virus data")
@@ -112,36 +111,6 @@ data=merge(taxa,species,by="species",all.x=T)
 ## if no viruses, 0 viruses
 data$virus=ifelse(is.na(data$virus),0,data$virus)
 
-## collect any citations per bat species
-cites=c()
-for(i in 1:length(data$tip)) {
-  
-  counts=as.numeric(as.character(get_pubmed_ids(gsub('_','-',data$tip[i]))$Count))
-  cites[i]=counts
-  print(paste(i,"/",nrow(data)))
-}
-
-## virus-related citations per bat species
-vcites=c()
-for(i in 1:length(data$tip)) {
-  
-  x=gsub('_','-',data$tip[i])
-  x=paste("(",x,")",sep="")
-  x=paste(x,"AND (virus OR viral)")
-  counts=as.numeric(as.character(get_pubmed_ids(x)$Count))
-  vcites[i]=counts
-  print(paste(i,"/",nrow(data)))
-}
-
-## compile all citations
-cdata=data.frame(tip=data$tip,
-                 cites=cites,
-                 vcites=vcites)
-
-## merge
-data=merge(data,cdata,by='tip')
-
-## clean
-rm(cites,vcites,x,cdata,i,counts)
-
 ## write flat file
+setwd("~/Desktop/bathaus/flat files")
+write.csv(data,"bathaus_virus to phylo backbone.csv")
