@@ -1,25 +1,50 @@
 ## 05_Taxonomy Merge
-## Merging combined Santini with Taxonomy data
+## Merging combined Santini with taxonomy, citations, and virus data
 
+## ready workspace
+gc()
+rm(list=ls())
+graphics.off()
+
+## libraries
 library(tidyverse)
+library(plyr)
 
-# read in csv
-santini <- read_csv("Santini et al 2018/Santini_dwellers and visitors.csv", col_names = TRUE) %>%
-  select(-X1) %>% #remove X1 column
-  rename(Species_Name = Species_ph) # change name to match taxonomy file for merging
+## merge taxonomy/viruses with citation
+setwd("~/Desktop/bathaus/flat files")
+data=read.csv("bathaus_virus to phylo backbone.csv")
+cites=read.csv("bathaus citations.csv")
+data=merge(data,cites,by="tip")
+rm(cites)
 
-# Updating Neoromicia_nanus to Neoromicia_nana
-santini[48,3] <- "Neoromicia_nana"
-santini[48,3]
+## clean
+data$X.x=NULL
+data$X.y=NULL
 
-tax_bats <- read_csv("phylos/taxonomy_mamPhy_5911species.csv", col_names = TRUE) %>%
-  filter(ord == "CHIROPTERA") # filter only for bats
+## merge santini
+setwd("~/Desktop/bathaus/Santini et al 2018")
+sdata=read.csv("Santini_dwellers and visitors.csv")
 
-# Merge by species name?
-f <- merge(tax_bats, santini, on = "Species_Name", all=T)
-write_csv(f, "phylos/Santini and Taxonomy merge.csv")
+## check names
+setdiff(sdata$Species_ph,data$tip)
 
+## fix
+sdata$tip=revalue(sdata$Species_ph,
+                  c("Neoromicia_nanus"="Neoromicia_nana"))
+sdata=sdata[c("tip","Synurbic")]
 
+## merge
+data=merge(data,sdata,by="tip",all.x=T)
+rm(sdata)
 
+## virus == 0 and cites > 0
+data$filter=ifelse(data$virus==0 & data$cites==0,"drop","keep")
+data$vfilter=ifelse(data$virus==0 & data$vcites==0,"drop","keep")
 
+## save whole dataset
+setwd("~/Desktop/bathaus/flat files")
+write.csv(data,"master data_1287 species.csv")
 
+## trim based on broad filter
+set=data[data$filter=="keep",]
+write.csv(data,"filter data_600 species.csv")
