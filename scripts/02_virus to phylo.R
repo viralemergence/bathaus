@@ -53,4 +53,64 @@ species$species=revalue(species$species,
                           "Chaerephon pusillus"="Chaerephon pumilus",
                           "Dasypterus ega"="Lasiurus ega",
                           "Dasypterus intermedius"="Lasiurus intermedius",
-                          "Dasypterus xanthinus"="Lasiurus xanthinus"))
+                          "Dasypterus xanthinus"="Lasiurus xanthinus",
+                          "Dobsonia andersoni"="Dobsonia anderseni",
+                          "Dobsonia magna"="Dobsonia moluccensis",
+                          "Doryrhina cyclops"="Hipposideros cyclops",
+                          "Eptesicus regulus"="Vespadelus regulus",
+                          "Eptesicus vulturnus"="Vespadelus vulturnus",
+                          "Gardnerycteris crenulatum"="Mimon crenulatum",
+                          "Hipposideros cf. ruber"="Hipposideros ruber",
+                          "Hipposideros terasensis"="Hipposideros armiger",
+                          "Hypsugo alaschanicus"="Pipistrellus alaschanicus",
+                          "Hypsugo pulveratus"="Pipistrellus pulveratus",
+                          "Hypsugo savii"="Pipistrellus savii",
+                          "Laephotis capensis"="Neoromicia capensis",
+                          "Lissonycteris angolensis"="Myonycteris angolensis",
+                          "Macronycteris commersoni"="Hipposideros commersoni",
+                          "Macronycteris gigas"="Hipposideros gigas",
+                          "Macronycteris vittata"="Hipposideros vittatus",
+                          "Miniopterus africanus"="Miniopterus inflatus",
+                          "Miniopterus orianae"="Miniopterus oceanensis",
+                          "Molossus ater"="Molossus rufus",
+                          "Myotis myotis/blythii"="Myotis myotis",
+                          "Myotis oxygnathus"="Myotis blythii",
+                          "Myotis ricketti"="Myotis pilosus",
+                          "Neoromicia brunneus"="Neoromicia brunnea",
+                          "Nyctalus velutinus"="Nyctalus plancyi",
+                          "Parahypsugo crassulus"="Pipistrellus crassulus",
+                          "Perimyotis subflavus"="Pipistrellus subflavus",
+                          "Plecotus gaisleri"="Plecotus teneriffae",
+                          "Pteronotus alitonus"="Pteronotus parnellii",
+                          "Pteronotus rubiginosus"="Pteronotus parnellii",
+                          "Rhinolophus blythi"="Rhinolophus lepidus",
+                          #"Rhinolophus cornutus"="",
+                          "Rhinolophus hildebrandti"="Rhinolophus hildebrandtii",
+                          "Rhinolophus lobatus"="Rhinolophus landeri",
+                          "Rhinolophus monoceros"="Rhinolophus pusillus",
+                          "Rhinolophus rhodesiae"="Rhinolophus simulator"))
+
+## recheck missing
+setdiff(species$species,taxa$species)
+
+## remove missing
+species=species[!species$species%in%setdiff(species$species,taxa$species),]
+
+## do we have duplicate species names after taxonomic matching?
+table(table(species$species)>1)
+
+## aggregate
+species=aggregate(virus~species,data=species,sum)
+
+## clean taxonomy file
+taxa=taxa[c("species","gen","fam","clade","MSW3_sciName_matched","tip")]
+
+## merge with species
+data=merge(taxa,species,by="species",all.x=T)
+
+## if no viruses, 0 viruses
+data$virus=ifelse(is.na(data$virus),0,data$virus)
+
+## write flat file
+setwd("~/Desktop/bathaus/flat files")
+write.csv(data,"bathaus_virus to phylo backbone.csv")
