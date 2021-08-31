@@ -51,7 +51,7 @@
 "50","Chiroptera","Vespertilionidae","Eptesicus_serotinus",22.85833,0.3185,0,30.8,1.5,6.5,1,"dweller"
 "51","Chiroptera","Vespertilionidae","Eptesicus_fuscus",16.46048,0.24,0,34.18,1.85,6.4,1,"dweller"
 "52","Chiroptera","Phyllostomidae","Glossophaga_longirostris",11.92214,0.435,1.0889,46.65,1,6.44,0,"neither"
-"53","Chiroptera","Vespertilionidae","Lasiurus_borealis",10.7375,0.17,0,38,3.12,6.7,1,"visitor"
+"53","Chiroptera","Vespertilionidae","Lasiurus_borealis",10.7375,0.17,0,38,3.12,6.7,0,"visitor"
 "54","Chiroptera","Vespertilionidae","Pipistrellus_ceylonicus",8.3875,0.182,0,27.5,1.98,7.9,1,"visitor"
 "55","Chiroptera","Rhinolophidae","Rhinolophus_ferrumequinum",21.06071,0.35,0,45.87,1,6.1,1,"visitor"
 "56","Chiroptera","Rhinolophidae","Rhinolophus_hipposideros",4.709231,0.195,0,33.2,1,5.7,1,"visitor"

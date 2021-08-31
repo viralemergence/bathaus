@@ -18,6 +18,10 @@ v <- visitors %>% mutate(UrbanStatus = if_else(Synurbic <= 0, "neither", "visito
 # Combine the data by rbind
 u <- unique(rbind(d,v))
 
+# change value of Lasiurus borealis from 1 to 0
+u[53,10] <- 0
+View(u) # check that the value was replaced
+
 # View table of UrbanStatus variable to confirm number of dwellers (11) and visitors (6)
 table(u$UrbanStatus)
 
