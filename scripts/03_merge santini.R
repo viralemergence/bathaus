@@ -20,12 +20,10 @@ u <- unique(rbind(d,v))
 
 # change value of Lasiurus borealis from 1 to 0
 u[53,10] <- 0
-View(u) # check that the value was replaced
+u[53,] # check that the value was replaced
 
 # View table of UrbanStatus variable to confirm number of dwellers (11) and visitors (6)
 table(u$UrbanStatus)
 
 # Write as csv
 write.csv(u, "Santini et al 2018/Santini_dwellers and visitors.csv")
-
-
