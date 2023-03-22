@@ -15,15 +15,15 @@ setwd("~/Desktop/virion/Virion")
 virion=vroom("Virion.csv.gz")
 
 ## prune to Chiroptera
-bats=virion %>% 
+bats2=virion %>% 
   filter(HostOrder == "chiroptera")
 
 ## trim to host and virus names NCBI resolved
-bats=bats[bats$HostNCBIResolved==T & bats$VirusNCBIResolved==T,]
+bats=bats[bats2$HostNCBIResolved==T & bats2$VirusNCBIResolved==T,]
 
 ## virus richness 
 bats$virus=1
-species=aggregate(virus~Host,data=bats,sum)
+species2=aggregate(virus~Host,data=bats2,sum)
 
 ## write to flat file
 setwd("~/Desktop/bathaus/virus data")
