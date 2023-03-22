@@ -11,11 +11,11 @@ library(tidyverse)
 
 # Read in the merged dataset
 setwd("/Users/brianabetke/Desktop/Bats and Viruses/bathaus")
-data <- read_csv("bathaus/flat files/master data and COMBINE.csv") %>% 
+data <- read_csv("flat files/master data and COMBINE.csv") %>% 
   select(-cnames)
 
 # reading in PanTHERIA
-PanTHERIA <- read.delim("bathaus/traits/PanTHERIA_1-0_WR05_Aug2008.txt")
+PanTHERIA <- read.delim("traits/PanTHERIA_1-0_WR05_Aug2008.txt")
 
 # Grab the geographic variables and species names from PanTHERIA to merge
 GR <- PanTHERIA %>%
@@ -92,7 +92,7 @@ data$cnames <- recode(data$species,
                       )
 
 # check to see if they all appear properly 
-c <- data %>% filter(species != cnames)
+c <- data %>% filter(species != cnames) %>% select(species,cnames)
 rm(c)
 
 # create a cnames in trait data for merge
@@ -107,7 +107,7 @@ data_GR[duplicated(data_GR$cnames),]
 # Dermanura phaeotis - should actually be in cnames
 
 # write after matching
-write.csv(data_GR,"bathaus/flat files/master data and PanTHERIA.csv", row.names = FALSE)
+write.csv(data_GR,"flat files/master data and PanTHERIA.csv", row.names = FALSE)
 
 # values for the myotis
 myotis <- PanTHERIA %>% 

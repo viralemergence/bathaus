@@ -114,11 +114,11 @@ trait_data$cnames <- trait_data$iucn2020_binomial
 
 # merge datasets
 trait_merge <- merge(merge_data, trait_data, by = "cnames", all.x = TRUE) %>%
-  select(!c(order, family, genus, species.y, iucn2020_binomial, phylacine_binomial)) %>%
+  select(!c(order, family, genus, species.y, phylacine_binomial)) %>%
   rename(species = species.x)
 
 # write after matching
-write.csv(trait_merge,"bathaus/flat files/master data and COMBINE.csv", row.names = FALSE)
+write.csv(trait_merge,"~/Desktop/Bats and Viruses/bathaus/flat files/master data and COMBINE.csv", row.names = FALSE)
 
 
 
