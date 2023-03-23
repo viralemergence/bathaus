@@ -24,7 +24,7 @@ zvirus <- zvirus %>%
 # Look at differences 
 setdiff(zvirus$species, data$species)
 
-# match - Probably recycle some of dan's matches from the overal virus pull
+# match - matches from the overall virus pull
 zvirus$species <- recode(zvirus$species,
                           "Aeorestes cinereus"="Lasiurus cinereus",
                           "Aeorestes egregius"="Lasiurus egregius",

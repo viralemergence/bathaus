@@ -12,7 +12,7 @@ virus <- read_csv("~/Desktop/Bats and Viruses/bathaus/flat files/filter data_600
   select(!(...1)) 
 
 # Google sheet data
-batroost <- read_csv("/Users/brianabetke/Desktop/Bat References Spreadsheet.xlsx - Sheet1.csv") %>%
+batroost <- read_csv("~/Desktop/Bats and Viruses/bathaus/Synurbic data/Bat References Spreadsheet.csv") %>%
   select(species, Synurbic, Complete)
 
 # look at how many complete observations you have - 333
@@ -21,7 +21,8 @@ table(batroost$Complete)
 # merge
 merged <- merge(virus, batroost, by = "species", all = TRUE) %>%
   rename(Synurbic = Synurbic.y) %>%
-  select(!(Synurbic.x)) 
+  select(!(Synurbic.x)) %>%
+  mutate(fam = ifelse(gen == "Miniopterus", "MINIOPTERIDAE", fam))
 
 # Export
 setwd("/Users/brianabetke/Desktop/Bats and Viruses/bathaus")

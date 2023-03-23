@@ -86,6 +86,8 @@ trait_data$iucn2020_binomial <- trait_data$iucn2020_binomial %>%
                       ) 
 setdiff(merge_data$species, trait_data$iucn2020_binomial)
 # went from 89 to 35. 54 bats recoded
+setdiff(trait_data$iucn2020_binomial, merge_data$species)
+# 138 to 84
 
 # cnames column for synonyms 
 merge_data$cnames <- recode(merge_data$species,
