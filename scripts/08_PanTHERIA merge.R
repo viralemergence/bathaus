@@ -20,7 +20,8 @@ PanTHERIA <- read.delim("traits/PanTHERIA_1-0_WR05_Aug2008.txt")
 # Grab the geographic variables and species names from PanTHERIA to merge
 GR <- PanTHERIA %>%
   filter(MSW05_Order == "Chiroptera") %>%
-  select(MSW05_Binomial, X26.1_GR_Area_km2:X30.2_PET_Mean_mm) 
+  select(MSW05_Binomial, X26.1_GR_Area_km2:X30.2_PET_Mean_mm) %>%
+  na_if(-999) # change -999 to NA
 
 # look at differences with setdiff()
 # Everything in virus, not in PanTHERIA
