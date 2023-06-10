@@ -89,10 +89,10 @@ setdiff(merge_data$species, trait_data$iucn2020_binomial)
 setdiff(trait_data$iucn2020_binomial, merge_data$species)
 # 138 to 84
 
-# cnames column for synonyms 
-merge_data$cnames <- recode(merge_data$species,
-                       "Dermanura incomitatus"="Dermanura watsoni",
-                       "Harpiocephalus mordax"="Harpiocephalus harpia",
+# cnames for synonyms that need values to be reassigned
+merge_data$ccnames <- recode(merge_data$species,
+                       "Dermanura incomitatus" = "Dermanura watsoni",
+                       "Harpiocephalus mordax" = "Harpiocephalus harpia",
                        "Hsunycteris thomasi" = "Lonchophylla thomasi",
                        "Lophostoma aequatorialis" = "Lophostoma occidentalis",
                        "Lophostoma yasuni" = "Lophostoma carrikeri",
@@ -108,14 +108,17 @@ merge_data$cnames <- recode(merge_data$species,
                        "Pteropus argentatus" = "Pteropus chrysoproctus",
                        "Pteropus yapensis" = "Pteropus pelewensis",
                        "Triaenops menamena" = "Triaenops rufus",
-                       "Rhinolophus chaseni" = "Rhinolophus borneensis"
+                       "Rhinolophus chaseni" = "Rhinolophus borneensis",
+                       "Triaenops rufus" = "Triaenops persicus",
+                       "Myotis aelleni" = "Myotis chiloensis",
+                       "Myotis hajastanicus" = "Myotis aurascens"
                        )
 
 # create a cnames in trait data for merge
-trait_data$cnames <- trait_data$iucn2020_binomial
+trait_data$ccnames <- trait_data$iucn2020_binomial
 
-# merge datasets
-trait_merge <- merge(merge_data, trait_data, by = "cnames", all.x = TRUE) %>%
+# merge datasets, dont remove IUCN 2020 names or ccnames
+trait_merge <- merge(merge_data, trait_data, by = "ccnames", all.x = TRUE) %>%
   select(!c(order, family, genus, species.y, phylacine_binomial)) %>%
   rename(species = species.x)
 

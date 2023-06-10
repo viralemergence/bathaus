@@ -11,8 +11,8 @@ library(tidyverse)
 
 # Read in the merged dataset
 setwd("/Users/brianabetke/Desktop/Bats and Viruses/bathaus")
-data <- read_csv("flat files/master data and COMBINE.csv") %>% 
-  select(-cnames)
+data <- read_csv("flat files/master data and COMBINE.csv") #%>% 
+  #select(-cnames)
 
 # reading in PanTHERIA
 PanTHERIA <- read.delim("traits/PanTHERIA_1-0_WR05_Aug2008.txt")
@@ -70,46 +70,73 @@ GR$MSW05_Binomial <- recode(GR$MSW05_Binomial,
                             "Artibeus gnomus"= "Dermanura gnomus",
                             "Artibeus incomitatus" = "Dermanura incomitatus",
                             "Artibeus toltecus" = "Dermanura toltecus",
-                            "Artibeus watsoni" = "Dermanura watsoni"
+                            "Artibeus watsoni" = "Dermanura watsoni",
+                            "Eptesicus matroka" = "Neoromicia matroka",
+                            "Artibeus phaeotis" = "Dermanura phaeotis"
                             ) 
 # Check again 
 setdiff(data$species, GR$MSW05_Binomial)
+# 
 
-# Cnames if I need it for synonyms
-data$cnames <- recode(data$species,
-                      "Chaerephon pumilus" = "Chaerephon leucogaster",
-                      "Chaerephon chapini" = "Chaerephon shortridgei",
-                      "Neoromicia matroka" = "Eptesicus matroka",
-                      "Carollia brevicauda" = "Carollia colombiana",
-                      "Pipistrellus ariel" = "Hypsugo bodenheimeri",
-                      "Murina ussuriensis" = "Murina silvatica",
-                      "Micronycteris minuta" = "Micronycteris homezi",
-                      "Myotis ikonnikovi" = "Myotis yesoensis",
-                      "Myotis ikonnikovi" = "Myotis hosonoi",
-                      "Myotis blythii" = "Myotis oxygnathus",
-                      "Myotis ikonnikovi" = "Myotis ozensis",
-                      "Pteropus alecto" = "Pteropus banakrisi",
-                      "Dermanura phaeotis" = "Artibeus phaeotis"
-                      )
+# cnames for synonyms that need species values to be reassigned
+# data$cnames <- recode(data$species,
+#                       "Chaerephon pumilus" = "Chaerephon leucogaster",
+#                       "Chaerephon chapini" = "Chaerephon shortridgei",
+#                       "Carollia brevicauda" = "Carollia colombiana",
+#                       "Pipistrellus ariel" = "Hypsugo bodenheimeri",
+#                       "Murina ussuriensis" = "Murina silvatica",
+#                       "Micronycteris minuta" = "Micronycteris homezi",
+#                       "Myotis ikonnikovi" = "Myotis yesoensis",
+#                       "Myotis ikonnikovi" = "Myotis hosonoi",
+#                       "Myotis blythii" = "Myotis oxygnathus",
+#                       "Myotis ikonnikovi" = "Myotis ozensis",
+#                       "Pteropus alecto" = "Pteropus banakrisi",
+#                       ) all overwriting traits for 
+
+data$pcnames <- recode(data$species,
+                             "Carollia sowelli" = "Carollia brevicauda",
+                             "Dermanura incomitatus" = "Dermanura watsoni",
+                             "Harpiocephalus mordax" = "Harpiocephalus harpia",
+                             "Hsunycteris thomasi" = "Lonchophylla thomasi",
+                             "Lophostoma aequatorialis" = "Lophostoma occidentalis",
+                             "Lophostoma yasuni" = "Lophostoma carrikeri",
+                             "Miniopterus fuliginosus" ="Miniopterus schreibersii",
+                             "Molossus barnesi" = "Molossus coibensis",
+                             "Myotis flavus" = "Myotis formosus",
+                             "Myotis midastactus" = "Myotis simus",
+                             "Natalus mexicanus" = "Natalus stramineus",
+                             "Natalus lanatus" = "Natalus stramineus",
+                             "Natalus saturatus" = "Natalus stramineus",
+                             #"Nyctophilus timoriensis" = "Nyctophilus corbeni", corbeni not in PanTHERIA
+                             "Paracoelops megalotis" = "Hipposideros Pomona",
+                             "Pipistrellus deserti" = "Pipistrellus kuhlii",
+                             "Pteropus argentatus" = "Pteropus chrysoproctus",
+                             "Pteropus yapensis" = "Pteropus pelewensis",
+                             "Triaenops menamena" = "Triaenops rufus",
+                             "Rhinolophus chaseni" = "Rhinolophus borneensis",
+                             "Triaenops rufus" = "Triaenops persicus",
+                             "Myotis aelleni" = "Myotis chiloensis",
+                             # "Myotis hajastanicus" = "Myotis aurascens"
+)
 
 # check to see if they all appear properly 
-c <- data %>% filter(species != cnames) %>% select(species,cnames)
+c <- data %>% filter(species != pcnames) %>% select(species,pcnames)
 rm(c)
 
 # create a cnames in trait data for merge
-GR$cnames <- GR$MSW05_Binomial
+GR$pcnames <- GR$MSW05_Binomial
 
-# merge datasets
-data_GR <- merge(data, GR, by = "cnames", all.x = TRUE) %>%
-  select(!c(cnames,MSW05_Binomial))
+# merge datasets, don't remove pcnames
+data_GR <- merge(data, GR, by = "pcnames", all.x = TRUE) %>%
+  select(!c(MSW05_Binomial))
 
 # which one is duplicated? 
-data_GR[duplicated(data_GR$cnames),]
-# Dermanura phaeotis - should actually be in cnames
+data_GR[duplicated(data_GR$pcnames),]
+# Dermanura phaeotis - should actually be changed in pantheria from Artibeus
 
 # write after matching
 write.csv(data_GR,"flat files/master data and PanTHERIA.csv", row.names = FALSE)
 
-# values for the myotis
-myotis <- PanTHERIA %>% 
-  filter(MSW05_Binomial %in% c("Myotis yesoensis", "Myotis hosonoi", "Myotis ozensis"))
+# # values for the myotis
+# myotis <- PanTHERIA %>% 
+#   filter(MSW05_Binomial %in% c("Myotis yesoensis", "Myotis hosonoi", "Myotis ozensis"))
