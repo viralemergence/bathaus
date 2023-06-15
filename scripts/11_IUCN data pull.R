@@ -22,7 +22,7 @@ table(zoonotic$Complete) # should be all yes
 # # remove NAs in iucn2020 to get only combine names, then do the same matching you did for COMBINE
 # cdata <- merged %>% drop_na(iucn2020_binomial)
 sum(is.na(zoonotic$iucn2020_binomial)) # 20 NAs 
-data <- zoonotic %>% drop_na(iucn2020_binomial) 
+#data <- zoonotic %>% drop_na(iucn2020_binomial) 
 
 # only run full data pull if needed. If not, just read in pulled dataset to merge with full virus data
 pull = "no"
