@@ -177,6 +177,13 @@ filtered <- filtered %>%
   select(-remove)
 rm(remove)
 
+# zoonotic virus proportions
+virus_props <- data %>% 
+  mutate(zoo_prop = zvirus/virus)
+
+virus_props <- virus_props %>% mutate(zoo_prop = ifelse(is.nan(zoo_prop), 0, zoo_prop))
+hist(virus_props$zoo_prop)
+
 # Write as csv
 write.csv(filtered, "flat files/cleaned dataset filtered.csv", row.names = FALSE)
 
@@ -423,8 +430,10 @@ brts <- function(data_df, seed, response, parameter_df, full){
                 shrinkage=shr,
                 interaction.depth=int.d,
                 n.minobsinnode=4,
-                cv.folds=folds,class.stratify.cv=TRUE,
-                bag.fraction=0.5,train.fraction=1,
+                cv.folds=folds,
+                class.stratify.cv=TRUE,
+                bag.fraction=0.5,
+                #train.fraction=1,
                 n.cores=1,
                 verbose=F)
   
@@ -485,7 +494,7 @@ brts <- function(data_df, seed, response, parameter_df, full){
   # pred_data <- pred_data[order(pred_data$pred,decreasing=T),]
   
   ## print
-  print(paste("BRT ",seed," done; test AUC = ",auc_test,sep=""))
+  print(paste("BRT ",seed," done; test AUC = ", auc_test,sep=""))
   
   ## save outputs
   return(list(mod=gbmOut,
@@ -521,7 +530,7 @@ saveRDS(fzvirus_brts,"fzvirus brts.rds")
 
 # full dataset
 virus_brts <- lapply(1:smax,function(x) brts(data_df = full, seed = x,response = "dum_virus", parameter_df = search_full, full = "yes"))
-zvirus_brts <- lapply(1:smax,function(x) brts(data_df = full, seed=x,response="dum_zvirus", parameter_df = search_full, full = "yes"))
+zvirus_brts <- lapply(1:smax,function(x) brts(data_df = full, seed = x,response="dum_zvirus", parameter_df = search_full, full = "yes"))
 
 # write to files
 #setwd("~/Desktop/hantaro/data/clean files")
