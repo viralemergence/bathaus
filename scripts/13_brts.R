@@ -7,7 +7,7 @@ graphics.off()
 
 # Packages
 library(tidyverse)
-# library(fastDummies) # dummy coding family
+# library(fastDummies) # dummy coding family this is done in data cleaning script now
 library(gbm)
 library(rsample)
 library(ROCR)
@@ -33,11 +33,33 @@ data <- data %>%
   mutate(dum_virus = if_else(virus <= 0, 0, 1),
          dum_zvirus = if_else(zvirus <= 0, 0, 1)) 
 
+# transform zoonotic proportion to gaussian space here so it is included 
+# in both datasets
+c <- data[c("species","zoo_prop")]
+c$xi <- c$zoo_prop * 100
+c$ni <- 100
+
+# Freeman tukey double arcsine transformation
+t <- metafor::escalc(measure = "PFT", xi=xi, ni=ni, data=c)
+# t$back <- metafor::transf.ipft(t$yi, t$ni) # back transformation
+
+# subset 
+tsub <- t[c("species","yi")]
+
+# rename yi to zoo_pft
+names(tsub) <- c("species","zoo_pft")
+
+# merge to data by species
+data <- merge(data, tsub, by = "species")
+
+# remove
+rm(c,t,tsub)
+
 # remove duplicated diet variable and geographic realm
 data <- data %>% 
   select(-c(det_inv, biogeographical_realm)) 
 
-# save before removing species
+# save before removing species (need this for predictions)
 fdata <- data
 
 # remove species
@@ -45,7 +67,7 @@ data$species <- NULL
 
 # run tuning grid
 # ifelse for running grid search function
-gsrun = "yes" 
+gsrun = "no" 
 if(gsrun == "yes"){# run grid search 
 
   # Set up BRT tuning via search grid
@@ -56,7 +78,7 @@ if(gsrun == "yes"){# run grid search
     # create grid
     tgrid <- expand.grid(n.trees = trees,
                          interaction.depth = c(2, 3, 4),
-                         shrinkage = c(0.1, 0.01, 0.001, 0.0005),
+                         shrinkage = c(0.01, 0.001, 0.0005),
                          #n.minobsinnode = c(5, 10, 15), 
                          #bag.fraction = c(0.5, 0.8, 1),
                          seed = seq(1,seed,by = 1))
@@ -70,19 +92,25 @@ if(gsrun == "yes"){# run grid search
     ## sort by id then seed
     tgrid <- tgrid[order(tgrid$id,tgrid$seed),]
     
+    # Number rows
+    tgrid$row <- 1:nrow(tgrid)
+    tgrid$id2=factor(as.numeric(factor(tgrid$id)))
+    
     return(tgrid)
   }
   
   #### Function to assess each hyperparameter combination
   # this function takes a search grid and runs them through gbms for a given split of data
-  # then assess performance of each combination of parameters to get the optimal parameters for
+  # then assesses performance of each combination of parameters to get the optimal parameters for
   # final gbms.
-
+  
+  # Takes:
   # row <- row in the hgrid
-  # set <- the subset of data I want to use (two full datasets and two trimmed to complete)
-  # response <- indicate which response I want to use. Either virus or zoo_prop
-  # folds <- indicating either 10 or 5 folds depending on the dataset (5 for subset of 544 and 10 for full)
-  grid_search <- function(row, data_df, response, folds, cv = NULL){
+  # data_df <- dataframe without species
+  # hgrid <- change grid based on response
+  # response <- indicate which response, determines the error distribution used
+  # cv <- null to avoid warnings when running poisson or gaussian dist. Set to TRUE for class stratify.
+  grid_search <- function(row, data_df, hgrid, response, cv = NULL){
     
     # new data
     ndata <- data_df
@@ -90,7 +118,10 @@ if(gsrun == "yes"){# run grid search
     # correct the response and remove raw response variables
     ndata <- ndata %>% 
       mutate(response = !!sym(response)) %>%
-      select(-c("zvirus", "virus", "zoo_prop", "dum_zvirus", "dum_virus"))
+      select(-c("zvirus", "virus", "zoo_prop", "dum_zvirus", "dum_virus", "zoo_pft"))
+    
+    # assign name of hgrid
+    hgrid <- hgrid
     
     ## use rsample to split (allow the proportion to be changed incase)
     set.seed(hgrid$seed[row])
@@ -107,7 +138,7 @@ if(gsrun == "yes"){# run grid search
     # ifelse
     dist <- ifelse(response == "virus", "poisson", 
                    ifelse(response == "zvirus", "poisson", 
-                          ifelse(response == "zoo_prop_arcine", "gaussian", "bernoulli")))
+                          ifelse(response == "zoo_pft", "gaussian", "bernoulli")))
     
     ## BRT
     set.seed(1)
@@ -117,7 +148,7 @@ if(gsrun == "yes"){# run grid search
                shrinkage=hgrid$shrinkage[row],
                interaction.depth=hgrid$interaction.depth[row],
                n.minobsinnode=10,
-               cv.folds=folds,
+               cv.folds=10,
                class.stratify.cv=cv, # will throw warning for poisson and gaussian unless = NULL
                bag.fraction=0.5,
                train.fraction=1,
@@ -147,7 +178,7 @@ if(gsrun == "yes"){# run grid search
       auc_test <- gbm.roc.area(yTest,predict(gbmOut,dataTest,n.trees=best.iter,type="response"))
       
       ## print
-      print(paste("hpar row ",row," done; test AUC is ",auc_test,sep=""))
+      print(paste("hpar row ",row," done; test AUC is ",auc_test, " for ", response, sep=""))
       
       ## save outputs
       return(list(best=best.iter,
@@ -159,164 +190,279 @@ if(gsrun == "yes"){# run grid search
       
     } else {
       
+      # another if else statement or try to transform rmse after? 
+      # since it will be in the unit of the response.
+      
       # calculate RMSE
-      mse <- mean((preds - result)^2)
-      rmse <- sqrt(mse)
+      testMSE <- mean((preds - result)^2)
+      testRMSE <- sqrt(testMSE)
+      
+      # training RMSE
+      preds <- predict(gbmOut,dataTrain,n.trees=best.iter,type="response")
+      trainMSE <- mean((preds - yTrain)^2)
+      trainRMSE <- sqrt(trainMSE)
       
       # print
-      print(paste("hpar row ",row," done; RMSE is ",rmse,sep=""))
+      print(paste("hpar row ",row," done; Test RMSE is ", testRMSE, " for ", response, sep=""))
       
       # save outputs
       return(list(best = best.iter,
-                  mse = mse,
-                  rmse = rmse,
+                  trainMSE = trainMSE,
+                  trainRMSE = trainRMSE,
+                  testMSE = testMSE,
+                  testRMSE = testRMSE,
                   wrow = row))
     }
     
   }
   
-    # hgrid <- makegrid(1, c(10000, 20000))
-    # vgrid <- makegrid(1,c(500, ))
-    hgrid <- makegrid(10, 5000) # just use 5000 and 15000, best iteration for 25000 on very small int. depth doesn't max out
+    # grids for each model type
+    pgrid <- makegrid(10, 5000)  # smaller grid for poisson models (seem to have low no of trees)
+    bgrid <- makegrid(10, c(5000, 25000)) # binary models, tend to use much larger values
     
-    # # Removing combinations that constantly max out
-    # hgrid %>% 
-    #   filter(!(n.trees == 5000 & shrinkage < 0.01)) %>%
-    #   filter(!(n.trees == 10000 & shrinkage < 0.001)) -> hgrid
+    # ### trim just for testing
+    # pgrid <- pgrid[71, ]
+    # pgrid$n.trees <- 5000
+    # pgrid$shrinkage <- 0.001
+    # pgrid$row <- 1
     
-    # renumber the rows for matching 
-    hgrid$row <- 1:nrow(hgrid)
-    hgrid$id2=factor(as.numeric(factor(hgrid$id)))
+    ### run for all types of responses
+    # Virus Richness and transformed zoonotic proportion
+    #vpars <- lapply(1:nrow(pgrid),function(x) grid_search(x, data_df = data, hgrid = pgrid, response="virus"))
+    pftpars <- lapply(1:nrow(pgrid),function(x) grid_search(x, data_df = data, hgrid = pgrid, response="zoo_pft"))
     
-    ### trim for testing
-    # hgrid <- hgrid[48, ]
-    # hgrid$n.trees <- 15000
-    # hgrid$shrinkage <- 0.0005
+    # trim just for testing
+    bgrid <- bgrid[84, ]
     
-    # run for the two types of data?
-    vpars <- lapply(1:nrow(hgrid),function(x) grid_search(x, data_df = data, response="virus", folds = 10))
-    zpars <- lapply(1:nrow(hgrid),function(x) grid_search(x, data_df = data, response="zvirus", folds = 10))
+    # Reservoir status models
+    vrespars <- lapply(1:nrow(bgrid),function(x) grid_search(x, data_df = data, hgrid = bgrid, response="dum_virus", cv = TRUE))
+    zrespars <- lapply(1:nrow(bgrid),function(x) grid_search(x, data_df = data, hgrid = bgrid, response="dum_zvirus", cv = TRUE))
     
+    # comment out for now because I already ran this
     ## get virus results
-    vresults <- data.frame(sapply(vpars,function(x) x$mse),
-                           sapply(vpars,function(x) x$rmse),
+    vresults <- data.frame(sapply(vpars,function(x) x$trainRMSE),
+                           sapply(vpars,function(x) x$testRMSE),
                            sapply(vpars,function(x) x$wrow),
                            sapply(vpars,function(x) x$best))
-    names(vresults) <- c("MSE","RMSE","row","best")
-    
+    names(vresults) <- c("trainRMSE","testRMSE","row","best")
+
     # Merge with hgrid
-    vcomplete <- merge(vresults, hgrid, by = "row")
+    vcomplete <- merge(vresults, pgrid, by = "row")
     
     # get zoonotic results
-    zresults <- data.frame(sapply(zpars,function(x) x$mse),
-                           sapply(zpars,function(x) x$rmse),
-                           sapply(zpars,function(x) x$wrow),
-                           sapply(zpars,function(x) x$best))
-    names(zresults) <- c("MSE","RMSE","row","best")
+    zpresults <- data.frame(sapply(pftpars,function(x) x$trainRMSE),
+                           sapply(pftpars,function(x) x$testRMSE),
+                           sapply(pftpars,function(x) x$wrow),
+                           sapply(pftpars,function(x) x$best))
+    names(zpresults) <- c("trainRMSE","testRMSE","row","best")
     
     # Merge with hgrid
-    zcomplete <- merge(zresults, hgrid, by = "row")
+    zpcomplete <- merge(zpresults, pgrid, by = "row")
+    
+    # Overall virus reservoir models not sure if you want a separate grid for this b/c of what you ran b4
+    ## get virus reservoir model results
+    vrresults <- data.frame(sapply(vrespars,function(x) x$trainAUC),
+                           sapply(vrespars,function(x) x$testAUC),
+                           sapply(vrespars,function(x) x$spec),
+                           sapply(vrespars,function(x) x$sen),
+                           supply(vrespars,function(x) x$wrow),
+                           sapply(vrespars,function(x) x$best))
+    names(vrresults) <- c("trainAUC","testAUC","spec","sen","row","best")
+    
+    # Merge with hgrid
+    vrcomplete <- merge(vrresults, hgrid, by = "row")
+    
+    # zoonotic virus reservoir models
+    ## get virus results
+    zrresults <- data.frame(sapply(zrespars,function(x) x$trainAUC),
+                           sapply(zrespars,function(x) x$testAUC),
+                           sapply(zrespars,function(x) x$spec),
+                           sapply(zrespars,function(x) x$sen),
+                           sapply(zrespars,function(x) x$wrow),
+                           sapply(zrespars,function(x) x$best))
+    names(zrresults) <- c("trainAUC","testAUC","spec","sen","row","best")
+    
+    # Merge with hgrid
+    zrcomplete <- merge(zrresults, hgrid, by = "row")
     
     # write as csv
     write_csv(vcomplete, "/Volumes/BETKE 2021/bathaus/flat files/virus grid search.csv")
-    write_csv(zcomplete, "/Volumes/BETKE 2021/bathaus/flat files/zvirus grid search.csv")
+    write_csv(zpcomplete, "/Volumes/BETKE 2021/bathaus/flat files/pft zoonotic grid search.csv")
+    write_csv(vrcomplete, "/Volumes/BETKE 2021/bathaus/flat files/virus reservoir grid search.csv")
+    write.csv(zrcomplete, "/Volumes/BETKE 2021/bathaus/flat files/zoonotic virus reservoir grid search.csv")
+    # may actually want to combine all of these for multiplots? or do it for like model outcomes.
     
 } else {# read in grid search results
-  
-  overall_search <- read_csv("~/Desktop/Bats and Viurses/bathaus/flat files/virus grid search.csv")
-  zoo_search <- read_csv("~/Desktop/Bats and Viurses/bathaus/flat files/zvirus grid search.csv")
+
+  overall_search <- read_csv("~/Desktop/Bats and Viruses/bathaus/flat files/virus grid search.csv")
+  zoo_search <- read_csv("~/Desktop/Bats and Viruses/bathaus/flat files/pft zoonotic grid search.csv")
+  #vres_search <- read_csv("~/Desktop/Bats and Viruses/bathaus/flat files/virus reservoir grid search.csv")
+  #zres_search <- read_csv("~/Desktop/Bats and Viruses/bathaus/flat files/zvirus reservoir grid search.csv")
   
 }
 
-### plots of parameters - these are from synurbat. need to update to this proj.
-auc_gg <- ggplot(na.complete, aes(x = factor(shrinkage), y = testAUC)) +
+### plots of parameters - figure S1
+library(patchwork)
+
+r <- overall_search %>% filter(shrinkage < 0.1)
+
+# plots for richness models
+virus_gg <- ggplot(overall_search, aes(x = factor(shrinkage), y = testRMSE)) +
   geom_boxplot(aes(fill = factor(interaction.depth)), color = "black", alpha = 0.5) +
   theme_bw() +
-  labs(x = "Learning Rate", y = "AUC", fill = "Interaction Depth", title = "Initial Model") +
+  labs(x = "Learning Rate", y = "Test RMSE", fill = "Interaction Depth", title = "Virus Richness") +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), 
-        plot.title = element_text(hjust = 0.5, size = 12),
+        plot.title = element_text(hjust = 0.5, size = 10),
         legend.position = "none",
-        axis.text = element_text(size = 8),
-        axis.title = element_text(size = 10)) +
+        axis.text = element_text(size = 6),
+        axis.title = element_text(size = 8)) +
   scale_fill_brewer(palette="Accent")
 
-tree_gg <- ggplot(na.complete, aes(x = factor(n.trees), y = testAUC)) +
+zvirus_gg <- ggplot(zoo_search, aes(x = factor(shrinkage), y = testRMSE)) +
   geom_boxplot(aes(fill = factor(interaction.depth)), color = "black", alpha = 0.5) +
   theme_bw() +
-  labs(x = "No.Trees", y = "AUC", fill = "Interaction Depth") +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.text = element_text(size = 8),
-        axis.title = element_text(size = 10)) +
-  scale_fill_brewer(palette="Accent")
-
-pauc_gg <- ggplot(p.complete, aes(x = factor(shrinkage), y = testAUC)) +
-  geom_boxplot(aes(fill = factor(interaction.depth)), color = "black", alpha = 0.5) +
-  theme_bw() +
-  labs(x = "Learning Rate", y = NULL, fill = "Interaction Depth", title = "Pseudoabsence Model") +
+  labs(x = "Learning Rate", y = NULL, fill = "Interaction Depth", title = "Arcsine Zoonotic Proportion") +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), 
-        plot.title = element_text(hjust = 0.5, size = 12),
+        plot.title = element_text(hjust = 0.5, size = 10),
         legend.position = "none",
-        axis.text = element_text(size = 8),
-        axis.title = element_text(size = 10)) +
+        axis.text = element_text(size = 6),
+        axis.title = element_text(size = 8)) +
   scale_fill_brewer(palette="Accent")
 
-ptree_gg <- ggplot(p.complete, aes(x = factor(n.trees), y = testAUC)) +
+# overall virus reservoir
+vresAUC_gg <- ggplot(search, aes(x = factor(shrinkage), y = testAUC)) +
   geom_boxplot(aes(fill = factor(interaction.depth)), color = "black", alpha = 0.5) +
   theme_bw() +
-  labs(x = "No.Trees", y = NULL, fill = "Interaction Depth") +
+  labs(x = NULL, y = "AUC", fill = "Interaction Depth", title = "Virus Reservoir") +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        legend.position = "none",
-        axis.text = element_text(size = 8),
-        axis.title = element_text(size = 10)) +
+        plot.title = element_text(hjust = 0.5, size = 10),
+        axis.text = element_text(size = 6),
+        axis.title = element_text(size = 8)) +
   scale_fill_brewer(palette="Accent")
 
-library(patchwork) # multiplot and save
-png("/Users/brianabetke/Desktop/Synurbic_Bats/synurbat/figures/Figure S4.png", width=6, height=6,units="in",res=300)
+vresSen_gg <- ggplot(search, aes(x = factor(shrinkage), y = sen)) +
+  geom_boxplot(aes(fill = factor(interaction.depth)), color = "black", alpha = 0.5) +
+  theme_bw() +
+  labs(x = NULL, y = "Sensitiviy", fill = "Interaction Depth") +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text = element_text(size = 6),
+        axis.title = element_text(size = 8)) +
+  scale_fill_brewer(palette="Accent")
+
+vresSpec_gg <- ggplot(search, aes(x = factor(shrinkage), y = spec)) +
+  geom_boxplot(aes(fill = factor(interaction.depth)), color = "black", alpha = 0.5) +
+  theme_bw() +
+  labs(x = "Learning rate", y = "Specificity", fill = "Interaction Depth") +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text = element_text(size = 6),
+        axis.title = element_text(size = 8)) +
+  scale_fill_brewer(palette="Accent")
+
+# zoonotic reservoir
+zresAUC_gg <- ggplot(search, aes(x = factor(shrinkage), y = testAUC)) +
+  geom_boxplot(aes(fill = factor(interaction.depth)), color = "black", alpha = 0.5) +
+  theme_bw() +
+  labs(x = NULL, y = NULL, fill = "Interaction Depth", title = "Zoonotic Reservoir") +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        plot.title = element_text(hjust = 0.5, size = 10),
+        axis.text = element_text(size = 6),
+        axis.title = element_text(size = 8)) +
+  scale_fill_brewer(palette="Accent")
+
+zresSen_gg <- ggplot(search, aes(x = factor(shrinkage), y = sen)) +
+  geom_boxplot(aes(fill = factor(interaction.depth)), color = "black", alpha = 0.5) +
+  theme_bw() +
+  labs(x = NULL, y = NULL, fill = "Interaction Depth") +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text = element_text(size = 6),
+        axis.title = element_text(size = 8)) +
+  scale_fill_brewer(palette="Accent")
+
+zresSpec_gg <- ggplot(search, aes(x = factor(shrinkage), y = spec)) +
+  geom_boxplot(aes(fill = factor(interaction.depth)), color = "black", alpha = 0.5) +
+  theme_bw() +
+  labs(x = "Learning rate", y = NULL, fill = "Interaction Depth") +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text = element_text(size = 6),
+        axis.title = element_text(size = 8)) +
+  scale_fill_brewer(palette="Accent")
+
+png("/Users/brianabetke/Desktop/Bats and Viruses/bathaus/figs/Figure S1.png", width=4.5, height=6.5,units="in",res=300)
 guide_area () + 
-  (auc_gg + pauc_gg) / (tree_gg + ptree_gg) + 
-  plot_layout(guides = "collect", heights = c(1, 15)) & theme(legend.position = "top")
+(virus_gg + zvirus_gg) / (vresAUC_gg + zresAUC_gg) / 
+  (vresSen_gg + zresSen_gg) / (vresSpec_gg + zresSpec_gg) +
+  plot_layout(guides = "collect", heights = c(1, 15)) & theme(legend.position = "top", legend.text = element_text(size = 8), legend.title = element_text(size = 8))
 dev.off()
 
-# remove
-rm(auc_gg, tree_gg, pauc_gg, ptree_gg)
+# remove plots from envrionment
+rm(vrius_gg, zvirus_gg, resAUC_gg, resSen_gg, resAUC_gg, zresAUC_gg, zresSen_gg, zresSpec_gg)
 
 # unload patchwork
 detach("package:patchwork", unload = TRUE)
 
-# Sort output to view top model combinations
-sort <- na.complete %>% 
-  arrange(desc(testAUC))
+# Sort output to view top model combinations (you want the lowest value for rmse)
+sort <- overall_search %>% 
+  arrange(testRMSE)
+
+# look at summary of ids across seeds, arranged by lowest testRMSE
+zoo_search %>% 
+  group_by(id) %>% 
+  summarise(med = median(testRMSE)) %>% 
+  arrange(med)
 
 # Sort output to view top model combinations
-psort <- p.complete %>% 
-  arrange(desc(testAUC))
+psort <- zoo_search %>% 
+  arrange(testRMSE)
+
+# look at summary of ids across seeds, arranged by lowest testRMSE
+zoo_search %>% 
+  group_by(id) %>% 
+  summarise(med = median(testRMSE)) %>% 
+  arrange(med)
 
 # remove sorts
 rm(sort, psort)
 
 #### Define brt function 
 # modify this to make it appropriate for the bat data
-# Original takes:
+# kept from original:
 # seed - the seeds to be used for the unique splits, this also dictates the number of splits
 # response - indicating what the response variable is
 
 # what I am adding:
-# data - control the dataset I plan to use because I have full and complete versions
-# parameter_df - subsets for that response and then filters by best AUC, use it to pull values to ref for brt
-# full - cv folds differ between full and filtered - maybe I could just do a ifelse statement that takes yes/no
-brts <- function(data_df, seed, response, nt, shr, int.d, cv = NULL){
+# data_df - dataset without species listed. But if it works to not have to specify this, then maybe get rid of it?
+# nt - number of trees based off search grid
+# shr - optimal shrinkage value based on search grid
+# int.d - interaction depth value based on search grid
+# syn - to indicate if it is a model without synurbic as a predictor. If == "yes" then keep it, remove if anything else
+# cv - change class stratify to NULL or TRUE depending on response variable (NULL for poisson and gaussian, TRUE for bernoulli)
+brts <- function(data_df, seed, response, nt, shr, int.d, syn, cv = NULL){
   
   # new data
   ndata <- data_df
   
+  if(syn == "yes"){
   # correct the response and remove raw response variables
   ndata <- ndata %>% 
     mutate(response = !!sym(response)) %>%
-    select(-c("virus", "zvirus", "dum_zvirus", "dum_virus", "zoo_prop"))
+    select(-c("virus", "zvirus", "dum_zvirus", "dum_virus", "zoo_prop", "zoo_pft"))
+  
+  }else{ # remove synurbic from data
+    # correct the response and remove raw response variables
+    ndata <- ndata %>% 
+      mutate(response = !!sym(response)) %>%
+      select(-c("virus", "zvirus", "dum_zvirus", "dum_virus", "zoo_prop", "zoo_pft", "Synurbic"))
+    
+    #fdata$Synurbic <- NULL # make null in fdata for prediction? Not sure if this is necessary
+  }
   
   # # parameter dataset filter by response and select the best parameters by AUC, resulting in a single row of data
   # # reference it for the gbm parameters
@@ -326,7 +472,8 @@ brts <- function(data_df, seed, response, nt, shr, int.d, cv = NULL){
   
   # ifelse
   dist <- ifelse(response == "virus", "poisson", 
-                 ifelse(response == "zoo_prop", "gaussian", "bernoulli"))
+                 ifelse(response == "zvirus", "poisson", 
+                        ifelse(response == "zoo_pft", "gaussian", "bernoulli")))
   
   ## use rsample to split
   set.seed(seed)
@@ -404,26 +551,32 @@ brts <- function(data_df, seed, response, nt, shr, int.d, cv = NULL){
   
   ## predict with cites
   preds <- predict(gbmOut,fdata,n.trees=best.iter,type="response")
-  pred_data <- fdata[c("species","dum_virus","dum_zvirus","virus", "zvirus", "dum_zvirus", "dum_virus", "zoo_prop","Synurbic")]
+  pred_data <- fdata[c("species","dum_virus","dum_zvirus","virus", "zvirus", "dum_zvirus", "dum_virus","zoo_prop","Synurbic")]
   pred_data$pred <- preds
   pred_data$type <- response
   
+  # then mean cites
+  pdata <- fdata
+  pdata$cites <- mean(pdata$cites)
+  pdata$vcites <- mean(pdata$vcites) #just incase we also mean to do this as well
+  pred_data$cpred <- predict(gbmOut, fdata, n.trees=best.iter, type="response")
+  
   ## print
-  print(paste("BRT ",seed," done; test AUC = ", auc_test,sep=""))
+  print(paste("BRT ", seed," done; test AUC = ", auc_test, sep=""))
   
   ## save outputs
-  return(list(mod=gbmOut,
-              best=best.iter,
-              trainAUC=auc_train,
-              testAUC=auc_test,
-              spec=spec,
-              sen=sen,
-              roc=perf,
-              rinf=bars,
-              predict=pred_data,
-              traindata=train,
-              testdata=test,
-              seed=seed))
+  return(list(mod = gbmOut,
+              best = best.iter,
+              trainAUC = auc_train,
+              testAUC = auc_test,
+              spec = spec,
+              sen = sen,
+              roc = perf,
+              rinf = bars,
+              predict = pred_data,
+              traindata = train,
+              testdata = test,
+              seed = seed))
   
   }else{ # pseudo R2 for poisson and gaussian models
     
@@ -434,20 +587,21 @@ brts <- function(data_df, seed, response, nt, shr, int.d, cv = NULL){
     if(dist == "poisson"){
     ## predict with cites
     preds <- predict(gbmOut,fdata,n.trees=best.iter,type="response")
-    pred_data <- fdata[c("species","dum_virus","dum_zvirus","virus", "zvirus", "dum_zvirus", "dum_virus", "zoo_prop","Synurbic")]
+    pred_data <- fdata[c("species","dum_virus","dum_zvirus","virus","zvirus","zoo_prop","zoo_pft","Synurbic")]
     pred_data$pred <- preds
     pred_data$type <- response
     
-    # ## predict with mean cites
-    # pdata <- data_df
-    # pdata$cites <- mean(pdata$cites)
-    # pred_data$cpred <- predict(gbmOut,pdata,n.trees=best.iter,type="response")
+    # then mean cites
+    pdata <- fdata
+    pdata$cites <- mean(pdata$cites)
+    pdata$vcites <- mean(pdata$vcites) #just incase we also mean to do this as well
+    pred_data$cpred <- predict(gbmOut, fdata, n.trees=best.iter, type="response")
     
-    } else {
+    } else { #handle the predictions to be back transformed if you 
       
       ## predict with cites
       preds <- predict(gbmOut,fdata,n.trees=best.iter,type="response")
-      pred_data <- fdata[c("species","dum_virus","dum_zvirus","virus", "zvirus", "dum_zvirus", "dum_virus", "zoo_prop","Synurbic")]
+      pred_data <- fdata[c("species","dum_virus","dum_zvirus","virus","zvirus","zoo_prop","zoo_pft","Synurbic")]
       pred_data$pred <- preds
       pred_data$type <- response
       
@@ -455,21 +609,29 @@ brts <- function(data_df, seed, response, nt, shr, int.d, cv = NULL){
       pred_data$ni <- 100
       pred_data$back <- metafor::transf.ipft(pred_data$pred, pred_data$ni)
       
+      # then mean cites
+      pdata <- fdata
+      pdata$cites <- mean(pdata$cites)
+      pdata$vcites <- mean(pdata$vcites) #just incase we also mean to do this as well
+      pred_data$cpred <- predict(gbmOut, fdata, n.trees=best.iter, type="response")
+      
+      # do I need to back transform cpred?
+      
     }
     
     ## sort
     pred_data <- pred_data[order(pred_data$pred,decreasing=T),]
     
     # calculate train pseudo R squared
-    r2train <- (1-(sum((yTrain - predict(gbmOut, newdata=dataTrain, n.trees=best.iter, type='response'))^2)/
+    r2train <- (1-(sum((yTrain - predict(gbmOut, newdata=train, n.trees=best.iter, type='response'))^2)/
                     sum((yTrain - mean(yTrain))^2)))
     
     # calculate test pseudo R squared
-    r2test <- (1-(sum((yTest - predict(gbmOut, newdata=dataTest, n.trees=best.iter, type='response'))^2)/
+    r2test <- (1-(sum((yTest - predict(gbmOut, newdata=test, n.trees=best.iter, type='response'))^2)/
                    sum((yTest - mean(yTest))^2)))
     
     ## print
-    print(paste("BRT ",seed," done; test R2 = ", r2test, sep=""))
+    print(paste("BRT ",seed," done; test R2 = ", r2test, " for ", response, sep=""))
     
     ## save outputs
     return(list(mod = gbmOut,
@@ -482,7 +644,6 @@ brts <- function(data_df, seed, response, nt, shr, int.d, cv = NULL){
                 testdata = test,
                 seed = seed))
   
-  
   }
   
 }
@@ -490,287 +651,237 @@ brts <- function(data_df, seed, response, nt, shr, int.d, cv = NULL){
 
 #### apply across specified number of splits smax
 # Filtered dataset
-smax=100
+smax=1 # 1 just for testing on personal comp
 
 # Richness models with and without synurbic
-vrichness_brts <- lapply(1:smax,function(x) brts(data_df = full, seed = x,response = "virus", parameter_df = search_full, full = "yes"))
-no_vrichness_brts <- lapply(1:smax,function(x) brts(data_df = full, seed = x,response="virus", parameter_df = search_full, full = "yes"))
+vrichness_brts <- lapply(1:smax,function(x) brts(data_df = data, seed = x,response = "virus", nt = 15000, shr = 0.001, int.d = 4, syn = "yes", cv = NULL))
+no_vrichness_brts <- lapply(1:smax,function(x) brts(data_df = data, seed = x,response = "virus", nt = 15000, shr = 0.001, int.d = 4, syn = "no", cv = NULL))
 
 # Proportion with and without
-zoo_prop_brts <- lapply(1:smax,function(x) brts(data_df = full, seed = x,response = "zoo_prop", parameter_df = search_full, full = "yes"))
-no_zoo_prop_brts <- lapply(1:smax,function(x) brts(data_df = full, seed = x,response="zoo_prop", parameter_df = search_full, full = "yes"))
+zoo_pft_brts <- lapply(1:smax,function(x) brts(data_df = full, seed = x,response = "zoo_pft", nt = 1500, shr = 0.001, int.d = 4, syn = "yes", cv = NULL))
+no_zoo_pft_brts <- lapply(1:smax,function(x) brts(data_df = full, seed = x,response = "zoo_pft", nt = 1500, shr = 0.001, int.d = 4, syn = "no", cv = NULL))
 
+#### THESE ARE THE OLD FUNCTION INPUTS THEY WILL NOT RUN YET
 # Overall virus reservoir status
 vbinary_brts <- lapply(1:smax,function(x) brts(data_df = full, seed = x,response = "dum_virus", parameter_df = search_full, full = "yes"))
-no_vbinary_brts <- lapply(1:smax,function(x) brts(data_df = full, seed = x,response="dum_zvirus", parameter_df = search_full, full = "yes"))
+no_vbinary_brts <- lapply(1:smax,function(x) brts(data_df = full, seed = x,response="dum_virus", parameter_df = search_full, full = "yes"))
 
 # Zoonotic virus reservoir
-zbinary_brts <- lapply(1:smax,function(x) brts(data_df = full, seed = x,response = "dum_virus", parameter_df = search_full, full = "yes"))
+zbinary_brts <- lapply(1:smax,function(x) brts(data_df = full, seed = x,response = "dum_zvirus", parameter_df = search_full, full = "yes"))
 no_zbinary_brts <- lapply(1:smax,function(x) brts(data_df = full, seed = x,response="dum_zvirus", parameter_df = search_full, full = "yes"))
 
-# write to files
+# add functions for predicting citations
+
+
+# write to files (should be 8 total) these will probably be huge.....
 #setwd("~/Desktop/hantaro/data/clean files")
-saveRDS(virus_brts,"virus brts.rds")
-saveRDS(zvirus_brts,"zvirus brts.rds")
-
-
+saveRDS(vrichness_brts,"virus with brts.rds")
+saveRDS(no_vrichness_brts,"virus without brts.rds")
+saveRDS(zoo_prop_brts, "zoo_prop with brts.rds")
+saveRDS(no_zoo_prop_brts, "zoo_prop without brts.rds")
+saveRDS(vbinary_brts, "dum_virus with brts.rds")
+saveRDS(no_vbinary_brts, "dum_virus without brts.rds")
+saveRDS(zbinary_brts, "dum_zvirus with brts.rds")
+saveRDS(no_zbinary_brts, "dum_zvirus without brts.rds")
 
 ####################### TEST CODE
-# new data
-ndata <- data
+#### Function with citation count predictions Testing
+# 1. I need to add a part that will run models for citation count
+# 2. I need to add code that predicts with mean citations and possibly vcites
+# 3. maybe get rid of some redundant prediction code between poisson and gaussian
+# if the prediction code is the same before transformation, then maybe we can combine?
 
-# correct the response and remove raw response variables
-ndata <- ndata %>% 
-  mutate(response = virus) %>%
-  select(-c("zvirus", "virus", "zoo_prop"))
-
-## use rsample to split (allow the proportion to be changed incase)
-#set.seed(hgrid$seed[row])
-split=initial_split(ndata,prop=0.8,strata="response")
-
-## test and train
-dataTrain=training(split)
-dataTest=testing(split)
-
-## yTest and yTrain
-yTrain=dataTrain$response
-yTest=dataTest$response
-
-## BRT
-set.seed(1)
-gbmOut=gbm(response ~ . ,data=dataTrain,
-           n.trees=15000,
-           distribution="poisson",
-           shrinkage=0.0001,
-           interaction.depth=4,
-           n.minobsinnode=5,
-           cv.folds=10,
-           bag.fraction=0.5,
-           train.fraction=1,
-           n.cores=1,
-           verbose=F)
-
-## performance
-par(mfrow=c(1,1),mar=c(4,4,1,1))
-best.iter=gbm.perf(gbmOut,method="cv")
-
-## predict with test data
-preds=predict(gbmOut,dataTest,n.trees=best.iter,type="response")
-
-## known
-result=dataTest$response
-
-# ## sensitiviy and specificity
-# sen=InformationValue::sensitivity(result,preds)
-# spec=InformationValue::specificity(result,preds)
-# 
-# ## AUC on train
-# auc_train=gbm.roc.area(yTrain,predict(gbmOut,dataTrain,n.trees=best.iter,type="response"))
-# 
-# ## AUC on test
-# auc_test=gbm.roc.area(yTest,predict(gbmOut,dataTest,n.trees=best.iter,type="response"))
-# 
-# ## print
-# print(paste("hpar row ",row," done; test AUC is ",auc_test,sep=""))
-
-# calculate RMSE
-mse = mean((preds - result)^2)
-rmse = sqrt(mse)
-
-
-#Perfomring caculation to calculate th pseduo R2 of the training dataset
-R2.train<-(1-(sum((train.response - predict(gbm.obj, newdata=data, n.trees=best.ntrees, type='response'))^2)/
-                sum((train.response - mean(train.response))^2)))
-
-#Performing calculation to calcualted the pseduo R2 of the test dataset
-R2.test<-(1-(sum((test.response - predict(gbm.obj, newdata=data.test, n.trees=best.ntrees, type='response'))^2)/
-               sum((test.response - mean(test.response))^2)))
-
-
-
-# zoonotic virus proportions
-data <- data %>% 
-  mutate(zoo_prop = zvirus/virus) %>%
-  mutate(zoo_prop = ifelse(is.nan(zoo_prop), 0, zoo_prop))
-
-# new data
-ndata <- data
-
-# correct the response and remove raw response variables
-ndata <- ndata %>% 
-  mutate(response = zoo_prop) %>%
-  select(-c("zvirus", "virus", "zoo_prop"))
-
-## use rsample to split (allow the proportion to be changed incase)
-set.seed(345)
-split=initial_split(ndata,prop=0.8,strata="response")
-
-## test and train
-dataTrain=training(split)
-dataTest=testing(split)
-
-## yTest and yTrain
-yTrain=dataTrain$response
-yTest=dataTest$response
-
-## BRT
-set.seed(1)
-gbmOut=gbm(response ~ . ,data=dataTrain,
-           n.trees=5000,
-           distribution="gaussian",
-           shrinkage=0.001,
-           interaction.depth=4,
-           n.minobsinnode=5,
-           cv.folds=10,
-           bag.fraction=0.5,
-           train.fraction=1,
-           n.cores=1,
-           verbose=F)
-
-## performance
-par(mfrow=c(1,1),mar=c(4,4,1,1))
-best.iter=gbm.perf(gbmOut,method="cv")
-
-## predict with test data
-preds=predict(gbmOut,dataTest,n.trees=best.iter,type="response")
-
-## known
-result=dataTest$response
-
-# calculate RMSE
-mse = mean((preds - result)^2)
-rmse = sqrt(mse)
-
-
-
-
-
-tgrid <- makegrid(10, c(5000, 20000))
-
-tgrid$n.trees=ifelse(tgrid$shrinkage<0.001,tgrid$n.trees*3,tgrid$n.trees)
-
-
-
-
-seq(500, 1000, 50)
-
-tgrid <- expand.grid(n.trees = seq(500, 1000, 250),
-                     interaction.depth = c(2, 3, 4),
-                     shrinkage = c(0.1, 0.01, 0.001))
-                     #n.minobsinnode = 10) 
-                     #bag.fraction = c(0.5, 0.8, 1)
-
-
-library(car)
-c <- data
-c$logit_boot <- boot::logit(c$zoo_prop)
-c$logitBack <- inv.logit(c$logitzoo)
-c$logitBackPlus <- c$logitBack + 0.025
-c$logitStack <- inv.logit(c$logitzoo,a=0.025)*100
-
-# stack exchange code - https://stackoverflow.com/questions/23845283/logit-transformation-backwards
-inv.logit <- function(f,a) {
-  a <- (1-2*a)
- (a*(1+exp(f))+(exp(f)-1))/(2*a*(1+exp(f)))
+brts <- function(data_df, seed, response, nt, shr, int.d, syn, cv = NULL){
+  
+  # new data
+  ndata <- data_df
+  
+  if(syn == "yes"){
+    # correct the response and remove raw response variables
+    ndata <- ndata %>% 
+      mutate(response = !!sym(response)) %>%
+      select(-c("virus", "zvirus", "dum_zvirus", "dum_virus", "zoo_prop", "zoo_pft"))
+    
+  }else{ # remove synurbic from data
+    # correct the response and remove raw response variables
+    ndata <- ndata %>% 
+      mutate(response = !!sym(response)) %>%
+      select(-c("virus", "zvirus", "dum_zvirus", "dum_virus", "zoo_prop", "zoo_pft", "Synurbic"))
+    
+    #fdata$Synurbic <- NULL # make null in fdata for prediction? Not sure if this is necessary
   }
+  
+  # ifelse to determine distribution. If not any of the below options, throw error
+  dist <- ifelse((response == "virus" | response == "zvirus" | response == "cites"), "poisson", 
+                 ifelse((response == "dum_zvirus" | response == "dum_virus"),"bernoulli", 
+                        ifelse(response == "zoo_pft","gaussian","Error")))
+  
+  ## use rsample to split
+  set.seed(seed)
+  split <- initial_split(ndata,prop=0.8,strata="response")
+  
+  ## test and train for data
+  train <- training(split)
+  test <- testing(split)
+  
+  # pull response test and train
+  yTrain <- train$response
+  yTest <- test$response
+  
+  ## BRT
+  set.seed(1)
+  gbmOut <- gbm(response ~ . ,data=train,
+                n.trees=nt,
+                distribution=dist,
+                shrinkage=shr,
+                interaction.depth=int.d,
+                n.minobsinnode=4,
+                cv.folds=10,
+                class.stratify.cv=cv,
+                bag.fraction=0.5,
+                train.fraction=1,
+                n.cores=1,
+                verbose=F)
+  
+  ## performance
+  par(mfrow=c(1,1),mar=c(4,4,1,1))
+  best.iter <- gbm.perf(gbmOut,method="cv")
 
-format(c$logitStack, scientific = FALSE)
+  # output dependent on dist
+  # AUC, sen, spec, ROC for binary models
+  if(dist == "bernoulli"){ 
+    
+    ## predict with test data
+    preds <- predict(gbmOut,test,n.trees=best.iter,type="response")
+    
+    ## known - isnt this the same as test?
+    result <- test$response
+    
+    ## sensitiviy and specificity
+    sen <- InformationValue::sensitivity(result,preds)
+    spec <- InformationValue::specificity(result,preds)
+    
+    ## AUC on train
+    auc_train <- gbm.roc.area(yTrain,predict(gbmOut,train,n.trees=best.iter,type="response"))
+    
+    ## AUC on test
+    auc_test <- gbm.roc.area(yTest,predict(gbmOut,test,n.trees=best.iter,type="response"))
+    
+    ## inner loop if yTest is all 0
+    ## I removed the portion for cites but this portion seems important for when variance of ytest is zero?
+    if(var(yTest)==0){
+      
+      perf=NA
+      
+    }else{
+      
+      ## ROC
+      pr=prediction(preds,test$response)
+      perf=performance(pr,measure="tpr",x.measure="fpr")
+      perf=data.frame(perf@x.values,perf@y.values)
+      names(perf)=c("fpr","tpr")
+      
+      ## add seed
+      perf$seed=seed
+      
+    }
+    
+    ## relative importance
+    bars <- summary(gbmOut,n.trees=best.iter,plotit=F)
+    bars$rel.inf <- round(bars$rel.inf,2)
+    
+    ## predict with cites
+    preds <- predict(gbmOut,fdata,n.trees=best.iter,type="response")
+    pred_data <- fdata[c("species","dum_virus","dum_zvirus","virus", "zvirus", "dum_zvirus", "dum_virus","zoo_prop","Synurbic")]
+    pred_data$pred <- preds
+    pred_data$type <- response
+    
+    # then mean cites
+    pdata <- fdata
+    pdata$cites <- mean(pdata$cites)
+    pdata$vcites <- mean(pdata$vcites) #just incase we also mean to do this as well
+    pred_data$cpred <- predict(gbmOut, fdata, n.trees=best.iter, type="response")
+    
+    ## print
+    print(paste("BRT ", seed," done; test AUC = ", auc_test, sep=""))
+    
+    ## save outputs
+    return(list(mod = gbmOut,
+                best = best.iter,
+                trainAUC = auc_train,
+                testAUC = auc_test,
+                spec = spec,
+                sen = sen,
+                roc = perf,
+                rinf = bars,
+                predict = pred_data,
+                traindata = train,
+                testdata = test,
+                seed = seed))
+    
+  }else{ # pseudo R2 for poisson and gaussian models
+    
+    ## relative importance
+    bars <- summary(gbmOut,n.trees=best.iter,plotit=F)
+    bars$rel.inf <- round(bars$rel.inf,2)
+    ## predict with cites
+    preds <- predict(gbmOut,fdata,n.trees=best.iter,type="response")
+    pred_data <- fdata[c("species","dum_virus","dum_zvirus","virus","zvirus","zoo_prop","zoo_pft","Synurbic")]
+    pred_data$pred <- preds
+    pred_data$type <- response
+    
+    # then mean cites
+    pdata <- fdata
+    pdata$cites <- mean(pdata$cites)
+    pdata$vcites <- mean(pdata$vcites) #just incase we also mean to do this as well
+    pred_data$cpred <- predict(gbmOut, fdata, n.trees=best.iter, type="response")
+    
+    if(dist == "poisson"){
+      
+      # back transforming predictions
+      pred_data$ni <- NULL
+      pred_data$back <- NULL
+      
+    } else {
+      
+      # back transforming predictions
+      pred_data$ni <- 100
+      pred_data$back <- metafor::transf.ipft(pred_data$pred, pred_data$ni)
+      
+      # # backtransform cpred? not sure but I should probably ask dan
+      # pred_data$back <- metafor::transf.ipft(pred_data$cpred, 100)
+    }
+    
+    ## sort
+    pred_data <- pred_data[order(pred_data$pred,decreasing=T),]
+    
+    # calculate train pseudo R squared
+    r2train <- (1-(sum((yTrain - predict(gbmOut, newdata=train, n.trees=best.iter, type='response'))^2)/
+                     sum((yTrain - mean(yTrain))^2)))
+    
+    # calculate test pseudo R squared
+    r2test <- (1-(sum((yTest - predict(gbmOut, newdata=test, n.trees=best.iter, type='response'))^2)/
+                    sum((yTest - mean(yTest))^2)))
+    
+    ## print
+    print(paste("BRT ",seed," done; test R2 = ", r2test, " for ", response, sep=""))
+    
+    ## save outputs
+    return(list(mod = gbmOut,
+                best = best.iter,
+                testr2 = r2test,
+                trainr2 = r2train,
+                rinf = bars,
+                predict = pred_data,
+                traindata = train,
+                testdata = test,
+                seed = seed))
+    
+  }
+  
+}
 
-asin(sqrt(c$zoo_prop))
 
 
-##### testing transformations with metafor package
-install.packages("metafor")
-library(metafor) #no mention of masking but some problems with %>%. may want to use metafor::escalc()
 
-c <- fdata[c("species","zoo_prop")]
-c$xi <- c$zoo_prop * 100
-c$ni <- 100
-
-g <- metafor::escalc(measure = "PLO", xi=xi, ni=ni, data=c)
-g$back <- metafor::transf.ilogit(g$yi)
-
-t <- metafor::escalc(measure = "PFT", xi=xi, ni=ni, data=c)
-t$back <- metafor::transf.ipft(t$yi, t$ni)
-
-# subset 
-g[c("species","yi")]
-tsub <- t[c("species","yi")]
-
-zdata <- merge(fdata, tsub, by = "species")
-
-########
-# new data
-ndata <- zdata
-
-# correct the response and remove raw response variables
-ndata <- ndata %>% 
-  mutate(response = yi) %>%
-  select(-c("virus", "zvirus", "dum_zvirus", "dum_virus", "zoo_prop", "yi", "species"))
-
-## use rsample to split (allow the proportion to be changed incase)
-#set.seed(hgrid$seed[row])
-split=initial_split(ndata,prop=0.8,strata="response")
-
-## test and train
-dataTrain=training(split)
-dataTest=testing(split)
-
-## yTest and yTrain
-yTrain=dataTrain$response
-yTest=dataTest$response
-
-## BRT
-set.seed(1)
-gbmOut=gbm(response ~ . ,data=dataTrain,
-           n.trees=500,
-           distribution="poisson",
-           shrinkage=0.01,
-           interaction.depth=4,
-           n.minobsinnode=5,
-           cv.folds=10,
-           bag.fraction=0.5,
-           train.fraction=1,
-           n.cores=1,
-           verbose=F)
-
-## performance
-par(mfrow=c(1,1),mar=c(4,4,1,1))
-best.iter=gbm.perf(gbmOut,method="cv")
-
-## predict with test data
-preds=predict(gbmOut,dataTest,n.trees=best.iter,type="response")
-
-## known
-result=dataTest$response
-
-## relative importance
-bars <- summary(gbmOut,n.trees=best.iter,plotit=F)
-bars$rel.inf <- round(bars$rel.inf,2)
-
-## predict with cites
-preds <- predict(gbmOut,fdata,n.trees=best.iter,type="response")
-pred_data <- fdata[c("species","dum_virus","dum_zvirus","virus", "zvirus", "dum_zvirus", "dum_virus", "zoo_prop","Synurbic")]
-pred_data$pred <- preds
-pred_data$type <- "zoo_prop"
-
-# ## predict with mean cites
-# pdata <- data_df
-# pdata$cites <- mean(pdata$cites)
-# pred_data$cpred <- predict(gbmOut,pdata,n.trees=best.iter,type="response")
-
-## sort
-pred_data <- pred_data[order(pred_data$pred,decreasing=T),]
-
-# back transforming
-pred_data$ni <- 100
-pred_data$back <- transf.ipft(pred_data$pred, pred_data$ni)
-
-# calculate train pseudo R squared
-r2train <- (1-(sum((yTrain - predict(gbmOut, newdata=dataTrain, n.trees=best.iter, type='response'))^2)/
-                 sum((yTrain - mean(yTrain))^2)))
-
-# calculate test pseudo R squared
-r2test <- (1-(sum((yTest - predict(gbmOut, newdata=dataTest, n.trees=best.iter, type='response'))^2)/
-                sum((yTest - mean(yTest))^2)))
 

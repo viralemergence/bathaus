@@ -2,6 +2,7 @@
 
 #clean envrionment
 rm(list=ls())
+graphics.off()
 
 # test code for pulling out all the relative importance info from every model
 library(tidyverse)
@@ -16,28 +17,30 @@ data <- readRDS("~/Desktop/Bats and Viruses/bathaus/flat files/cleaned dataset 3
 # traits is the full dataset B4 cut off, has families in it
 traits <- readRDS("~/Desktop/Bats and Viruses/bathaus/flat files/synurbic and traits only.rds")
 
+# add lowecase family names
+traits$family <- tools::toTitleCase(tolower(traits$fam))
+
 # density plots
-png("~/Desktop/Bats and Viruses/bathaus/figs/density_ridge.png",width=6,height=7,units="in",res=600)
 traits %>% filter(!fam %in% c('NYCTERIDAE',"MYSTACINIDAE","CRASEONYCTERIDAE","FURIPTERIDAE","MYZOPODIDAE", "NOCTILIONIDAE")) %>%
-  ggplot(aes(x = virus+1, y = fam)) +
+  ggplot(aes(x = virus+1, y = family)) +
   geom_density_ridges(aes(fill = Synurbic), alpha = 0.6) +
   #facet_wrap(~fam, ncol = 1) +
   scale_x_log10() +
   labs(x="Log Viral Richness", y = " ", fill = "Roost Status") +
   theme_bw() +
   theme(panel.grid.major=element_blank(),
-        panel.grid.minor=element_blank()) +
-        #legend.position = "top") +
+        panel.grid.minor=element_blank(),
+        axis.text = element_text(size = 6),
+        axis.title = element_text(size = 7),
+        legend.position = "none") +
 scale_fill_manual(labels = c("no","yes","NA"), values = c("#8470ff","#9DD866","#A0B1BA")) -> vrich
-dev.off()
 
 # zoonotic proportions
-png("~/Desktop/Bats and Viruses/bathaus/figs/zoonotic_density_ridge.png",width=6,height=7,units="in",res=600)
 traits %>%
   mutate(zoo_prop = zvirus/virus) %>%
   mutate(zoo_prop = ifelse(is.nan(zoo_prop), 0, zoo_prop)) %>%
   filter(!fam %in% c('NYCTERIDAE',"MYSTACINIDAE","CRASEONYCTERIDAE","FURIPTERIDAE","MYZOPODIDAE", "NOCTILIONIDAE")) %>%
-  ggplot(aes(x = zoo_prop, y = fam)) +
+  ggplot(aes(x = zoo_prop, y = family)) +
   geom_density_ridges(aes(fill = Synurbic), alpha = 0.6) +
   #facet_wrap(~fam, ncol = 1) +
   #scale_x_log10() +
@@ -46,50 +49,108 @@ traits %>%
   theme_bw() +
   theme(panel.grid.major=element_blank(),
         panel.grid.minor=element_blank(),
-        #legend.position = "top", 
+        axis.text = element_text(size = 6),
+        axis.title = element_text(size = 7),
+        legend.position = "none",
         axis.text.y = element_blank()) +
   scale_fill_manual(labels = c("no","yes","NA"), values = c("#8470ff","#9DD866","#A0B1BA")) -> zprop
-dev.off()
 
 #balloon plot
-points <- data.frame(table(traits$fam,traits$Synurbic, useNA = "ifany"))
-
+points <- data.frame(table(traits$family,traits$Synurbic, useNA = "ifany"))
+colnames(points) <- c("Family", "Roost Status", "Frequency")
+  
 # I could pull out to match the other two plots
-points[!points$Var1 %in% c('NYCTERIDAE',"MYSTACINIDAE","CRASEONYCTERIDAE","FURIPTERIDAE","MYZOPODIDAE", "NOCTILIONIDAE"), ]
+#points[!points$Var1 %in% c('NYCTERIDAE',"MYSTACINIDAE","CRASEONYCTERIDAE","FURIPTERIDAE","MYZOPODIDAE", "NOCTILIONIDAE"), ]
 
-ggplot(points, aes(x = Var2, y = Var1)) +
-  geom_point(aes(size = Freq, color = Var2)) +
+ggplot(points, aes(x = `Roost Status`, y = Family)) +
+  geom_point(aes(size = Frequency, color = `Roost Status`)) +
   labs(x="Roost Status", y = " ", fill = "Roost Status") +
   theme_bw() +
   theme(panel.grid.major=element_blank(),
-        panel.grid.minor=element_blank(), 
-        legend.position = "top", 
-        legend.box="vertical",
-        legend.margin=margin()) +
+        panel.grid.minor=element_blank(),
+        axis.text = element_text(size = 6),
+        axis.title = element_text(size = 7)) +
+        # legend.position = "top",
+        # legend.box = "vertical",
+        # legend.margin=margin()) +
   scale_color_manual(labels = c("no","yes","NA"), values = c("#8470ff","#9DD866","#A0B1BA")) +
-  scale_size(range = c(1, 8)) -> balloon1
+  scale_x_discrete(labels = c('no',"yes","NA")) +
+  scale_size(range = c(0.5, 6)) +
+  guides(color = guide_legend(override.aes = list(size=3))) -> balloon1
 
-# I could pull out to match the other two plots
-trim <- points[!points$Var1 %in% c('NYCTERIDAE',"MYSTACINIDAE","CRASEONYCTERIDAE","FURIPTERIDAE","MYZOPODIDAE", "NOCTILIONIDAE"), ]
+# # I could pull out to match the other two plots
+# trim <- points[!points$Var1 %in% c('NYCTERIDAE',"MYSTACINIDAE","CRASEONYCTERIDAE","FURIPTERIDAE","MYZOPODIDAE","NOCTILIONIDAE"), ]
+# 
+# ggplot(trim, aes(x = Var2, y = Var1)) +
+#   geom_point(aes(size = Freq, color = Var2)) +
+#   labs(x="Roost Status", y = " ", fill = "Roost Status") +
+#   theme_bw() +
+#   theme(panel.grid.major=element_blank(),
+#         panel.grid.minor=element_blank(),
+#         legend.position = "top", 
+#         legend.box="vertical",
+#         legend.margin=margin()) +
+#   scale_color_manual(labels = c("no","yes","NA"), values = c("#8470ff","#9DD866","#A0B1BA")) +
+#   scale_size(range = c(1, 8))-> balloon2 # to match other panels, turns out this doesn't work the way I thought....
 
-ggplot(trim, aes(x = Var2, y = Var1)) +
-  geom_point(aes(size = Freq, color = Var2)) +
-  labs(x="Roost Status", y = " ", fill = "Roost Status") +
+ggplot(points, aes(x = `Roost Status`, y = Family)) +
+  geom_point(aes(size = Frequency, color = `Roost Status`)) +
+  labs(x=NULL, y =NULL, fill = "Roost Status") +
+  coord_flip() +
   theme_bw() +
   theme(panel.grid.major=element_blank(),
-        panel.grid.minor=element_blank(), 
-        legend.position = "top", 
-        legend.box="vertical",
-        legend.margin=margin()) +
+        panel.grid.minor=element_blank(),
+        axis.text = element_text(size = 6),
+        axis.title = element_text(size = 7)) +
+  # legend.position = "top",
+  # legend.box = "vertical",
+  # legend.margin=margin()) +
   scale_color_manual(labels = c("no","yes","NA"), values = c("#8470ff","#9DD866","#A0B1BA")) +
-  scale_size(range = c(1, 8))-> balloon2 # to match other panels, turns out this doesn't work the way I thought....
+  scale_x_discrete(labels = c('no',"yes","NA")) +
+  scale_size(range = c(1, 5)) +
+  guides(color = guide_legend(override.aes = list(size=3))) -> balloon
+
+dens <- vrich + zprop
 
 # put together
-fig1 <- (balloon1 + plot_layout(widths = c(20, 80), guide = "collect") & 
-    theme(legend.position = "right")) + 
-  (vrich + zprop)
+fig1 <- (balloon1 + plot_layout(widths = c(15, 85), guide = "collect") & 
+    theme(legend.position = "right",
+          #legend.box = "vertical",
+          legend.text = element_text(size = 6), 
+          legend.title = element_text(size = 6),
+          legend.margin=margin(l=-7))) + 
+  ((vrich + zprop) + plot_layout(tag_level = "new"))
 
-fig1 + plot_annotation(tag_levels = 'A')
+(balloon1 + dens) + plot_layout(widths = c(15, 85), guide = "collect") & 
+  theme(legend.position = "bottom",
+        #legend.box = "vertical",
+        legend.text = element_text(size = 6), 
+        legend.title = element_text(size = 6),
+        legend.margin=margin(b = 0, unit='cm'))
+
+alt <- (balloon + 
+    plot_layout(heights = c(15, 85), guide = "collect") & 
+    theme(legend.position = "bottom",
+          legend.text = element_text(size = 6), 
+          legend.title = element_text(size = 7),
+          legend.margin=margin(l=-7))) + 
+  ((vrich + zprop) + plot_layout(tag_level = "new"))
+
+(balloon1 + vrich) + plot_layout(widths = c(15, 85), guide = "collect") & 
+    theme(legend.position = "right",
+          #legend.box = "vertical",
+          legend.text = element_text(size = 6), 
+          legend.title = element_text(size = 6),
+          legend.margin=margin(l=-7)) + 
+   (zprop + plot_layout(tag_level = "new"))
+
+png("~/Desktop/Bats and Viruses/bathaus/figs/Figure 1.png",width=6.5,height=3.5,units="in",res=600)
+fig1 + plot_annotation(tag_levels = c('A','1')) & theme(plot.tag = element_text(size = 7))
+dev.off()
+
+png("~/Desktop/Bats and Viruses/bathaus/figs/Figure 1 Alt.png",width=6,height=6,units="in",res=600)
+alt + plot_annotation(tag_levels = list(c('A','B', NULL))) & theme(plot.tag = element_text(size = 7), plot.tag.position = "topleft")
+dev.off()
 
 #### brts
 # read in the datasets 
@@ -100,7 +161,17 @@ fzvirus_brts <- readRDS("~/Desktop/Bats and Viruses/bathaus/flat files/fzvirus b
 virus_brts <- readRDS("~/Desktop/Bats and Viruses/bathaus/flat files/virus brts.rds")
 zvirus_brts <- readRDS("~/Desktop/Bats and Viruses/bathaus/flat files/zvirus brts.rds")
 
-## Variable Importance Plot Function
+# Read in rds files for model outputs
+vrichness_brts <- readRDS(vrichness_brts,"virus with brts.rds")
+no_vrichness_brts <- readRDS(no_vrichness_brts,"virus without brts.rds")
+zoo_prop_brts <- readRDS(zoo_prop_brts, "zoo_prop with brts.rds")
+no_zoo_prop_brts <- readRDS(no_zoo_prop_brts, "zoo_prop without brts.rds")
+vbinary_brts <- readRDS(vbinary_brts, "dum_virus with brts.rds")
+no_vbinary_brts <- readRDS(no_vbinary_brts, "dum_virus without brts.rds")
+zbinary_brts <- readRDS(zbinary_brts, "dum_zvirus with brts.rds")
+no_zbinary_brts <- readRDS(no_zbinary_brts, "dum_zvirus without brts.rds")
+
+################### Variable Importance Plots
 # Pull all the relative importance into a dataframe, get the mean, sd, and variation.
 # Then create a plot similar to the one I made for the variants 
 vinfPlot <- function(data_name, df_name, fig_name, bar_color){
@@ -314,6 +385,27 @@ png("sqrt_virus_variableinf.png",width=15,height=10,units="in",res=600)
 sqrt_virus/sqrt_zvirus
 dev.off()
 
+################# may want to calculate feature rankings first - get the top most important predictors in the model
+
+
+
+################# going to want code here that makes pdps for all models
+# work on adapting the synurbat code to handle aggregated data - will aggregating result in a file that looks the same but just of averages?
+# Need to look at hantavirus code 
+# the thing is calculating the marginal effects across models do I actually show averaged y axis?
+
+
+
+
+
+############### not sure if this is the order I want to put this here but take performance values and calculate sig. changes in performance metrics
+# Cohen's D
+
+
+
+
+
+############## model predictions
 # pulling predictions (may just want the values separately for now?)
 # csv of predicted reservoirs and another for zoonotic?
 
@@ -327,7 +419,7 @@ virus_apreds=data.frame(aggregate(pred~species,data=virus_apreds,mean),
                         aggregate(dum_virus~species,data=virus_apreds,prod)["dum_virus"],
                         aggregate(dum_zvirus~species,data=virus_apreds,prod)["dum_zvirus"])
 
-# ## type
+### type
 # virus_apreds$type='PCR'
 
 ## average predictions: Zoonotic
