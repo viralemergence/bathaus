@@ -681,7 +681,6 @@ no_vrichness_brts <- lapply(1:smax,function(x) brts( seed = x,response = "virus"
 zoo_pft_brts <- lapply(1:smax,function(x) brts(seed = x,response = "zoo_pft", nt = 15000, shr = 0.001, int.d = 4, syn = "yes", cv = NULL))
 no_zoo_pft_brts <- lapply(1:smax,function(x) brts(seed = x,response = "zoo_pft", nt = 15000, shr = 0.001, int.d = 4, syn = "no", cv = NULL))
 
-#### THESE ARE THE OLD FUNCTION INPUTS THEY WILL NOT RUN YET
 # Overall virus reservoir status
 vbinary_brts <- lapply(1:smax,function(x) brts(seed = x,response = "dum_virus", nt = 5000, shr = 0.01, int.d = 3, syn = "yes", cv = NULL))
 no_vbinary_brts <- lapply(1:smax,function(x) brts(seed = x,response ="dum_virus", nt = 5000, shr = 0.01, int.d = 3, syn = "no", cv = NULL))
@@ -696,7 +695,7 @@ cite_brts <- lapply(1:smax,function(x) brts(seed = x,response = "virus", nt = 15
 vcite_brts <- lapply(1:smax,function(x) brts(seed = x,response = "virus", nt = 15000, shr = 0.001, int.d = 4, syn = "yes", cv = NULL))
 
 # write to files (should be 10 total) these will probably be huge.....
-#setwd("~/Desktop/hantaro/data/clean files")
+setwd("/Volumes/BETKE 2021/bathaus/flat files")
 saveRDS(vrichness_brts,"virus with brts.rds")
 saveRDS(no_vrichness_brts,"virus without brts.rds")
 saveRDS(zoo_prop_brts, "zoo_prop with brts.rds")
