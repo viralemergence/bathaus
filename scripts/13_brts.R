@@ -582,7 +582,7 @@ brts <- function(seed, response, nt, shr, int.d, syn, cv = NULL){
     pdata <- fdata
     pdata$cites <- mean(pdata$cites)
     pdata$vcites <- mean(pdata$vcites) #just incase we also mean to do this as well
-    pred_data$cpred <- predict(gbmOut, fdata, n.trees=best.iter, type="response")
+    pred_data$cpred <- predict(gbmOut, pdata, n.trees=best.iter, type="response")
     
     ## print
     print(paste("BRT ", seed," done; test AUC = ", auc_test, sep=""))
@@ -625,7 +625,7 @@ brts <- function(seed, response, nt, shr, int.d, syn, cv = NULL){
     pdata <- fdata
     pdata$cites <- mean(pdata$cites)
     pdata$vcites <- mean(pdata$vcites) #just incase we also mean to do this as well
-    pred_data$cpred <- predict(gbmOut, fdata, n.trees=best.iter, type="response")
+    pred_data$cpred <- predict(gbmOut, pdata, n.trees=best.iter, type="response")
     
     if(dist == "poisson"){
       

@@ -152,7 +152,7 @@ png("~/Desktop/Bats and Viruses/bathaus/figs/Figure 1 Alt.png",width=6,height=6,
 alt + plot_annotation(tag_levels = list(c('A','B', NULL))) & theme(plot.tag = element_text(size = 7), plot.tag.position = "topleft")
 dev.off()
 
-#### brts
+###################### BRT Results
 # read in the datasets 
 fvirus_brts <- readRDS("~/Desktop/Bats and Viruses/bathaus/flat files/fvirus brts.rds")
 fzvirus_brts <- readRDS("~/Desktop/Bats and Viruses/bathaus/flat files/fzvirus brts.rds")
@@ -162,14 +162,14 @@ virus_brts <- readRDS("~/Desktop/Bats and Viruses/bathaus/flat files/virus brts.
 zvirus_brts <- readRDS("~/Desktop/Bats and Viruses/bathaus/flat files/zvirus brts.rds")
 
 # Read in rds files for model outputs
-vrichness_brts <- readRDS(vrichness_brts,"virus with brts.rds")
-no_vrichness_brts <- readRDS(no_vrichness_brts,"virus without brts.rds")
-zoo_prop_brts <- readRDS(zoo_prop_brts, "zoo_prop with brts.rds")
-no_zoo_prop_brts <- readRDS(no_zoo_prop_brts, "zoo_prop without brts.rds")
-vbinary_brts <- readRDS(vbinary_brts, "dum_virus with brts.rds")
-no_vbinary_brts <- readRDS(no_vbinary_brts, "dum_virus without brts.rds")
-zbinary_brts <- readRDS(zbinary_brts, "dum_zvirus with brts.rds")
-no_zbinary_brts <- readRDS(no_zbinary_brts, "dum_zvirus without brts.rds")
+vrichness_brts <- readRDS("/Users/brianabetke/Desktop/Bats and Viruses/bathaus/flat files/virus with brts.rds")
+no_vrichness_brts <- readRDS("/Users/brianabetke/Desktop/Bats and Viruses/bathaus/flat files/virus without brts.rds")
+zoo_prop_brts <- readRDS("/Users/brianabetke/Desktop/Bats and Viruses/bathaus/flat files/zoo_prop with brts.rds")
+no_zoo_prop_brts <- readRDS("/Users/brianabetke/Desktop/Bats and Viruses/bathaus/flat files/zoo_prop without brts.rds")
+vbinary_brts <- readRDS("/Users/brianabetke/Desktop/Bats and Viruses/bathaus/flat files/dum_virus with brts.rds")
+no_vbinary_brts <- readRDS("/Users/brianabetke/Desktop/Bats and Viruses/bathaus/flat files/dum_virus without brts.rds")
+zbinary_brts <- readRDS("/Users/brianabetke/Desktop/Bats and Viruses/bathaus/flat files/dum_zvirus with brts.rds")
+no_zbinary_brts <- readRDS("/Users/brianabetke/Desktop/Bats and Viruses/bathaus/flat files/dum_zvirus without brts.rds")
 
 ################### Variable Importance Plots
 # Pull all the relative importance into a dataframe, get the mean, sd, and variation.
@@ -281,9 +281,10 @@ vinfPlot <- function(data_name, df_name, fig_name, bar_color){
   #   scale_color_manual(breaks = c("Anthro","Shade"), values = c("red", box_color))
   
   fig_name <- ggplot(df_name, aes(x = reorder(var, -avg), y = avg, color = ifelse(var == "Anthropogenic Roost", "Anthro", "Shade"))) + 
-    geom_crossbar(aes(ymin = avg-rse, ymax = avg+rse), alpha = 0.5) +
-    #eom_bar(stat = "identity") +
+    #geom_crossbar(aes(ymin = avg-rse, ymax = avg+rse), alpha = 0.5) +
+    #geom_bar(stat = "identity") +
     #geom_errorbar(aes(ymin = avg-rse, ymax = avg+rse)) +
+    geom_pointrange(aes(ymin = avg-rse, ymax = avg+rse)) +
     #coord_flip() +
     theme_bw() +
     theme(axis.text.x = element_text(size = 6, angle = 45, hjust = 1),
@@ -292,11 +293,13 @@ vinfPlot <- function(data_name, df_name, fig_name, bar_color){
           panel.grid.minor=element_blank(),
           axis.text.y = element_text(size = 6),
           plot.title = element_text(size = 10)) + 
-    scale_color_manual(breaks = c("Anthro","Shade"), values = c("red", bar_color))
+    scale_color_manual(breaks = c("Anthro","Shade"), values = c("red", "purple"))
   
   # return a list with that dataset of rel.inf and figure
   return(list(df_name, test_auc, fig_name))
 }
+
+comp_fig <- vinfPlot(vrichness_brts, compdf, compfig, "grey")
 
 # run function with dataset
 # comp test
@@ -333,7 +336,7 @@ fzvirus <- fzvirus_fig[[3]] +
 
 
 # Create the patchwork, dropping the y-axis labels from the plots, and setting
-# the margins
+# the margins, this adds the common label
 h_patch <- fvirus / fzvirus & ylab(NULL) & theme(plot.margin = margin(5.5, 5.5, 0, 5.5))
 
 # Use the tag label as a y-axis label
@@ -389,6 +392,10 @@ dev.off()
 
 
 
+
+
+
+
 ################# going to want code here that makes pdps for all models
 # work on adapting the synurbat code to handle aggregated data - will aggregating result in a file that looks the same but just of averages?
 # Need to look at hantavirus code 
@@ -396,6 +403,147 @@ dev.off()
 
 
 
+
+## Partial dependence plots for continuous variables 
+make_pdp_cont <- function(model, predictor, var_name, pcolor = FALSE) {
+  
+  # return grid
+  vals <- plot.gbm(model[["mod"]], i.var = predictor, type = "response", return.grid = TRUE)
+  
+  # data for hist
+  yrange = range(vals$y, na.rm = TRUE)
+  
+  # pull histogram values
+  hi=hist(model[["testdata"]][[predictor]],breaks=30,plot=F)
+  hi=with(hi,data.frame(breaks[1:(length(breaks)-1)],counts))
+  names(hi)=c("mids","counts")
+  
+  if(pcolor == FALSE){
+    
+    # plot
+    ggplot() + 
+      geom_line(data = vals, aes(x = !!sym(predictor), y = y)) +
+      geom_segment(data=hi,inherit.aes=F,
+                   aes(x=mids,xend=mids,
+                       y=yrange[1],yend=plotrix::rescale(counts,yrange)),
+                   size=2,colour="darkgrey",alpha=0.50) +
+      labs(x = var_name, y = "Marginal Effect") +
+      theme_bw() +
+      theme(axis.text=element_text(size=6),
+            axis.title=element_text(size=7)) +
+      theme(panel.grid.major=element_blank(),
+            panel.grid.minor=element_blank())
+    
+  }else{
+    
+    ggplot() + 
+      geom_line(data = vals, aes(x = !!sym(predictor), y = y)) +
+      geom_segment(data=hi,inherit.aes=F,
+                   aes(x=mids,xend=mids,
+                       y=yrange[1],yend=plotrix::rescale(counts,yrange)),
+                   size=2,colour="Orange",alpha=0.40) +
+      labs(x = var_name, y = "Marginal Effect") +
+      theme_bw() +
+      theme(axis.text=element_text(size=6),
+            axis.title=element_text(size=7)) +
+      theme(panel.grid.major=element_blank(),
+            panel.grid.minor=element_blank())
+  }
+  
+}
+
+## Function for factor pdp plots
+make_pdp_fact <- function(model, predictor, var_name, pcolor = FALSE) {
+  
+  # return grid
+  vals <- plot.gbm(model[["mod"]], i.var = predictor, type = "response", return.grid = TRUE)
+  
+  # data for hist
+  yrange = range(vals$y, na.rm = TRUE)
+  
+  # pull counts for color
+  df_cat <- as.data.frame(table(noNA[["testdata"]][[predictor]]))
+  
+  # fix y axis point
+  df_cat$ymin <- yrange[1]-0.01
+  
+  if(pcolor == FALSE){ #greys for initial model
+    
+    ggplot() +
+      geom_point(data = vals, size= 2, shape=15, aes(category, y)) +
+      geom_point(data = df_cat, aes(Var1, ymin, color = Freq)) +
+      scale_color_continuous(high = "#636363", low = "#D9D9D9", guide = "none") +
+      labs(x = var_name, y = "Marginal Effect") +
+      theme_bw() +
+      theme(axis.text=element_text(size=6),
+            axis.title=element_text(size=7)) +
+      theme(panel.grid.major=element_blank(),
+            panel.grid.minor=element_blank())
+    
+  }else{ #different color for pseudoab variables
+    
+    ggplot() +
+      geom_point(data = vals, size= 2, shape=15, aes(category, y)) +
+      geom_point(data = df_cat, aes(Var1, ymin, color = Freq)) +
+      scale_color_continuous(high = "#8C2D04", low = "#FEE6CE", guide = "none") +
+      labs(x = var_name, y = "Marginal Effect") +
+      theme_bw() +
+      theme(axis.text=element_text(size=6),
+            axis.title=element_text(size=7)) +
+      theme(panel.grid.major=element_blank(),
+            panel.grid.minor=element_blank())
+    
+  }
+  
+}
+
+## Plot partial dependence
+# No NA pdps
+gr <- make_pdp_cont(noNA, "X26.1_GR_Area_km2", "Geographic Area (km2)", pcolor = FALSE)
+hb <- make_pdp_cont(noNA,"habitat_breadth_n", "Habitat Breadth", pcolor = FALSE)
+pm <- make_pdp_cont(noNA, "X28.1_Precip_Mean_mm", "Mean Monthly Precipitation (mm)", pcolor = FALSE)
+at <- make_pdp_cont(noNA, "X30.1_AET_Mean_mm", "Mean Monthly AET", pcolor = FALSE)
+ls <- make_pdp_cont(noNA, "litter_size_n", "Litter Size", pcolor = FALSE)
+mp <- make_pdp_cont(noNA, "X30.2_PET_Mean_mm", "Mean Monthly PET", pcolor = FALSE)
+am <- make_pdp_cont(noNA, "adult_mass_g","Adult Mass (g)", pcolor = FALSE)
+dp <- make_pdp_cont(noNA, "dphy_plant","Diet Plants (%)", pcolor = FALSE)
+bl <- make_pdp_cont(noNA, "adult_body_length_mm", "Adult Body Length", pcolor = FALSE)
+fa <- make_pdp_cont(noNA, "adult_forearm_length_mm", "Adult Forearm Length", pcolor = FALSE)
+mx <- make_pdp_cont(noNA, "X26.3_GR_MinLat_dd", "Maximum Latitude", pcolor = FALSE)
+cs <- make_pdp_fact(noNA, "category", "Conservation Status", pcolor = FALSE)
+fr <- make_pdp_cont(noNA, "det_fruit", "Diet Fruit (%)", pcolor = FALSE)
+hp <- make_pdp_cont(noNA, "X27.2_HuPopDen_Mean_n.km2", "Mean Human Density", pcolor = FALSE)
+ml <- make_pdp_cont(noNA, "X26.3_GR_MinLat_dd", "Minimum Latitude", pcolor = FALSE)
+
+# Save
+png("/Users/brianabetke/Desktop/Synurbic_Bats/synurbat/figures/Figure 3.png", width=7,height=7.5,units="in",res=300)
+gr + hb + pm + at + ls + mp + am + dp + bl + fa + mx + cs + fr + hp + ml + plot_layout(nrow = 5, ncol = 3, byrow = TRUE)
+dev.off()
+
+png("/Users/brianabetke/Desktop/Synurbic_Bats/synurbat/figures/pdp 9 no NAs.png", width=10,height=8,units="in",res=300)
+hb + gr + at + pm + ls + fr + fa + am + bl + plot_layout(nrow = 3, ncol = 3, byrow = TRUE)
+dev.off()
+
+#  Pseudo model pdps 
+phb <- make_pdp_cont(pseudo,"habitat_breadth_n", "Habitat Breadth", pcolor = TRUE)
+pgr <- make_pdp_cont(pseudo, "X26.1_GR_Area_km2", "Geographic Area (km2)", pcolor = TRUE)
+ppm <- make_pdp_cont(pseudo, "X28.1_Precip_Mean_mm", "Mean Monthly Precipitation (mm)", pcolor = TRUE)
+pat <- make_pdp_cont(pseudo, "X30.1_AET_Mean_mm", "Mean Monthly AET", pcolor = TRUE)
+pls <- make_pdp_cont(pseudo, "litter_size_n", "Litter Size", pcolor = TRUE)
+pmx <- make_pdp_cont(pseudo, "X26.3_GR_MinLat_dd", "Maximum Latitude", pcolor = TRUE)
+pcs <- make_pdp_fact(pseudo, "category", "Conservation Status", pcolor = TRUE)
+pcc <- make_pdp_cont(pseudo, "cites","Citation Count", pcolor = TRUE)
+pam <- make_pdp_cont(pseudo, "adult_mass_g","Adult Mass (g)", pcolor = TRUE)
+ppt <- make_pdp_cont(pseudo, "X30.2_PET_Mean_mm", "Mean Monthly PET", pcolor = TRUE)
+pdp <- make_pdp_cont(pseudo, "dphy_plant","Diet Plants (%)", pcolor = TRUE)
+pfr <- make_pdp_cont(pseudo, "det_fruit", "Diet Fruit (%)", pcolor = TRUE)
+pml <- make_pdp_cont(pseudo, "X26.3_GR_MinLat_dd", "Minimum Latitude", pcolor = TRUE)
+pfa <- make_pdp_cont(pseudo, "adult_forearm_length_mm", "Adult Forearm Length", pcolor = TRUE)
+
+# Save
+png("/Users/brianabetke/Desktop/Synurbic_Bats/synurbat/figures/Figure S2.png", width=7,height=7.5,units="in",res=300)
+phb + pgr + pat + ppm + pat + pls + pmx + pcs + pcc + pam + ppt + pdp + pfr + pml + pfa + plot_layout(nrow = 5, ncol = 3, byrow = TRUE)
+dev.off()
 
 
 ############### not sure if this is the order I want to put this here but take performance values and calculate sig. changes in performance metrics
@@ -501,3 +649,25 @@ filter(`synurbic and traits only`, species %in% vnames) %>% select(fam) %>% tabl
 znames <- zundet$species
 zf <- filter(data, species %in% znames)
 filter(`synurbic and traits only`, species %in% znames) %>% select(fam) %>% table()
+
+# TESTING CODE
+fig_name <- ggplot(g, aes(x = reorder(var, avg), y = avg, fill = ifelse(var == "Synurbic", "Anthro", "Shade"))) + 
+  #geom_crossbar(aes(ymin = avg-rse, ymax = avg+rse), alpha = 0.5) +
+  geom_bar(stat = "identity") +
+  geom_errorbar(aes(ymin = avg-rse, ymax = avg+rse)) +
+  #geom_pointrange(aes(ymin = avg-rse, ymax = avg+rse)) +
+  coord_flip() +
+  theme_bw() +
+  theme(axis.text.x = element_text(size = 6, hjust = 1),
+        legend.position = "none") +
+  theme(panel.grid.major=element_blank(),
+        panel.grid.minor=element_blank(),
+        axis.text.y = element_text(size = 6),
+        plot.title = element_text(size = 10)) + 
+  scale_fill_manual(breaks = c("Anthro","Shade"), values = c("red", "purple")) +
+  labs(x = NULL, y = "sqrt avg variable influence")
+
+
+
+fig_name + scale_y_sqrt()
+
