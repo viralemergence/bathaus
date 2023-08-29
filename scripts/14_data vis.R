@@ -9,172 +9,264 @@ library(tidyverse)
 library(plotrix)
 library(patchwork)
 library(gbm)
+library(rstatix)
+library(ggridges)
 #library(ggrepel)
 
 #### Descriptive stats
-library(ggridges)
 data <- readRDS("~/Desktop/Bats and Viruses/bathaus/flat files/cleaned dataset 30 cutoff.rds")
-# traits is the full dataset B4 cut off, has families in it
-traits <- readRDS("~/Desktop/Bats and Viruses/bathaus/flat files/synurbic and traits only.rds")
 
-# add lowecase family names
-traits$family <- tools::toTitleCase(tolower(traits$fam))
-
-# density plots
-traits %>% filter(!fam %in% c('NYCTERIDAE',"MYSTACINIDAE","CRASEONYCTERIDAE","FURIPTERIDAE","MYZOPODIDAE", "NOCTILIONIDAE")) %>%
-  ggplot(aes(x = virus+1, y = family)) +
-  geom_density_ridges(aes(fill = Synurbic), alpha = 0.6) +
-  #facet_wrap(~fam, ncol = 1) +
-  scale_x_log10() +
-  labs(x="Log Viral Richness", y = " ", fill = "Roost Status") +
-  theme_bw() +
-  theme(panel.grid.major=element_blank(),
-        panel.grid.minor=element_blank(),
-        axis.text = element_text(size = 6),
-        axis.title = element_text(size = 7),
-        legend.position = "none") +
-scale_fill_manual(labels = c("no","yes","NA"), values = c("#8470ff","#9DD866","#A0B1BA")) -> vrich
-
-# zoonotic proportions
-traits %>%
-  mutate(zoo_prop = zvirus/virus) %>%
-  mutate(zoo_prop = ifelse(is.nan(zoo_prop), 0, zoo_prop)) %>%
-  filter(!fam %in% c('NYCTERIDAE',"MYSTACINIDAE","CRASEONYCTERIDAE","FURIPTERIDAE","MYZOPODIDAE", "NOCTILIONIDAE")) %>%
-  ggplot(aes(x = zoo_prop, y = family)) +
-  geom_density_ridges(aes(fill = Synurbic), alpha = 0.6) +
-  #facet_wrap(~fam, ncol = 1) +
-  #scale_x_log10() +
-  scale_x_continuous(labels = scales::percent) +
-  labs(x="Proportion Zoonotic Virus", y = " ", fill = "Roost Status") +
-  theme_bw() +
-  theme(panel.grid.major=element_blank(),
-        panel.grid.minor=element_blank(),
-        axis.text = element_text(size = 6),
-        axis.title = element_text(size = 7),
-        legend.position = "none",
-        axis.text.y = element_blank()) +
-  scale_fill_manual(labels = c("no","yes","NA"), values = c("#8470ff","#9DD866","#A0B1BA")) -> zprop
-
-#balloon plot
-points <- data.frame(table(traits$family,traits$Synurbic, useNA = "ifany"))
-colnames(points) <- c("Family", "Roost Status", "Frequency")
-  
-# I could pull out to match the other two plots
-#points[!points$Var1 %in% c('NYCTERIDAE',"MYSTACINIDAE","CRASEONYCTERIDAE","FURIPTERIDAE","MYZOPODIDAE", "NOCTILIONIDAE"), ]
-
-ggplot(points, aes(x = `Roost Status`, y = Family)) +
-  geom_point(aes(size = Frequency, color = `Roost Status`)) +
-  labs(x="Roost Status", y = " ", fill = "Roost Status") +
-  theme_bw() +
-  theme(panel.grid.major=element_blank(),
-        panel.grid.minor=element_blank(),
-        axis.text = element_text(size = 6),
-        axis.title = element_text(size = 7)) +
-        # legend.position = "top",
-        # legend.box = "vertical",
-        # legend.margin=margin()) +
-  scale_color_manual(labels = c("no","yes","NA"), values = c("#8470ff","#9DD866","#A0B1BA")) +
-  scale_x_discrete(labels = c('no',"yes","NA")) +
-  scale_size(range = c(0.5, 6)) +
-  guides(color = guide_legend(override.aes = list(size=3))) -> balloon1
-
-# # I could pull out to match the other two plots
-# trim <- points[!points$Var1 %in% c('NYCTERIDAE',"MYSTACINIDAE","CRASEONYCTERIDAE","FURIPTERIDAE","MYZOPODIDAE","NOCTILIONIDAE"), ]
-# 
-# ggplot(trim, aes(x = Var2, y = Var1)) +
-#   geom_point(aes(size = Freq, color = Var2)) +
-#   labs(x="Roost Status", y = " ", fill = "Roost Status") +
-#   theme_bw() +
-#   theme(panel.grid.major=element_blank(),
-#         panel.grid.minor=element_blank(),
-#         legend.position = "top", 
-#         legend.box="vertical",
-#         legend.margin=margin()) +
-#   scale_color_manual(labels = c("no","yes","NA"), values = c("#8470ff","#9DD866","#A0B1BA")) +
-#   scale_size(range = c(1, 8))-> balloon2 # to match other panels, turns out this doesn't work the way I thought....
-
-ggplot(points, aes(x = `Roost Status`, y = Family)) +
-  geom_point(aes(size = Frequency, color = `Roost Status`)) +
-  labs(x=NULL, y =NULL, fill = "Roost Status") +
-  coord_flip() +
-  theme_bw() +
-  theme(panel.grid.major=element_blank(),
-        panel.grid.minor=element_blank(),
-        axis.text = element_text(size = 6),
-        axis.title = element_text(size = 7)) +
-  # legend.position = "top",
-  # legend.box = "vertical",
-  # legend.margin=margin()) +
-  scale_color_manual(labels = c("no","yes","NA"), values = c("#8470ff","#9DD866","#A0B1BA")) +
-  scale_x_discrete(labels = c('no',"yes","NA")) +
-  scale_size(range = c(1, 5)) +
-  guides(color = guide_legend(override.aes = list(size=3))) -> balloon
-
-dens <- vrich + zprop
-
-# put together
-fig1 <- (balloon1 + plot_layout(widths = c(15, 85), guide = "collect") & 
-    theme(legend.position = "right",
-          #legend.box = "vertical",
-          legend.text = element_text(size = 6), 
-          legend.title = element_text(size = 6),
-          legend.margin=margin(l=-7))) + 
-  ((vrich + zprop) + plot_layout(tag_level = "new"))
-
-(balloon1 + dens) + plot_layout(widths = c(15, 85), guide = "collect") & 
-  theme(legend.position = "bottom",
-        #legend.box = "vertical",
-        legend.text = element_text(size = 6), 
-        legend.title = element_text(size = 6),
-        legend.margin=margin(b = 0, unit='cm'))
-
-alt <- (balloon + 
-    plot_layout(heights = c(15, 85), guide = "collect") & 
-    theme(legend.position = "bottom",
-          legend.text = element_text(size = 6), 
-          legend.title = element_text(size = 7),
-          legend.margin=margin(l=-7))) + 
-  ((vrich + zprop) + plot_layout(tag_level = "new"))
-
-(balloon1 + vrich) + plot_layout(widths = c(15, 85), guide = "collect") & 
-    theme(legend.position = "right",
-          #legend.box = "vertical",
-          legend.text = element_text(size = 6), 
-          legend.title = element_text(size = 6),
-          legend.margin=margin(l=-7)) + 
-   (zprop + plot_layout(tag_level = "new"))
-
-png("~/Desktop/Bats and Viruses/bathaus/figs/Figure 1.png",width=6.5,height=3.5,units="in",res=600)
-fig1 + plot_annotation(tag_levels = c('A','1')) & theme(plot.tag = element_text(size = 7))
-dev.off()
-
-png("~/Desktop/Bats and Viruses/bathaus/figs/Figure 1 Alt.png",width=6,height=6,units="in",res=600)
-alt + plot_annotation(tag_levels = list(c('A','B', NULL))) & theme(plot.tag = element_text(size = 7), plot.tag.position = "topleft")
-dev.off()
+# lab comp directory
+data <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/cleaned dataset 30 cutoff.rds")
 
 ###################### BRT Results
-# read in the datasets 
-fvirus_brts <- readRDS("~/Desktop/Bats and Viruses/bathaus/flat files/fvirus brts.rds")
-fzvirus_brts <- readRDS("~/Desktop/Bats and Viruses/bathaus/flat files/fzvirus brts.rds")
+# Read in rds files for model outputs from drive
+vrichness_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/virus with brts.rds")
+no_vrichness_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/virus without brts.rds")
+zoo_prop_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/zoo_prop with brts.rds")
+no_zoo_prop_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/zoo_prop without brts.rds")
+vbinary_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/dum_virus with brts.rds")
+no_vbinary_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/dum_virus without brts.rds")
+zbinary_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/dum_zvirus with brts.rds")
+no_zbinary_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/dum_zvirus without brts.rds")
+cites_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/citation brts.rds")
+vcites_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/virus citation brts.rds")
 
-# full brts
-virus_brts <- readRDS("~/Desktop/Bats and Viruses/bathaus/flat files/virus brts.rds")
-zvirus_brts <- readRDS("~/Desktop/Bats and Viruses/bathaus/flat files/zvirus brts.rds")
+##### Summary stats of model performance
+## Richness models - pseudo R2
+# with
+mean(sapply(vrichness_brts,function(x) x$testr2)) # 0.5575969
+std.error(sapply(vrichness_brts,function(x) x$testr2)) # 0.0354378
+# without
+mean(sapply(no_vrichness_brts,function(x) x$testr2)) # 0.5544271
+std.error(sapply(no_vrichness_brts,function(x) x$testr2)) # 0.0363453
 
-# Read in rds files for model outputs
-vrichness_brts <- readRDS("/Users/brianabetke/Desktop/Bats and Viruses/bathaus/flat files/virus with brts.rds")
-no_vrichness_brts <- readRDS("/Users/brianabetke/Desktop/Bats and Viruses/bathaus/flat files/virus without brts.rds")
-zoo_prop_brts <- readRDS("/Users/brianabetke/Desktop/Bats and Viruses/bathaus/flat files/zoo_prop with brts.rds")
-no_zoo_prop_brts <- readRDS("/Users/brianabetke/Desktop/Bats and Viruses/bathaus/flat files/zoo_prop without brts.rds")
-vbinary_brts <- readRDS("/Users/brianabetke/Desktop/Bats and Viruses/bathaus/flat files/dum_virus with brts.rds")
-no_vbinary_brts <- readRDS("/Users/brianabetke/Desktop/Bats and Viruses/bathaus/flat files/dum_virus without brts.rds")
-zbinary_brts <- readRDS("/Users/brianabetke/Desktop/Bats and Viruses/bathaus/flat files/dum_zvirus with brts.rds")
-no_zbinary_brts <- readRDS("/Users/brianabetke/Desktop/Bats and Viruses/bathaus/flat files/dum_zvirus without brts.rds")
+## Zoonotic proportion - pseudo R2
+# with
+mean(sapply(zoo_prop_brts,function(x) x$testr2)) # 0.1333381
+std.error(sapply(zoo_prop_brts,function(x) x$testr2)) # 0.00538303
+# without
+mean(sapply(no_zoo_prop_brts,function(x) x$testr2)) # 0.1331381
+std.error(sapply(no_zoo_prop_brts,function(x) x$testr2)) # 0.005441455
 
-################### Variable Importance Plots
+## Virus reservoir - AUC
+# With
+mean(sapply(vbinary_brts,function(x) x$testAUC)) # 0.9030022
+std.error(sapply(vbinary_brts,function(x) x$testAUC)) # 0.00176121
+# without
+mean(sapply(no_vbinary_brts,function(x) x$testAUC)) # 0.9029828
+std.error(sapply(no_vbinary_brts,function(x) x$testAUC)) # 0.001763804
+
+## Zoonotic virus reservoir - AUC
+# With
+mean(sapply(zbinary_brts,function(x) x$testAUC))
+std.error(sapply(binary_brts,function(x) x$testAUC))
+# without
+mean(sapply(no_zbinary_brts,function(x) x$testAUC))
+std.error(sapply(no_vbinary_brts,function(x) x$testAUC))
+
+### ttests
+## function for extracting data, perform unpaired t test, Cohen's d
+# should probably take the with/without labels and model types
+# adding data argument to allow for different responses
+# Need to allow for removing negative pseudo R2 values
+tfun=function(mod_with, mod_without, measure, fcol){
+  
+  ## format data
+  n=length(sapply(mod_with,function(x) x$measure))
+  adata=data.frame(y=c(sapply(mod_with,function(x) x[measure][[1]]),
+                       sapply(mod_without,function(x) x[measure][[1]])),
+                   response=c(rep('mod_with',n),rep('mod_without',n)),
+                   seed=c(sapply(mod_with,function(x) x$seed),
+                          sapply(mod_without,function(x) x$seed)))
+  rm(n)
+  
+  # conditionally change negeative pseudo R2 values
+  if(mod_with[[1]][["mod"]][["distribution"]][["name"]] != "bernoulli") {
+    
+    # change negatives to 0
+    adata <- adata %>% mutate(y = ifelse(y <= 0, 0, y))
+    
+  }else{
+    
+    adata <- adata
+    
+  }
+  
+  ## factor
+  adata$response=factor(adata$response,levels=c('mod_with','mod_without'))
+  
+  ## make jitter position
+  adata$x=as.numeric(factor(adata$response))
+  set.seed(1)
+  adata$xj=jitter(adata$x,0.5)
+  
+  ## fix response
+  adata$response2=recode(adata$response,
+                         "mod_with"="with",
+                         "mod_without"="without")
+  
+  ## t-test
+  tsum=t.test(y~response,data=adata,
+              alternative='two.sided',
+              var.equal=F,paired=F)  
+  
+  ## effect size
+  csum=cohens_d(y~response,data=adata,paired=F,var.equal=F)
+
+  ## Add plot function?
+  set.seed(3)
+  plot <- ggplot(adata)+
+    geom_boxplot(aes(x=x,y=y,group=x),width=0.25,outlier.alpha = 0,fill=fcol) +
+    geom_point(aes(x=xj,y=y),size=1.5,alpha=0.5) +
+    scale_x_continuous(breaks=c(1,2),
+                       labels=levels(adata$response2),
+                       limits=c(0.5,2.5)) +
+    theme_bw() +
+    theme(axis.text=element_text(size=10),
+          axis.text.x=element_text(size=12),
+          axis.title=element_text(size=12)) +
+    theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank()) +
+    theme(axis.title.x=element_text(margin=margin(t=10,r=0,b=0,l=0))) +
+    theme(axis.title.y=element_text(margin=margin(t=0,r=10,b=0,l=0))) +
+    theme(legend.position = "none")
+    # guides(colour="none")
+  
+  ## return
+  return(list(adata=adata,tsum=tsum,csum=csum,plot=plot))
+}
+
+# virus richness models
+vrichdata <- tfun(vrichness_brts, no_vrichness_brts, "testr2", "#E78AC3")
+
+# view stats
+vrichdata$tsum
+vrichdata$csum
+
+# boxplot with significance?
+v_box <-vrichdata[["plot"]] + 
+            labs(x = "Model Type", y = "Model Performance (Pseudo R2)", title = "Virus Richness") +
+            geom_line(data = tibble(x=c(1, 2),y = c(0.97, 0.97)), aes(x=x,y=y), inherit.aes = FALSE) +
+            geom_text(data = tibble(x=1.5,y = 0.995), 
+                      aes(x=x,y=y, label = paste("T-test: p = ", round(vrichdata$tsum$p.value, 4), sep = "")), inherit.aes = FALSE) +
+            geom_text(data = tibble(x=1.5,y = 0.945), 
+                      aes(x=x,y=y, label = paste("Cohen's d = ", round(vrichdata$csum$effsize, 4), sep = "")), inherit.aes = FALSE) +
+            theme(plot.title = element_text(hjust = 0.5, size = 12)) 
+v_box
+
+rm(no_vrichness_brts)
+rm(vrichness_brts)
+
+## Zoonotic proportion
+zpropdata <- tfun(zoo_prop_brts, no_zoo_prop_brts, "testr2", "#FC8D62")
+
+# view stats
+zpropdata$tsum
+zpropdata$csum
+
+# boxplot
+z_box <- zpropdata[["plot"]] + labs(x = "Model Type", y = "Model Performance (Pseudo R2)") +
+            labs(x = "Model Type", y = NULL, title = "Zoonotic Proportion Transformed") +
+            geom_line(data = tibble(x=c(1, 2),y = c(0.29, 0.29)), aes(x=x,y=y), inherit.aes = FALSE) +
+            geom_text(data = tibble(x=1.5,y = 0.3), 
+                      aes(x=x,y=y, label = paste("T-test: p = ", round(zpropdata$tsum$p.value, 4), sep = "")), inherit.aes = FALSE) +
+            geom_text(data = tibble(x=1.5,y = 0.28), 
+                      aes(x=x,y=y, label = paste("Cohen's d = ", round(zpropdata$csum$effsize, 4), sep = "")), inherit.aes = FALSE) +
+            theme(plot.title = element_text(hjust = 0.5, size = 12))
+
+z_box
+
+rm(no_zoo_prop_brts, zoo_prop_brts)
+
+v_box + z_box
+
+## virus reservoir status
+# need t stats for all metrics
+vresAUC <- tfun(vbinary_brts, no_vbinary_brts, "testAUC", "#66C2A5")
+vresSEN <- tfun(vbinary_brts, no_vbinary_brts, "sen")
+vresSpec <- tfun(vbinary_brts, no_vbinary_brts, "spec")
+
+# view stats
+vresAUC$tsum
+vresAUC$csum
+
+# pvalue adjustment for values
+ps=c(vresAUC$tsum$p.value,
+     vresSEN$tsum$p.value,
+     vresSpec$tsum$p.value)
+round(p.adjust(ps,method="BH"),4)
+
+# Plot AUC
+# boxplots
+vb_box  <- vresAUC[["plot"]] + labs(x = "Model Type", y = "Model Performance (Test AUC)", title = "Virus Host") +
+              geom_line(data = tibble(x=c(1, 2),y = c(0.96, 0.96)), aes(x=x,y=y), inherit.aes = FALSE) +
+              geom_text(data = tibble(x=1.5,y = 0.965), 
+                        aes(x=x,y=y, label = paste("T-test: p = ", round(vresAUC$tsum$p.value, 4), sep = "")), inherit.aes = FALSE) +
+              geom_text(data = tibble(x=1.5,y = 0.955), 
+                        aes(x=x,y=y, label = paste("Cohen's d = ", round(vresAUC$csum$effsize, 4), sep = "")), inherit.aes = FALSE) +
+              theme(plot.title = element_text(hjust = 0.5, size = 12))
+vb_box
+
+rm(no_vbinary_brts, vbinary_brts)
+
+# haven't changed the bar placement
+vresSEN[["plot"]] + labs(x = "Model Type", y = "Model Performance (Sensitivity)") +
+  geom_line(data = tibble(x=c(1, 2),y = c(0.96, 0.96)), aes(x=x,y=y), inherit.aes = FALSE) +
+  geom_text(data = tibble(x=1.5,y = 0.965), 
+            aes(x=x,y=y, label = paste("T-test: p = ", round(vresSEN$tsum$p.value, 4), sep = "")), inherit.aes = FALSE) +
+  geom_text(data = tibble(x=1.5,y = 0.955), 
+            aes(x=x,y=y, label = paste("Cohen's d = ", round(vresSEN$csum$effsize, 4), sep = "")), inherit.aes = FALSE)
+
+# haven't changed the bar placement
+vresSpec[["plot"]] + labs(x = "Model Type", y = "Model Performance (Specificity)") +
+  geom_line(data = tibble(x=c(1, 2),y = c(0.96, 0.96)), aes(x=x,y=y), inherit.aes = FALSE) +
+  geom_text(data = tibble(x=1.5,y = 0.965), 
+            aes(x=x,y=y, label = paste("T-test: p = ", round(vresSpec$tsum$p.value, 4), sep = "")), inherit.aes = FALSE) +
+  geom_text(data = tibble(x=1.5,y = 0.955), 
+            aes(x=x,y=y, label = paste("Cohen's d = ", round(vresSpec$csum$effsize, 4), sep = "")), inherit.aes = FALSE)
+
+## zoonotic reservoir status
+# need t stats for all metrics
+zresAUC <- tfun(zbinary_brts, no_zbinary_brts, "testAUC", "#8DA0CB")
+zresSEN <- tfun(zbinary_brts, no_zbinary_brts, "sen")
+zresSpec <- tfun(zbinary_brts, no_zbinary_brts, "spec")
+
+# pvalue adjustment for values
+ps=c(zresAUC$tsum$p.value,
+     zresSEN$tsum$p.value,
+     zresSpec$tsum$p.value)
+round(p.adjust(ps,method="BH"),4)
+
+# plot AUC
+# boxplots
+zresAUC[["plot"]] + labs(x = "Model Type", y = "Model Performance (Test AUC)") +
+  geom_line(data = tibble(x=c(1, 2),y = c(0.96, 0.96)), aes(x=x,y=y), inherit.aes = FALSE) +
+  geom_text(data = tibble(x=1.5,y = 0.965), 
+            aes(x=x,y=y, label = paste("T-test: p = ", round(vresAUC$tsum$p.value, 4), sep = "")), inherit.aes = FALSE) +
+  geom_text(data = tibble(x=1.5,y = 0.955), 
+            aes(x=x,y=y, label = paste("Cohen's d = ", round(vresAUC$csum$effsize, 4), sep = "")), inherit.aes = FALSE)
+
+zresSEN[["plot"]] + labs(x = "Model Type", y = "Model Performance (Sensitivity)") + 
+  geom_line(data = tibble(x=c(1, 2),y = c(0.96, 0.96)), aes(x=x,y=y), inherit.aes = FALSE) +
+  geom_text(data = tibble(x=1.5,y = 0.965), 
+            aes(x=x,y=y, label = paste("T-test: p = ", round(vresAUC$tsum$p.value, 4), sep = "")), inherit.aes = FALSE) +
+  geom_text(data = tibble(x=1.5,y = 0.955), 
+            aes(x=x,y=y, label = paste("Cohen's d = ", round(vresAUC$csum$effsize, 4), sep = "")), inherit.aes = FALSE)
+
+zresSpec[["plot"]] + labs(x = "Model Type", y = "Model Performance (Specificity)") +
+  geom_line(data = tibble(x=c(1, 2),y = c(0.96, 0.96)), aes(x=x,y=y), inherit.aes = FALSE) +
+  geom_text(data = tibble(x=1.5,y = 0.965), 
+            aes(x=x,y=y, label = paste("T-test: p = ", round(vresAUC$tsum$p.value, 4), sep = "")), inherit.aes = FALSE) +
+  geom_text(data = tibble(x=1.5,y = 0.955), 
+            aes(x=x,y=y, label = paste("Cohen's d = ", round(vresAUC$csum$effsize, 4), sep = "")), inherit.aes = FALSE)
+
+# patch them together and save
+v_box + z_box / vb_box + zb_box
+
+################### Variable Importance Plots and rankings
 # Pull all the relative importance into a dataframe, get the mean, sd, and variation.
 # Then create a plot similar to the one I made for the variants 
-vinfPlot <- function(data_name, df_name, fig_name, bar_color){
+vinfPlot <- function(data_name, bar_color){
   
   # pull relative importance
   vinf <- lapply(data_name,function(x) x$rinf)
@@ -251,22 +343,6 @@ vinfPlot <- function(data_name, df_name, fig_name, bar_color){
                          "Synurbic" = "Anthropogenic Roost"
   )
   
-  # gather Test AUC
-  tauc <- sapply(data_name, function(x) x$testAUC)
-  mean_tauc <- mean(tauc)
-  se_tauc <- std.error(tauc)
-  test_auc <- data.frame(avg = mean_tauc, 
-                         se = se_tauc)
-  # vinf=lapply(data_name,function(x) x$rinf)
-  # data_vinf=do.call(rbind,vinf)
-  # ## from brtvis aggregate mean, SE, var
-  # # creates a dataset from list with 10 unique splits
-  # vdata=data.frame(aggregate(rel.inf~var,data=data_vinf,mean),
-  #                       aggregate(rel.inf~var,data=data_vinf,st.error)["rel.inf"],
-  #                       aggregate(rel.inf~var,data=data_vinf,var)["rel.inf"])
-  # names(vdata)=c("var","rel.inf","rse","rvar")
-  # df_name=vdata[order(vdata$rel.inf,decreasing=T),]
-  
   # you might want something that lets you also manipulate the color as well so you can 
   # make the points colored by dataset.
   # next thing would be to add the second dataset and see if I can have them on both
@@ -280,120 +356,129 @@ vinfPlot <- function(data_name, df_name, fig_name, bar_color){
   #         legend.position = "none") +
   #   scale_color_manual(breaks = c("Anthro","Shade"), values = c("red", box_color))
   
-  fig_name <- ggplot(df_name, aes(x = reorder(var, -avg), y = avg, color = ifelse(var == "Anthropogenic Roost", "Anthro", "Shade"))) + 
+  fig_name <- ggplot(df_name, aes(x = reorder(var, avg), y = avg, 
+                                  fill = ifelse(var == "Anthropogenic Roost", "Anthro", "Shade"))) + 
     #geom_crossbar(aes(ymin = avg-rse, ymax = avg+rse), alpha = 0.5) +
-    #geom_bar(stat = "identity") +
-    #geom_errorbar(aes(ymin = avg-rse, ymax = avg+rse)) +
-    geom_pointrange(aes(ymin = avg-rse, ymax = avg+rse)) +
-    #coord_flip() +
+    geom_bar(stat = "identity") +
+    geom_errorbar(aes(ymin = avg-rse, ymax = avg+rse)) +
+    #geom_pointrange(aes(ymin = avg-rse, ymax = avg+rse)) +
+    coord_flip() +
     theme_bw() +
-    theme(axis.text.x = element_text(size = 6, angle = 45, hjust = 1),
+    theme(# axis.text.x = element_text(size = 6, angle = 45, hjust = 1),
           legend.position = "none") +
     theme(panel.grid.major=element_blank(),
           panel.grid.minor=element_blank(),
           axis.text.y = element_text(size = 6),
           plot.title = element_text(size = 10)) + 
-    scale_color_manual(breaks = c("Anthro","Shade"), values = c("red", "purple"))
+    scale_fill_manual(breaks = c("Anthro","Shade"), values = c("#F0027F", bar_color))
   
   # return a list with that dataset of rel.inf and figure
-  return(list(df_name, test_auc, fig_name))
+  return(list(df_name, fig_name))
 }
 
-comp_fig <- vinfPlot(vrichness_brts, compdf, compfig, "grey")
+# Get colors - try to avoid using the same colors as in Fig 1. Which doesn't leave a lot but maybe pastels 
+library(RColorBrewer)
+brewer.pal(n = 8, name = "Accent")
 
-# run function with dataset
-# comp test
-comp_fig <- vinfPlot(comp_brts, compdf, compfig, "grey")
-c <- comp_fig[[3]] + 
-  labs(x = " ", y = "Relative Importance") +
-  theme(axis.title.y = element_text(size = 14, hjust = -1.5))
+# run for all models with anthropogenic roosting
+vrich_fig <- vinfPlot(vrichness_brts, "#E78AC3")
+zprop_fig <- vinfPlot(zoo_prop_brts, "#FC8D62")
+vbinary_fig <- vinfPlot(vbinary_brts, "#66C2A5")
+zbinary_fig <- vinfPlot(zbinary_brts, "#8DA0CB")
 
-# pcr test
-pcr_fig <- vinfPlot(pcr_brts, pcrdf, pcrfig, "palegreen3")
-p <- pcr_fig[[3]] + 
-  labs(x = "Trait Variable", y = " ") +
-  theme(axis.title.x = element_text(size = 14))
-
-# put the figures together
-png("variableinf.png",width=15,height=10,units="in",res=600)
-c / p
-dev.off()
-
-#### with bat brts
-fvirus_fig <- vinfPlot(fvirus_brts, fviurs_df, fvirus_fig, "grey")
-fzvirus_fig <- vinfPlot(fzvirus_brts, fzviurs_df, fzvirus_fig, "palegreen3")
-
-# make multi
-fvirus <- fvirus_fig[[3]] + 
+# look at plots
+vrich_gg <- vrich_fig[[2]] + 
+  scale_y_sqrt() + 
   labs(x = " ", y = "Relative Importance") +
   theme(axis.title.y = element_text(size = 10, hjust = -8, vjust = 5)) +
-  ggtitle("Overall Virus")
+  ggtitle("Virus Richness")
 
-fzvirus <- fzvirus_fig[[3]] + 
+zprop_gg <- zprop_fig[[2]] + 
+  scale_y_sqrt() + 
   labs(x = " ", y = " ") +
-  #theme(axis.title.x = element_text(size = 14)) +
-  ggtitle("Zoonotic Virus")
-
+  theme(axis.title.y = element_text(size = 10, hjust = -8, vjust = 5)) +
+  ggtitle("Zoonotic Proportion")
 
 # Create the patchwork, dropping the y-axis labels from the plots, and setting
 # the margins, this adds the common label
-h_patch <- fvirus / fzvirus & ylab(NULL) & theme(plot.margin = margin(5.5, 5.5, 0, 5.5))
+h_patch <- vrich_gg + zprop_gg & ylab(NULL) & theme(plot.margin = margin(5.5, 5.5, 0, 5.5))
 
 # Use the tag label as a y-axis label
-png("fvirus_variableinf.png",width=7,height=6,units="in",res=600)
+png("/Volumes/BETKE 2021/bathaus/figs/richnes_variableinf.png",width=7,height=6,units="in",res=600)
 wrap_elements(h_patch) +
   labs(tag = "Relative Importance") +
   theme(
-    plot.tag = element_text(size = 10, angle = 90),
-    plot.tag.position = "left"
+    plot.tag = element_text(size = 10),
+    plot.tag.position = "bottom"
   )
 dev.off()
 
+# binary models
+vbinary_gg <- vbinary_fig[[2]] + 
+  scale_y_sqrt() + 
+  labs(x = " ", y = "Relative Importance") +
+  theme(axis.title.y = element_text(size = 10, hjust = -8, vjust = 5)) +
+  ggtitle("Virus Host")
 
-#setwd("/Users/brianabetke/Desktop/Bats and Viruses/ESA 2022/figs")
-png("fvirus_variableinf.png",width=7,height=6,units="in",res=600)
-fvirus/fzvirus
-dev.off()
-
-#### With full bat dataset
-virus_fig <- vinfPlot(virus_brts, viurs_df, virus_fig, "dimgrey")
-zvirus_fig <- vinfPlot(zvirus_brts, zviurs_df, zvirus_fig, "palegreen3")
-
-# make multi
-virus <- fvirus_fig[[3]] + 
-  labs(x = " ", y = "Sqrt Relative Importance") +
-  theme(axis.title.y = element_text(size = 14, hjust = -14, vjust = 5)) +
-  ggtitle("Overall Virus", subtitle = paste("Test AUC =", 
-                                            paste(format(round(fvirus_fig[[2]]$avg, 2), nsmall = 2),
-                                                  paste(format(round(fvirus_fig[[2]]$se, 2), nsmall = 2),
-                                                        sep = " "), sep = " +- ")))
-zvirus <- zvirus_fig[[3]] + 
+zbinary_gg <- zbinary_fig[[2]] + 
+  scale_y_sqrt() + 
   labs(x = " ", y = " ") +
-  theme(axis.title.x = element_text(size = 14)) +
-  ggtitle("Zoonotic Virus", subtitle = paste("Test AUC =", 
-                                             paste(round(zvirus_fig[[2]]$avg, 2),
-                                                   paste(format(round(zvirus_fig[[2]]$se, 2), nsmall = 2),
-                                                         sep = " "), sep = " +- ")))
+  theme(axis.title.y = element_text(size = 10, hjust = -8, vjust = 5)) +
+  ggtitle("Zoonotic Host")
 
-#setwd("/Users/brianabetke/Desktop/Bats and Viruses/ESA 2022/figs")
-png("virus_variableinf.png",width=7,height=7,units="in",res=600)
-virus/zvirus
+# Create the patchwork, dropping the y-axis labels from the plots, and setting
+# the margins, this adds the common label
+h_patch <- vbinary_gg + zbinary_gg & ylab(NULL) & theme(plot.margin = margin(5.5, 5.5, 0, 5.5))
+
+# Use the tag label as a y-axis label
+png("/Volumes/BETKE 2021/bathaus/figs/host_variableinf.png",width=7,height=6,units="in",res=600)
+wrap_elements(h_patch) +
+  labs(tag = "Relative Importance") +
+  theme(
+    plot.tag = element_text(size = 10),
+    plot.tag.position = "bottom"
+  )
 dev.off()
 
-# Square root of y
-sqrt_virus <- virus + scale_y_sqrt()
-sqrt_zvirus <- zvirus + scale_y_sqrt()
+## Rankings
+# wouldn't you want to rank them from highest to lowest? 
+virus <- vrich_fig[[1]]
+virus$ranks <- 1:nrow(virus)
+virus$type <- "virus richness"
 
-png("sqrt_virus_variableinf.png",width=15,height=10,units="in",res=600)
-sqrt_virus/sqrt_zvirus
+zoop <- zprop_fig[[1]]
+zoop$ranks <- 1:nrow(zoop)
+zoop$type <- "zoonotic proportion"
+
+vb <- vbinary_fig[[1]]
+vb$ranks <- 1:nrow(vb)
+vb$type <- "virus host"
+
+zb <- zbinary_fig[[1]]
+zb$ranks <- 1:nrow(zb)
+zb$type <- "zoonotic host"
+
+# merge into one dataset by variable
+# try making lolipop plot for synurbic by filtering out anthropogenic roosting values and ggsegement - maybe match colors to var inf plot model colors?
+ranks <- rbind(virus, zoop, vb, zb)
+anthrank <- filter(ranks, var == "Anthropogenic Roost") %>% 
+  mutate(group = ifelse(type == "virus richness" | type == "zoonotic proportion", "richness", "host"))
+
+# geom segment
+png("/Volumes/BETKE 2021/bathaus/figs/synurbic ranks.png",width=6.5,height=5,units="in",res=600)
+ggplot(anthrank, aes(x=type, y=ranks, color = type)) +
+  geom_segment(aes(x=type, xend=type, y=ranks, yend=0)) +
+  geom_point(size=5) +
+  coord_flip() +
+  scale_y_reverse() +
+  theme_bw() +
+  labs(x = "Response", y = "Rank") +
+  scale_color_manual(breaks = c("virus richness","zoonotic proportion","virus host","zoonotic host"), 
+                     values = c("#E78AC3", "#FC8D62", "#66C2A5", "#8DA0CB")) +
+  theme(panel.grid.major=element_blank())
 dev.off()
 
-################# may want to calculate feature rankings first - get the top most important predictors in the model
-
-
-
-
-
+# maybe add a smaller panel with citations? 
 
 
 ################# going to want code here that makes pdps for all models
@@ -402,102 +487,170 @@ dev.off()
 # the thing is calculating the marginal effects across models do I actually show averaged y axis?
 
 
-
+# so calculate pdep for every model
+# Aggreagating pdps
+pdp_agg=function(mod, feature){
+  
+  if(mod[["mod"]][["distribution"]][["name"]] == "gaussian"){
+    
+    pdep=plot.gbm(mod[["mod"]], 
+                  i.var = feature,
+                  return.grid = TRUE)
+  }else{
+  
+  pdep=plot.gbm(mod[["mod"]], 
+                i.var = feature, 
+                type = "response",
+                return.grid = TRUE)
+  }
+  
+  pdep$seed=unique(mod[["seed"]])
+  
+  pdep$predictor = pdep[feature][,1]
+  
+  pdep$rank=1:nrow(pdep)
+  
+  pdep$yhat=pdep$y
+  
+  return(pdep)
+  
+}
 
 ## Partial dependence plots for continuous variables 
-make_pdp_cont <- function(model, predictor, var_name, pcolor = FALSE) {
+make_pdp_cont <- function(model,feature, pcolor) {
   
-  # return grid
-  vals <- plot.gbm(model[["mod"]], i.var = predictor, type = "response", return.grid = TRUE)
+  agg = do.call(rbind, lapply(model,function(x) pdp_agg(x, feature)))
   
-  # data for hist
-  yrange = range(vals$y, na.rm = TRUE)
+  ## get element-wise means
+  x=with(agg,tapply(predictor,rank,mean))
+  y=with(agg,tapply(yhat,rank,mean))
   
-  # pull histogram values
-  hi=hist(model[["testdata"]][[predictor]],breaks=30,plot=F)
+  ## save as mean
+  pmean=data.frame(predictor=x,yhat=y)
+  
+  ## get yrange
+  yrange=range(agg$yhat,pmean$yhat,na.rm=T)
+  
+  ## get histogram
+  hi=hist(data[feature][,1],breaks=30,plot=F)
   hi=with(hi,data.frame(breaks[1:(length(breaks)-1)],counts))
   names(hi)=c("mids","counts")
   
-  if(pcolor == FALSE){
+  ## ggplot it
+  ggplot(agg,aes(predictor,yhat,group=seed))+
     
-    # plot
-    ggplot() + 
-      geom_line(data = vals, aes(x = !!sym(predictor), y = y)) +
-      geom_segment(data=hi,inherit.aes=F,
-                   aes(x=mids,xend=mids,
-                       y=yrange[1],yend=plotrix::rescale(counts,yrange)),
-                   size=2,colour="darkgrey",alpha=0.50) +
-      labs(x = var_name, y = "Marginal Effect") +
-      theme_bw() +
-      theme(axis.text=element_text(size=6),
-            axis.title=element_text(size=7)) +
-      theme(panel.grid.major=element_blank(),
-            panel.grid.minor=element_blank())
+    ## add histogram
+    geom_segment(data=hi,inherit.aes=F,
+                 aes(x=mids,xend=mids,
+                     y=yrange[1],yend=plotrix::rescale(counts,yrange)),
+                 size=5,colour="grey",alpha=0.50)+
     
-  }else{
+    ## add lines
+    geom_line(size=1,alpha=0.25,colour=pcolor)+
     
-    ggplot() + 
-      geom_line(data = vals, aes(x = !!sym(predictor), y = y)) +
-      geom_segment(data=hi,inherit.aes=F,
-                   aes(x=mids,xend=mids,
-                       y=yrange[1],yend=plotrix::rescale(counts,yrange)),
-                   size=2,colour="Orange",alpha=0.40) +
-      labs(x = var_name, y = "Marginal Effect") +
-      theme_bw() +
-      theme(axis.text=element_text(size=6),
-            axis.title=element_text(size=7)) +
-      theme(panel.grid.major=element_blank(),
-            panel.grid.minor=element_blank())
-  }
+    ## add mean
+    geom_line(data=pmean,size=2,inherit.aes=F,
+              aes(predictor,yhat))+
+    
+    ## theme
+    theme_bw()+
+    theme(axis.text=element_text(size=6),
+          axis.title=element_text(size=7))+
+    theme(axis.title.x=element_text(margin=margin(t=5,r=0,b=0,l=0)))+
+    theme(axis.title.y=element_text(margin=margin(t=0,r=5,b=0,l=0)))+
+    theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank())+
+    labs(x=feature,y="marginal effect")+
+    scale_y_continuous(labels=scales::number_format(accuracy=0.01))
   
 }
 
 ## Function for factor pdp plots
-make_pdp_fact <- function(model, predictor, var_name, pcolor = FALSE) {
+make_pdp_fact <- function(model, feature, pcolor) {
   
-  # return grid
-  vals <- plot.gbm(model[["mod"]], i.var = predictor, type = "response", return.grid = TRUE)
+  # aggregate
+  agg = do.call(rbind, lapply(model,function(x) pdp_agg(x, feature)))
   
-  # data for hist
-  yrange = range(vals$y, na.rm = TRUE)
+  ## get element-wise means
+  y=with(agg,tapply(yhat,predictor,mean))
+  
+  ## save as mean
+  #pmean=data.frame(predictor=x,yhat=y)
+  pmean=data.frame(y)
+  names(pmean)="yhat"
+  pmean$predictor=rownames(pmean)
+  rownames(pmean)=NULL
+  
+  ## make temp data
+  temp=data
+  temp$predictor=temp[feature][,1]
+  
+  ## do nothing
+  agg=agg
+  pmean=pmean
+  temp=temp
+  
+  ## get yrange
+  yrange=range(agg$yhat,pmean$yhat,na.rm=T)
   
   # pull counts for color
-  df_cat <- as.data.frame(table(noNA[["testdata"]][[predictor]]))
+  df_cat <- as.data.frame(table(temp$predictor))
   
   # fix y axis point
   df_cat$ymin <- yrange[1]-0.01
   
-  if(pcolor == FALSE){ #greys for initial model
+  ## fix temp to yrange
+  #temp$yhat=ifelse(temp$predictor==1,max(yrange),min(yrange))
+  
+  ## ggplot with rug
+  set.seed(1)
+  ggplot(agg,aes(predictor,yhat,group=seed)) +
     
-    ggplot() +
-      geom_point(data = vals, size= 2, shape=15, aes(category, y)) +
-      geom_point(data = df_cat, aes(Var1, ymin, color = Freq)) +
-      scale_color_continuous(high = "#636363", low = "#D9D9D9", guide = "none") +
-      labs(x = var_name, y = "Marginal Effect") +
-      theme_bw() +
-      theme(axis.text=element_text(size=6),
-            axis.title=element_text(size=7)) +
-      theme(panel.grid.major=element_blank(),
-            panel.grid.minor=element_blank())
+    ## add individual BRTs
+    geom_jitter(size=1,alpha=0.25,colour=pcolor,width=0.1) +
     
-  }else{ #different color for pseudoab variables
+    ## add mean
+    geom_point(data=pmean,size=2,inherit.aes=F,shape=15,
+               aes(predictor,yhat)) +
     
-    ggplot() +
-      geom_point(data = vals, size= 2, shape=15, aes(category, y)) +
-      geom_point(data = df_cat, aes(Var1, ymin, color = Freq)) +
-      scale_color_continuous(high = "#8C2D04", low = "#FEE6CE", guide = "none") +
-      labs(x = var_name, y = "Marginal Effect") +
-      theme_bw() +
-      theme(axis.text=element_text(size=6),
-            axis.title=element_text(size=7)) +
-      theme(panel.grid.major=element_blank(),
-            panel.grid.minor=element_blank())
+    # # # ## add rug
+    # geom_rug(data=df_cat,inherit.aes=F,
+    #          aes(Var1, ymin),
+    #          sides="b",position="jitter",
+    #          colour="grey",alpha=0.25,
+    #          na.rm=T)+
     
-  }
+    geom_point(data=df_cat, inherit.aes = F, shape=23, 
+               aes(x=Var1,y=ymin,fill=Freq)) +
+    
+    ## theme
+    theme_bw() +
+    theme(axis.text=element_text(size=6),
+          axis.title=element_text(size=7)) +
+    theme(axis.title.x=element_text(margin=margin(t=5,r=0,b=0,l=0))) +
+    theme(axis.title.y=element_text(margin=margin(t=0,r=5,b=0,l=0))) +
+    theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank()) +
+    labs(x=feature,y="marginal effect") +
+    scale_y_continuous(limits=c(yrange[1]-0.01,yrange[2]+0.01),
+                       labels=scales::number_format(accuracy=0.01)) +
+    scale_fill_continuous(high = "#525252", low = "#D9D9D9", guide="none")
   
 }
 
-## Plot partial dependence
+# for right now, only grab synurbic pdps
+vsyn <- make_pdp_fact(vrichness_brts, "Synurbic", "#E78AC3") 
+zsyn <- make_pdp_fact(zoo_prop_brts, "Synurbic", "#FC8D62")
+vbsyn <- make_pdp_fact(vbinary_brts, "Synurbic",  "#66C2A5")
+zbsyn <- make_pdp_fact(zbinary_brts, "Synurbic",  "#8DA0CB")
+
+png("/Volumes/BETKE 2021/bathaus/figs/synurbic pdps.png",width=6,height=4.5,units="in",res=600)
+(vsyn + zsyn) / (vbsyn + zbsyn)
+dev.off()
+
+con <- make_pdp_fact(vrichness_brts, "category", "#E78AC3")
+cit <- make_pdp_cont(vrichness_brts, "cites", "#E78AC3")
+vit <- make_pdp_cont(vrichness_brts, "vcites", "#E78AC3")
+
+## Plot partial dependence - Syunurbat code NEEDS TO BE ADAPTED
 # No NA pdps
 gr <- make_pdp_cont(noNA, "X26.1_GR_Area_km2", "Geographic Area (km2)", pcolor = FALSE)
 hb <- make_pdp_cont(noNA,"habitat_breadth_n", "Habitat Breadth", pcolor = FALSE)
@@ -544,14 +697,6 @@ pfa <- make_pdp_cont(pseudo, "adult_forearm_length_mm", "Adult Forearm Length", 
 png("/Users/brianabetke/Desktop/Synurbic_Bats/synurbat/figures/Figure S2.png", width=7,height=7.5,units="in",res=300)
 phb + pgr + pat + ppm + pat + pls + pmx + pcs + pcc + pam + ppt + pdp + pfr + pml + pfa + plot_layout(nrow = 5, ncol = 3, byrow = TRUE)
 dev.off()
-
-
-############### not sure if this is the order I want to put this here but take performance values and calculate sig. changes in performance metrics
-# Cohen's D
-
-
-
-
 
 ############## model predictions
 # pulling predictions (may just want the values separately for now?)
@@ -650,24 +795,160 @@ znames <- zundet$species
 zf <- filter(data, species %in% znames)
 filter(`synurbic and traits only`, species %in% znames) %>% select(fam) %>% table()
 
-# TESTING CODE
-fig_name <- ggplot(g, aes(x = reorder(var, avg), y = avg, fill = ifelse(var == "Synurbic", "Anthro", "Shade"))) + 
-  #geom_crossbar(aes(ymin = avg-rse, ymax = avg+rse), alpha = 0.5) +
-  geom_bar(stat = "identity") +
-  geom_errorbar(aes(ymin = avg-rse, ymax = avg+rse)) +
-  #geom_pointrange(aes(ymin = avg-rse, ymax = avg+rse)) +
-  coord_flip() +
+
+### old code I might want to look at later
+#### with bat brts
+fvirus_fig <- vinfPlot(fvirus_brts, fviurs_df, fvirus_fig, "grey")
+fzvirus_fig <- vinfPlot(fzvirus_brts, fzviurs_df, fzvirus_fig, "palegreen3")
+
+# make multi
+fvirus <- fvirus_fig[[3]] + 
+  labs(x = " ", y = "Relative Importance") +
+  theme(axis.title.y = element_text(size = 10, hjust = -8, vjust = 5)) +
+  ggtitle("Overall Virus")
+
+fzvirus <- fzvirus_fig[[3]] + 
+  labs(x = " ", y = " ") +
+  #theme(axis.title.x = element_text(size = 14)) +
+  ggtitle("Zoonotic Virus")
+
+# Create the patchwork, dropping the y-axis labels from the plots, and setting
+# the margins, this adds the common label
+h_patch <- fvirus + fzvirus & ylab(NULL) & theme(plot.margin = margin(5.5, 5.5, 0, 5.5))
+
+# Use the tag label as a y-axis label
+png("fvirus_variableinf.png",width=7,height=6,units="in",res=600)
+wrap_elements(h_patch) +
+  labs(tag = "Relative Importance") +
+  theme(
+    plot.tag = element_text(size = 10, angle = 90),
+    plot.tag.position = "left"
+  )
+dev.off()
+
+#setwd("/Users/brianabetke/Desktop/Bats and Viruses/ESA 2022/figs")
+png("fvirus_variableinf.png",width=7,height=6,units="in",res=600)
+fvirus/fzvirus
+dev.off()
+
+#### With full bat dataset
+virus_fig <- vinfPlot(virus_brts, viurs_df, virus_fig, "dimgrey")
+zvirus_fig <- vinfPlot(zvirus_brts, zviurs_df, zvirus_fig, "palegreen3")
+
+# make multi
+virus <- fvirus_fig[[3]] + 
+  labs(x = " ", y = "Sqrt Relative Importance") +
+  theme(axis.title.y = element_text(size = 14, hjust = -14, vjust = 5)) +
+  ggtitle("Overall Virus", subtitle = paste("Test AUC =", 
+                                            paste(format(round(fvirus_fig[[2]]$avg, 2), nsmall = 2),
+                                                  paste(format(round(fvirus_fig[[2]]$se, 2), nsmall = 2),
+                                                        sep = " "), sep = " +- ")))
+zvirus <- zvirus_fig[[3]] + 
+  labs(x = " ", y = " ") +
+  theme(axis.title.x = element_text(size = 14)) +
+  ggtitle("Zoonotic Virus", subtitle = paste("Test AUC =", 
+                                             paste(round(zvirus_fig[[2]]$avg, 2),
+                                                   paste(format(round(zvirus_fig[[2]]$se, 2), nsmall = 2),
+                                                         sep = " "), sep = " +- ")))
+
+#setwd("/Users/brianabetke/Desktop/Bats and Viruses/ESA 2022/figs")
+png("virus_variableinf.png",width=7,height=7,units="in",res=600)
+virus/zvirus
+dev.off()
+
+# Square root of y
+sqrt_virus <- virus + scale_y_sqrt()
+sqrt_zvirus <- zvirus + scale_y_sqrt()
+
+png("sqrt_virus_variableinf.png",width=15,height=10,units="in",res=600)
+sqrt_virus/sqrt_zvirus
+dev.off()
+
+
+
+
+
+pdp_agg=function(mod, feature){
+  
+  pdep=plot.gbm(mod[["mod"]], 
+                i.var = feature, 
+                return.grid = TRUE)
+  
+  pdep$seed=unique(mod[["seed"]])
+  
+  pdep$predictor = pdep[feature][,1]
+  
+  pdep$rank=1:nrow(pdep)
+  
+  pdep$yhat=pdep$y
+  
+  return(pdep)
+  
+}
+
+# aggregate
+agg = do.call(rbind, lapply(zoo_prop_brts,function(x) pdp_agg(x, "Synurbic")))
+zagg = do.call(rbind, lapply(vrichness_brts,function(x) pdp_agg(x, "Synurbic")))
+## get element-wise means
+y=with(agg,tapply(yhat,predictor,mean))
+
+## save as mean
+#pmean=data.frame(predictor=x,yhat=y)
+pmean=data.frame(y)
+names(pmean)="yhat"
+pmean$predictor=rownames(pmean)
+rownames(pmean)=NULL
+
+## make temp data
+temp=data
+temp$predictor=temp[feature][,1]
+
+## do nothing
+agg=agg
+pmean=pmean
+temp=temp
+
+## get yrange
+yrange=range(agg$yhat,pmean$yhat,na.rm=T)
+
+# pull counts for color
+df_cat <- as.data.frame(table(temp$predictor))
+
+# fix y axis point
+df_cat$ymin <- yrange[1]-0.01
+
+## fix temp to yrange
+#temp$yhat=ifelse(temp$predictor==1,max(yrange),min(yrange))
+
+## ggplot with rug
+set.seed(1)
+ggplot(agg,aes(predictor,yhat,group=seed)) +
+  
+  ## add individual BRTs
+  geom_jitter(size=1,alpha=0.25,colour=pcolor,width=0.1) +
+  
+  ## add mean
+  geom_point(data=pmean,size=2,inherit.aes=F,shape=15,
+             aes(predictor,yhat)) +
+  
+  # # # ## add rug
+  # geom_rug(data=df_cat,inherit.aes=F,
+  #          aes(Var1, ymin),
+  #          sides="b",position="jitter",
+  #          colour="grey",alpha=0.25,
+  #          na.rm=T)+
+  
+  geom_point(data=df_cat, inherit.aes = F, shape=23, 
+             aes(x=Var1,y=ymin,fill=Freq)) +
+  
+  ## theme
   theme_bw() +
-  theme(axis.text.x = element_text(size = 6, hjust = 1),
-        legend.position = "none") +
-  theme(panel.grid.major=element_blank(),
-        panel.grid.minor=element_blank(),
-        axis.text.y = element_text(size = 6),
-        plot.title = element_text(size = 10)) + 
-  scale_fill_manual(breaks = c("Anthro","Shade"), values = c("red", "purple")) +
-  labs(x = NULL, y = "sqrt avg variable influence")
-
-
-
-fig_name + scale_y_sqrt()
-
+  theme(axis.text=element_text(size=6),
+        axis.title=element_text(size=7)) +
+  theme(axis.title.x=element_text(margin=margin(t=5,r=0,b=0,l=0))) +
+  theme(axis.title.y=element_text(margin=margin(t=0,r=5,b=0,l=0))) +
+  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank()) +
+  labs(x=feature,y="marginal effect") +
+  scale_y_continuous(limits=c(yrange[1]-0.01,yrange[2]+0.01),
+                     labels=scales::number_format(accuracy=0.01)) +
+  scale_fill_continuous(high = "#525252", low = "#D9D9D9", guide="none")
