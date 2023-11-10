@@ -11,19 +11,19 @@ library(tidyverse)
 library(vroom)
 
 ## load VIRION
-setwd("~/Desktop/virion/Virion")
+setwd("/Users/brianabetke/Desktop/Bats and Viruses/virion/Virion")
 virion=vroom("Virion.csv.gz")
 
 ## prune to Chiroptera
-bats2=virion %>% 
+bats=virion %>% 
   filter(HostOrder == "chiroptera")
 
 ## trim to host and virus names NCBI resolved
-bats=bats[bats2$HostNCBIResolved==T & bats2$VirusNCBIResolved==T,]
+bats=bats[bats$HostNCBIResolved==T & bats$VirusNCBIResolved==T,]
 
 ## virus richness 
 bats$virus=1
-species2=aggregate(virus~Host,data=bats2,sum)
+species=aggregate(virus~Host,data=bats,sum)
 
 ## write to flat file
 setwd("~/Desktop/bathaus/virus data")

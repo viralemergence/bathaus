@@ -1,4 +1,5 @@
-# data vis - descriptive and brts?
+# brt visualizations
+# babetke@utexas.edu
 
 #clean environment
 rm(list=ls())
@@ -14,7 +15,7 @@ library(ggridges)
 #library(ggrepel)
 
 #### Descriptive stats
-data <- readRDS("~/Desktop/Bats and Viruses/bathaus/flat files/cleaned dataset 30 cutoff.rds")
+#data <- readRDS("~/Desktop/Bats and Viruses/bathaus/flat files/cleaned dataset 30 cutoff.rds")
 
 # lab comp directory
 data <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/cleaned dataset 30 cutoff.rds")
@@ -40,19 +41,29 @@ vcites_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/virus citation br
 ##### Summary stats of model performance
 ## Richness models - pseudo R2
 # with
-mean(sapply(vrichness_brts,function(x) x$testr2)) # 0.5572603
-std.error(sapply(vrichness_brts,function(x) x$testr2)) # 0.03571409
+vrich <- sapply(vrichness_brts,function(x) x$testr2) 
+vrich <- ifelse(vrich <= 0, 0, vrich)
+mean(vrich) # 0.5819087
+std.error(vrich) # 0.02074958
+
 # without
-mean(sapply(no_vrichness_brts,function(x) x$testr2)) # 0.5544271
-std.error(sapply(no_vrichness_brts,function(x) x$testr2)) # 0.0363453
+no_vrich <- sapply(no_vrichness_brts,function(x) x$testr2) 
+no_vrich <- ifelse(vrich <= 0, 0, no_vrich)
+mean(no_vrich) # 0.5797941
+std.error(no_vrich) # 0.02097104
 
 ## Zoonotic proportion - pseudo R2
 # with
-mean(sapply(zoo_prop_brts,function(x) x$testr2)) #  0.1333257
-std.error(sapply(zoo_prop_brts,function(x) x$testr2)) # 0.005387098
+zoop <- sapply(zoo_prop_brts,function(x) x$testr2) 
+zoop <- ifelse(zoop <= 0, 0, zoop)
+mean(zoop) #  0.1334578
+std.error(zoop) # 0.005352308
+
 # without
-mean(sapply(no_zoo_prop_brts,function(x) x$testr2)) # 0.1331381
-std.error(sapply(no_zoo_prop_brts,function(x) x$testr2)) # 0.005441455
+no_zoop <- sapply(no_zoo_prop_brts,function(x) x$testr2) 
+no_zoop <- ifelse(no_zoop <= 0, 0, no_zoop)
+mean(no_zoop) # 0.133267
+std.error(no_zoop) # 0.005407942
 
 ## Virus reservoir - AUC
 # With
@@ -102,11 +113,11 @@ std.error(sapply(no_zbinary_brts,function(x) x$spec)) # 0.001348789
 
 ## need to look at summary stats for citation models
 # cites
-mean(sapply(cite_brts,function(x) x$testr2)) # 0.1209731
-std.error(sapply(cite_brts,function(x) x$testr2)) # 0.07554686
+mean(sapply(cites_brts,function(x) x$testr2)) # 0.1209731
+std.error(sapply(cites_brts,function(x) x$testr2)) # 0.07554686
 #vcites
-mean(sapply(vcite_brts,function(x) x$testr2)) # -0.08667685
-std.error(sapply(vcite_brts,function(x) x$testr2)) # 0.1400668
+mean(sapply(vcites_brts,function(x) x$testr2)) # -0.08667685
+std.error(sapply(vcites_brts,function(x) x$testr2)) # 0.1400668
 
 ### ttests
 ## function for extracting data, perform unpaired t test, Cohen's d
@@ -630,7 +641,7 @@ zprop_gg <- zprop_fig[[3]] +
 h_patch <- vrich_gg + zprop_gg & ylab(NULL) & theme(plot.margin = margin(5.5, 5.5, 0, 5.5))
 
 # Use the tag label as a y-axis label
-png("/Volumes/BETKE 2021/bathaus/figs/richnes_variableinf.png",width=7,height=6,units="in",res=600)
+png("/Volumes/BETKE 2021/bathaus/figs/figure S3.png",width=7,height=6,units="in",res=600)
 wrap_elements(h_patch) +
   labs(tag = "Relative Importance") +
   theme(
@@ -657,7 +668,7 @@ zbinary_gg <- zbinary_fig[[3]] +
 h_patch <- vbinary_gg + zbinary_gg & ylab(NULL) & theme(plot.margin = margin(5.5, 5.5, 0, 5.5))
 
 # Use the tag label as a y-axis label
-png("/Volumes/BETKE 2021/bathaus/figs/host_variableinf.png",width=7,height=6,units="in",res=600)
+png("/Volumes/BETKE 2021/bathaus/figs/figure S4.png",width=7,height=6,units="in",res=600)
 wrap_elements(h_patch) +
   labs(tag = "Relative Importance") +
   theme(
@@ -709,10 +720,11 @@ write.csv(anthrank, "/Volumes/BETKE 2021/bathaus/flat files/anthropogenic roost 
 # 
 
 # define factor levels
+anthrank <- read.csv("/Volumes/BETKE 2021/bathaus/flat files/anthropogenic roost rankings.csv")
 anthrank$type <- factor(anthrank$type, levels = c("virus richness","zoonotic proportion","virus host","zoonotic host"))
 
 # alternative plot - reverse barplot with error bars
-png("/Volumes/BETKE 2021/bathaus/figs/synurbic ranks.png",width=4.5,height=3,units="in",res=600)
+png("/Volumes/BETKE 2021/bathaus/figs/figure 2.png",width=4.5,height=3,units="in",res=600)
 ggplot(anthrank, aes(x=type, y=avg, fill = type)) + 
   geom_bar(stat = "identity") +
   geom_errorbar(aes(ymin = avg-rse, ymax = avg+rse)) +
@@ -723,11 +735,10 @@ ggplot(anthrank, aes(x=type, y=avg, fill = type)) +
   labs(x = "Response", y = "Rank") +
   scale_fill_manual(breaks = c("virus richness","zoonotic proportion","virus host","zoonotic host"), 
                      values = c("#E78AC3", "#FC8D62", "#66C2A5", "#8DA0CB")) +
-  theme(# axis.text.x = element_text(size = 6, angle = 45, hjust = 1),
-    legend.position = "none") +
   theme(panel.grid.major=element_blank(),
         panel.grid.minor=element_blank(),
-        axis.text = element_text(size = 8))
+        axis.text = element_text(size = 8),
+        legend.position = "none")
 dev.off()
 
 #################### Partial Dependence plots
@@ -863,8 +874,8 @@ make_pdp_fact <- function(model, feature, var_name, pcolor) {
     #          colour="grey",alpha=0.25,
     #          na.rm=T)+
     
-    geom_point(data=df_cat, inherit.aes = F, shape=23,
-               aes(x=Var1,y=ymin,fill=Freq)) +
+    #geom_point(data=df_cat, inherit.aes = F, shape=23,
+               #aes(x=Var1,y=ymin,fill=Freq)) +
 
     ## theme
     theme_bw() +
@@ -890,29 +901,30 @@ zbsyn <- make_pdp_fact(zbinary_brts, "Synurbic", "Anthropogenic Roost", "#8DA0CB
 vsyn <- vsyn + 
   scale_x_discrete(breaks=c("0","1"),
                    labels=c("no", "yes")) + 
-  ggtitle("Virus Richness") + 
+  #ggtitle("Virus Richness") + 
   theme(plot.title = element_text(hjust = 0.5, size = 10))
   
 zsyn <- zsyn + 
   scale_x_discrete(breaks=c("0","1"),
                    labels=c("no", "yes")) + 
-  ggtitle("Zoonotic Proportion") +
+  #ggtitle("Zoonotic Proportion") +
   theme(plot.title = element_text(hjust = 0.5, size = 10))
 
 vbsyn <- vbsyn + 
   scale_x_discrete(breaks=c("0","1"),
                    labels=c("no", "yes")) + 
-  ggtitle("Virus Host") +
+  #ggtitle("Virus Host") +
   theme(plot.title = element_text(hjust = 0.5, size = 10))
 
 zbsyn <- zbsyn + 
   scale_x_discrete(breaks=c("0","1"),
                    labels=c("no", "yes")) + 
-  ggtitle("Zoonotic Host") +
+  #ggtitle("Zoonotic Host") +
   theme(plot.title = element_text(hjust = 0.5, size = 10))
 
-png("/Volumes/BETKE 2021/bathaus/figs/synurbic pdps.png",width=6,height=4.5,units="in",res=600)
-(vsyn + zsyn) / (vbsyn + zbsyn)
+png("/Volumes/BETKE 2021/bathaus/figs/figure 3.png",width=6,height=4.5,units="in",res=600)
+(vsyn + zsyn) / (vbsyn + zbsyn) + plot_annotation(tag_levels = "A") & 
+  theme(plot.tag = element_text(size = 10))
 dev.off()
 
 # ttest and cohens D for synurbic pdps
@@ -1030,7 +1042,7 @@ mp_rich <- make_pdp_cont(vrichness_brts, "X30.2_PET_Mean_mm", "Mean Monthly PET"
 ls_rich <- make_pdp_cont(vrichness_brts, "litter_size_n", "Litter Size", "#E78AC3")
 mlon_rich <- make_pdp_cont(vrichness_brts, "X26.5_GR_MaxLong_dd", "Maximum Longitude", "#E78AC3")
 
-png("/Volumes/BETKE 2021/bathaus/figs/richness pdps.png", width=4,height=6.5,units="in",res=300)
+png("/Volumes/BETKE 2021/bathaus/figs/figure S5.png", width=4,height=6.5,units="in",res=300)
 vit_rich + cit_rich + gr_rich + mx_rich + hp_rich + hb_rich + ml_rich + mp_rich + ls_rich + mlon_rich + plot_layout(nrow = 5, ncol = 2, byrow = TRUE)
 dev.off()
 
@@ -1047,7 +1059,7 @@ mt_zoop <- make_pdp_cont(zoo_prop_brts, "X28.2_Temp_Mean_01degC","Mean Monthly T
 nt_zoop <- make_pdp_fact(zoo_prop_brts, "Neotropical", "Neotropical", "#FC8D62") 
 
 # save
-png("/Volumes/BETKE 2021/bathaus/figs/zoonotic proportion pdps.png", width=4,height=6.5,units="in",res=300)
+png("/Volumes/BETKE 2021/bathaus/figs/figure S6.png", width=4,height=6.5,units="in",res=300)
 cit_zoop + vit_zoop + ml_zoop + fa_zoop + hp_zoop + mp_zoop + ls_zoop + bl_zoop + mt_zoop + nt_zoop + plot_layout(nrow = 5, ncol = 2, byrow = TRUE)
 dev.off()
 
@@ -1064,7 +1076,7 @@ op_vres <- make_pdp_fact(vbinary_brts, "fam_MINIOPTERIDAE", "Miniopteridae", "#6
 bl_vres <- make_pdp_cont(vbinary_brts, "adult_body_length_mm", "Adult Body Length", "#66C2A5")
 
 #save
-png("/Volumes/BETKE 2021/bathaus/figs/virus host pdps.png", width=4,height=6.5,units="in",res=300)
+png("/Volumes/BETKE 2021/bathaus/figs/figure S7.png", width=4,height=6.5,units="in",res=300)
 cit_vres + vit_vres + gr_vres + at_vres + mp_vres + ml_vres + mi_vres + mt_vres + op_vres + bl_vres + plot_layout(nrow = 5, ncol = 2, byrow = TRUE)
 dev.off()
 
@@ -1081,395 +1093,392 @@ bl_zres <- make_pdp_cont(zbinary_brts, "adult_body_length_mm", "Adult Body Lengt
 up_zres <- make_pdp_cont(zbinary_brts, "upper_elevation_m", "Upper Elevation Limit", "#8DA0CB")
 
 # save
-png("/Volumes/BETKE 2021/bathaus/figs/zoonotic virus host pdps.png", width=4,height=6.5,units="in",res=300)
+png("/Volumes/BETKE 2021/bathaus/figs/figure S8.png", width=4,height=6.5,units="in",res=300)
 cit_zres + vit_zres + gr_zres + ml_zres + at_zres + milon_zres + fa_zres + mp_zres + bl_zres + up_zres + plot_layout(nrow = 5, ncol = 2, byrow = TRUE)
 dev.off()
 
-# one where the top 5 for all of them in the same plot?
-png("/Volumes/BETKE 2021/bathaus/figs/All pdps.png", width=8,height=5,units="in",res=300)
-vit_rich + cit_rich + gr_rich + mx_rich + hp_rich +
-cit_zoop + vit_zoop + ml_zoop + fa_zoop + hp_zoop +
-cit_vres + vit_vres + gr_vres + at_vres + mp_vres +
-cit_zres + vit_zres + gr_zres + ml_zres + at_zres + plot_layout(nrow = 4, ncol = 5, byrow = TRUE)
-dev.off()
+# # one where the top 5 for all of them in the same plot?
+# png("/Volumes/BETKE 2021/bathaus/figs/All pdps.png", width=8,height=5,units="in",res=300)
+# vit_rich + cit_rich + gr_rich + mx_rich + hp_rich +
+# cit_zoop + vit_zoop + ml_zoop + fa_zoop + hp_zoop +
+# cit_vres + vit_vres + gr_vres + at_vres + mp_vres +
+# cit_zres + vit_zres + gr_zres + ml_zres + at_zres + plot_layout(nrow = 4, ncol = 5, byrow = TRUE)
+# dev.off()
 
 ############## model predictions
-# pulling predictions (may just want the values separately for now?)
-# csv of predicted reservoirs and another for zoonotic?
-
-## average predictions: Overall virus reservoir
-virus_apreds=lapply(vbinary_brts,function(x) x$predict)
-virus_apreds=do.call(rbind,virus_apreds)
+library(ggpubr)
+#### Virus richness predictions
+vrich_apreds <- lapply(vrichness_brts,function(x) x$predict)
+vrich_apreds <- do.call(rbind,vrich_apreds)
 
 ## aggregate
-virus_apreds=data.frame(aggregate(pred~species,data=virus_apreds,mean),
-                        aggregate(cpred~species,data=virus_apreds,mean)['cpred'], ## holding wos constant
-                        aggregate(dum_virus~species,data=virus_apreds,prod)["dum_virus"],
-                        aggregate(dum_zvirus~species,data=virus_apreds,prod)["dum_zvirus"])
+vrich_apreds  <- data.frame(aggregate(pred~species,data=vrich_apreds,mean),
+                        aggregate(cpred~species,data=vrich_apreds,mean)['cpred'])
 
-### type
-# virus_apreds$type='PCR'
+# am assuming if you want to keep richness in there, you have to merge it back by species?
+rich_with <- merge(vrich_apreds, data[c("species","virus","Synurbic")], by = "species") # add roost status
 
-## average predictions: Zoonotic
-zvirus_apreds=lapply(zbinary_brts,function(x) x$predict)
-zvirus_apreds=do.call(rbind,zvirus_apreds)
+# label
+rich_with$type <- "with"
+
+# without synurbic
+# Virus richness predictions
+no_vrich_preds <- lapply(no_vrichness_brts,function(x) x$predict)
+no_vrich_preds <- do.call(rbind,no_vrich_preds)
 
 ## aggregate
-zvirus_apreds=data.frame(aggregate(pred~species,data=zvirus_apreds,mean),
-                         aggregate(cpred~species,data=zvirus_apreds,mean)['cpred'], ## holding wos constant
-                         aggregate(dum_virus~species,data=virus_apreds,prod)["dum_virus"],
-                         aggregate(dum_zvirus~species,data=virus_apreds,prod)["dum_zvirus"])
+no_vrich_preds <- data.frame(aggregate(pred~species,data=no_vrich_preds,mean),
+                        aggregate(cpred~species,data=no_vrich_preds,mean)['cpred'])
 
-# ## type
-# comp_apreds$type='competence'
+# merge to data to get synurbic
+rich_without <- merge(no_vrich_preds, data[c("species","virus","Synurbic")], by = "species") # add roost status
+
+# type
+rich_without$type <- "without"
+
+# either merge for scatterplots or rbind for facets? Both?
+all_rich <- bind_rows(rich_with, rich_without)
+
+# # faceted fig
+# rich_facet <- ggplot(all_rich, aes(cpred)) + 
+#   geom_density(aes(fill = Synurbic, color = Synurbic)) +
+#   facet_wrap(~type,ncol=1,strip.position='top',scales="free_y") +
+#   theme_bw() +
+#   theme(legend.position = "top", 
+#         legend.text = element_text(size = 8), 
+#         legend.title = element_text(size = 8),
+#         panel.grid.major = element_blank(),
+#         panel.grid.minor = element_blank()) +
+#   labs(x = "predicted richness", fill = "Anthropogenic Roosting", color = "Anthropogenic Roosting") +
+#   scale_color_manual(labels = c("no","yes","unknown"), 
+#                      values = c("#8470ff","#9DD866","#A0B1BA")) +
+#   scale_fill_manual(labels = c("no","yes","unknown"), 
+#                      values = c("#8470ff","#9DD866","#A0B1BA"))
+
+# scatter plot of values with and without
+# pivot wider
+pivot_wider(all_rich)
+rich_preds <- all_rich %>% 
+  select(species, cpred, type, Synurbic, virus) %>%
+  pivot_wider(names_from = type, values_from = cpred)
+
+# save csv
+write.csv(rich_preds, "/Volumes/BETKE 2021/bathaus/flat files/richness predictions.csv")
+
+# # scatter plot
+# rich_scatter <- ggplot(rich_preds, aes(with, without)) + 
+#   geom_point(color = "#E78AC3") +
+#   theme_bw() +
+#   labs(x = "predicted richness with",y = "predicted richness without")+
+#   theme(panel.grid.major = element_blank(),
+#         panel.grid.minor = element_blank())
+
+# save fig
+#png("/Volumes/BETKE 2021/bathaus/figs/virus richness preds.png", width=6.5,height=3.5,units="in",res=300)
+rich_facet + rich_scatter + plot_layout(width = c(45, 55), guides = "collect") & theme(legend.position = "top")
+#dev.off()
+
+#### zoonotic proportion predictions
+zoop_apreds <- lapply(zoo_prop_brts,function(x) x$predict)
+zoop_apreds <- do.call(rbind,zoop_apreds)
+
+# aggregate
+zoop_apreds <- data.frame(aggregate(back~species,data=zoop_apreds,mean),
+                            aggregate(cback~species,data=zoop_apreds,mean)['cback'])
+
+# get zoonotic prop 
+data <- data %>% 
+  mutate(zoo_prop = zvirus/virus) %>%
+  mutate(zoo_prop = ifelse(is.nan(zoo_prop), 0, zoo_prop))
+
+# merge with data
+zoop_with <- merge(zoop_apreds, data[c("species","zoo_prop","Synurbic")], by = "species") # add roost status
+
+# label
+zoop_with$type <- "with"
+
+# without synurbic
+# zoonotic proportion predictions
+no_zoop_preds <- lapply(no_zoo_prop_brts,function(x) x$predict)
+no_zoop_preds <- do.call(rbind,no_zoop_preds)
+
+## aggregate
+no_zoop_preds <- data.frame(aggregate(back~species,data=no_zoop_preds,mean),
+                             aggregate(cback~species,data=no_zoop_preds,mean)['cback'])
+
+# merge with data by species - UPDATE TO ZOONOTIC PROP DATA
+zoop_without <- merge(no_zoop_preds, data[c("species","zoo_prop","Synurbic")], by = "species") # add roost status
+
+# label
+zoop_without$type <- "without"
+
+# rbind
+all_zoop <- bind_rows(zoop_with, zoop_without)
+
+# faceted fig
+zoop_facet <- ggplot(all_zoop, aes(cback)) + 
+  geom_density(aes(fill = Synurbic, color = Synurbic)) +
+  facet_wrap(~type,ncol=1,strip.position='top',scales="free_y") +
+  theme_bw() +
+  theme(legend.position = "top", 
+        legend.text = element_text(size = 9), 
+        legend.title = element_text(size = 9),
+        legend.key.size = unit(0.4, "cm"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  labs(x = "predicted zoonotic proportion", fill = "Anthropogenic Roosting", color = "Anthropogenic Roosting") +
+  scale_color_manual(labels = c("no","yes","unknown"), 
+                     values = c("#8470ff","#9DD866","#A0B1BA")) +
+  scale_fill_manual(labels = c("no","yes","unknown"), 
+                    values = c("#8470ff","#9DD866","#A0B1BA"))
+
+# scatter plot of values with and without
+# pivot wider
+zoop_preds <- all_zoop %>% 
+  select(species, cback, type, Synurbic, zoo_prop) %>%
+  pivot_wider(names_from = type, values_from = cback)
+
+# save
+write.csv(zoop_preds, "/Volumes/BETKE 2021/bathaus/flat files/zoonotic proportion predictions.csv")
+
+# # scatter plot
+# zoop_scatter <- ggplot(zoop_preds, aes(with, without)) + 
+#   geom_point(color = "#FC8D62") +
+#   theme_bw() +
+#   labs(x = "predicted zoonotic proportion with", y = "predicted zoonotic proportion without")+
+#   theme(panel.grid.major = element_blank(),
+#         panel.grid.minor = element_blank())
 # 
-# ## apreds
-# apreds=rbind.data.frame(pcr_apreds,comp_apreds)
+# # ggarrange makes them the same size, no problem
+# #png("/Volumes/BETKE 2021/bathaus/figs/zoonotic proportion preds.png", width=7,height=3.5,units="in",res=300)
+# ggarrange(zoop_facet, zoop_scatter, labels = c("A","B"))
+# #dev.off()
+# 
+# # maybe density plot of knowns instead?
+# zoop_preds$known <- ifelse(zoop_preds$zoo_prop == 0, "unknown", "known")
+# 
+# all_zoop$known <- ifelse(all_zoop$zoo_prop == 0, "unknown", "known")
+# 
+# ggplot(all_zoop, aes(cback)) +
+#   geom_density(aes(fill=known,color=known)) +
+#   facet_wrap(~type,ncol=1,strip.position='top',scales="free_y")
+# 
+# zoop_known <- ggplot(all_zoop, aes(cback)) + 
+#   geom_density(aes(fill=known,color=known)) +
+#   facet_wrap(~type,ncol=1,strip.position='top',scales="free_y") +
+#   theme_bw() +
+#   theme(legend.position = "top", 
+#         legend.text = element_text(size = 9), 
+#         legend.title = element_text(size = 9),
+#         legend.key.size = unit(0.4, "cm"),
+#         panel.grid.major = element_blank(),
+#         panel.grid.minor = element_blank()) +
+#   labs(x = "predicted zoonotic proportion", fill = "Known Associations", color = "Known Associations")
+# 
+# png("/Volumes/BETKE 2021/bathaus/figs/zoonotic proportion preds Knowns.png", width=7,height=3.5,units="in",res=300)
+# ggarrange(zoop_known, zoop_scatter, labels = c("A","B"))
+# dev.off()
 
-virus_apreds[order(virus_apreds$pred, decreasing=T),]
-zvirus_apreds[order(zvirus_apreds$pred, decreasing = T),]
+#### average predictions: Overall virus reservoir
+# with
+vres_apreds <- lapply(vbinary_brts,function(x) x$predict)
+vres_apreds <- do.call(rbind,vres_apreds)
 
-zvirus_apreds$zpred <- zvirus_apreds$pred
-zvirus_apreds$pred <- NULL
+## aggregate
+vres_apreds=data.frame(aggregate(pred~species,data=vres_apreds,mean),
+                        aggregate(cpred~species,data=vres_apreds,mean)['cpred'],
+                        aggregate(dum_virus~species,data=vres_apreds,prod)["dum_virus"])
+                        # aggregate(dum_zvirus~species,data=virus_apreds,prod)["dum_zvirus"])
 
-virus_apreds$vpred <- virus_apreds$pred
-virus_apreds$pred <- NULL
+# am assuming if you want to keep richness in there, you have to merge it back by species?
+vres_with <- merge(vres_apreds, data[c("species","Synurbic")], by = "species") # add roost status
 
+# label
+vres_with$type <- "with"
 
-# read in data and merge traits
-data <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/cleaned dataset 30 cutoff.rds")
-apreds <- merge(virus_apreds, zvirus_apreds[c("species","zpred")], by = "species")
-apreds <- merge(apreds, data[c("species","Synurbic")], by = "species") # add roost status
+# without
+no_vres_apreds <- lapply(no_vbinary_brts,function(x) x$predict)
+no_vres_apreds <- do.call(rbind,no_vres_apreds)
 
-write_csv(virus_apreds, "/Volumes/BETKE 2021/bathaus/flat files/virus predictions.csv")
-write_csv(zvirus_apreds, "/Volumes/BETKE 2021/bathaus/flat files/zoonotic virus predictions.csv")
-write_csv(apreds, "/Volumes/BETKE 2021/bathaus/flat files/all virus predictions.csv")
-
-
-apreds <- read_csv("/Volumes/BETKE 2021/bathaus/flat files/all virus predictions.csv")
-# calculate the number of reservoir species 
-# of known reservoirs, how many of them are anthropogenic roosting?
-ksyn <- filter(apreds, apreds$dum_virus == 1 & apreds$Synurbic == 1)
-known <- filter(apreds, apreds$dum_virus == 1)
-nrow(ksyn)/nrow(known)
-# 0.6358839
-
-zksyn <- filter(apreds, apreds$dum_zvirus == 1 & apreds$Synurbic == 1)
-zknown <- filter(apreds, apreds$dum_zvirus == 1)
-nrow(zksyn)/nrow(zknown)
-# 0.6541353
-
-# then the number of undetected reservoir species
-# of unknown/undetected species, how many are likely to be reservoirs and how many roost in anthropogenic structures?
-undet <- filter(apreds, apreds$dum_virus == 0 & vpred > 0.5) %>%
-  arrange(desc(vpred)) %>%
-  select(!zpred)
-syndet <- filter(undet, Synurbic == 1)
-nrow(undet) # 37 undetected species, 27 of which are anthropogenic roosting
-nrow(syndet) 
-
-# zoonotic 
-zundet <- filter(apreds, apreds$dum_zvirus == 0 & zpred > 0.5) %>% 
-  arrange(desc(zpred)) %>%
-  select(!vpred)
-zsyndet <- filter(zundet, Synurbic == 1)
-nrow(zundet) # 18 undetected bat species
-nrow(zsyndet) # 14 of which are anthropogenic roosting
-
-# save these
-write_csv(undet, "/Volumes/BETKE 2021/bathaus/flat files/overall undetected.csv")
-write_csv(syndet, "/Volumes/BETKE 2021/bathaus/flat files/overall undetected synurbic.csv")
-write_csv(zundet, "/Volumes/BETKE 2021/bathaus/flat files/zoonotic undetected.csv")
-write_csv(zsyndet, "/Volumes/BETKE 2021/bathaus/flat files/zoonotic undetected synurbic.csv")
-
-vnames <- undet$species
-f <- filter(data, species %in% vnames)
-filter(`synurbic and traits only`, species %in% vnames) %>% select(fam) %>% table()
-
-znames <- zundet$species
-zf <- filter(data, species %in% znames)
-filter(`synurbic and traits only`, species %in% znames) %>% select(fam) %>% table()
+## aggregate
+no_vres_apreds <- data.frame(aggregate(pred~species,data=no_vres_apreds,mean),
+                        aggregate(cpred~species,data=no_vres_apreds,mean)['cpred'], # holding citations constant
+                        aggregate(dum_virus~species,data=no_vres_apreds,prod)["dum_virus"])
 
 
-### old code I might want to look at later
-#### with bat brts
-fvirus_fig <- vinfPlot(fvirus_brts, fviurs_df, fvirus_fig, "grey")
-fzvirus_fig <- vinfPlot(fzvirus_brts, fzviurs_df, fzvirus_fig, "palegreen3")
+# merge to data to get synurbic
+vres_without <- merge(no_vres_apreds, data[c("species","Synurbic")], by = "species") # add roost status
 
-# make multi
-fvirus <- fvirus_fig[[3]] + 
-  labs(x = " ", y = "Relative Importance") +
-  theme(axis.title.y = element_text(size = 10, hjust = -8, vjust = 5)) +
-  ggtitle("Overall Virus")
+# type
+vres_without$type <- "without"
 
-fzvirus <- fzvirus_fig[[3]] + 
-  labs(x = " ", y = " ") +
-  #theme(axis.title.x = element_text(size = 14)) +
-  ggtitle("Zoonotic Virus")
+# either merge for scatterplots or rbind for facets? Both?
+all_vres <- bind_rows(vres_with, vres_without)
 
-# Create the patchwork, dropping the y-axis labels from the plots, and setting
-# the margins, this adds the common label
-h_patch <- fvirus + fzvirus & ylab(NULL) & theme(plot.margin = margin(5.5, 5.5, 0, 5.5))
+# facet by known and unknown
+all_vres$known <- ifelse(all_vres$dum_virus == 1, "unknown", "known")
 
-# Use the tag label as a y-axis label
-png("fvirus_variableinf.png",width=7,height=6,units="in",res=600)
-wrap_elements(h_patch) +
-  labs(tag = "Relative Importance") +
-  theme(
-    plot.tag = element_text(size = 10, angle = 90),
-    plot.tag.position = "left"
-  )
+# plot for with only
+all_vres %>% 
+  filter(type == "with") %>%
+ggplot(aes(cpred)) + 
+  geom_density(aes(fill=Synurbic,color=Synurbic), alpha = 0.5) +
+  facet_wrap(~known,ncol=1,strip.position='top',scales="free_y") +
+  theme_bw() +
+  theme(legend.position = "top", 
+        legend.text = element_text(size = 9), 
+        legend.title = element_text(size = 9),
+        legend.key.size = unit(0.4, "cm"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  labs(x = "predicted probablity of hosting", fill = "Anthropogenic Roosting", color = "Anthropogenic Roosting") +
+  scale_color_manual(labels = c("no","yes","unknown"), 
+                     values = c("#8470ff","#9DD866","#A0B1BA")) +
+  scale_fill_manual(labels = c("no","yes","unknown"), 
+                    values = c("#8470ff","#9DD866","#A0B1BA")) -> vres_gg
+
+# scatter plot of values with and without
+# pivot wider
+vres_preds <- all_vres %>% 
+  select(species, cpred, type, Synurbic, dum_virus) %>%
+  pivot_wider(names_from = type, values_from = cpred)
+
+# save
+write.csv(vres_preds, "/Volumes/BETKE 2021/bathaus/flat files/virus host predictions.csv")
+
+# scatter plot
+vres_scatter <- ggplot(vres_preds, aes(with, without)) + 
+  geom_point(color = "#66C2A5") +
+  theme_bw() +
+  labs(x = "predicted probablity of hosting with", y = "predicted probablity of hosting without")+
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+  
+# save figs 
+png("/Volumes/BETKE 2021/bathaus/figs/figure 4.png", width=7,height=3.5,units="in",res=300)
+ggarrange(vres_scatter, vres_gg, labels = c("A","B"))
 dev.off()
 
-#setwd("/Users/brianabetke/Desktop/Bats and Viruses/ESA 2022/figs")
-png("fvirus_variableinf.png",width=7,height=6,units="in",res=600)
-fvirus/fzvirus
-dev.off()
+# cor test for virus hosts
+cor.test(vres_preds$with, vres_preds$without, method = "pearson")
+# Pearson's product-moment correlation
+# 
+# data:  vres_preds$with and vres_preds$without
+# t = 632.62, df = 1277, p-value < 2.2e-16
+# alternative hypothesis: true correlation is not equal to 0
+# 95 percent confidence interval:
+#  0.9982239 0.9985737
+# sample estimates:
+#       cor 
+# 0.9984084 
 
-#### With full bat dataset
-virus_fig <- vinfPlot(virus_brts, viurs_df, virus_fig, "dimgrey")
-zvirus_fig <- vinfPlot(zvirus_brts, zviurs_df, zvirus_fig, "palegreen3")
-
-# make multi
-virus <- fvirus_fig[[3]] + 
-  labs(x = " ", y = "Sqrt Relative Importance") +
-  theme(axis.title.y = element_text(size = 14, hjust = -14, vjust = 5)) +
-  ggtitle("Overall Virus", subtitle = paste("Test AUC =", 
-                                            paste(format(round(fvirus_fig[[2]]$avg, 2), nsmall = 2),
-                                                  paste(format(round(fvirus_fig[[2]]$se, 2), nsmall = 2),
-                                                        sep = " "), sep = " +- ")))
-zvirus <- zvirus_fig[[3]] + 
-  labs(x = " ", y = " ") +
-  theme(axis.title.x = element_text(size = 14)) +
-  ggtitle("Zoonotic Virus", subtitle = paste("Test AUC =", 
-                                             paste(round(zvirus_fig[[2]]$avg, 2),
-                                                   paste(format(round(zvirus_fig[[2]]$se, 2), nsmall = 2),
-                                                         sep = " "), sep = " +- ")))
-
-#setwd("/Users/brianabetke/Desktop/Bats and Viruses/ESA 2022/figs")
-png("virus_variableinf.png",width=7,height=7,units="in",res=600)
-virus/zvirus
-dev.off()
-
-# Square root of y
-sqrt_virus <- virus + scale_y_sqrt()
-sqrt_zvirus <- zvirus + scale_y_sqrt()
-
-png("sqrt_virus_variableinf.png",width=15,height=10,units="in",res=600)
-sqrt_virus/sqrt_zvirus
-dev.off()
-
-
-
-
-
-pdp_agg=function(mod, feature){
-  
-  pdep=plot.gbm(mod[["mod"]], 
-                i.var = feature, 
-                return.grid = TRUE)
-  
-  pdep$seed=unique(mod[["seed"]])
-  
-  pdep$predictor = pdep[feature][,1]
-  
-  pdep$rank=1:nrow(pdep)
-  
-  pdep$yhat=pdep$y
-  
-  return(pdep)
-  
-}
+#### average predictions: Zoonotic
+zres_apreds <- lapply(zbinary_brts,function(x) x$predict)
+zres_apreds <- do.call(rbind,zres_apreds)
 
 # aggregate
-agg = do.call(rbind, lapply(zoo_prop_brts,function(x) pdp_agg(x, "Synurbic")))
-zagg = do.call(rbind, lapply(vrichness_brts,function(x) pdp_agg(x, "Synurbic")))
-## get element-wise means
-y=with(agg,tapply(yhat,predictor,mean))
+zres_apreds=data.frame(aggregate(pred~species,data=zres_apreds,mean),
+                         aggregate(cpred~species,data=zres_apreds,mean)['cpred'], ## holding citation count constant
+                         aggregate(dum_zvirus~species,data=zres_apreds,prod)["dum_zvirus"])
 
-## save as mean
-#pmean=data.frame(predictor=x,yhat=y)
-pmean=data.frame(y)
-names(pmean)="yhat"
-pmean$predictor=rownames(pmean)
-rownames(pmean)=NULL
 
-## make temp data
-temp=data
-temp$predictor=temp[feature][,1]
+# am assuming if you want to keep richness in there, you have to merge it back by species?
+zres_with <- merge(zres_apreds, data[c("species","Synurbic")], by = "species") # add roost status
 
-## do nothing
-agg=agg
-pmean=pmean
-temp=temp
+# label
+zres_with$type <- "with"
 
-## get yrange
-yrange=range(agg$yhat,pmean$yhat,na.rm=T)
+## Zoonotic without
+no_zres_apreds <- lapply(no_zbinary_brts,function(x) x$predict)
+no_zres_apreds <- do.call(rbind,no_zres_apreds)
 
-# pull counts for color
-df_cat <- as.data.frame(table(temp$predictor))
+## aggregate
+no_zres_apreds=data.frame(aggregate(pred~species,data=no_zres_apreds,mean),
+                       aggregate(cpred~species,data=no_zres_apreds,mean)['cpred'], ## holding citation count constant
+                       aggregate(dum_zvirus~species,data=no_zres_apreds,prod)["dum_zvirus"])
 
-# fix y axis point
-df_cat$ymin <- yrange[1]-0.01
 
-## fix temp to yrange
-#temp$yhat=ifelse(temp$predictor==1,max(yrange),min(yrange))
+# am assuming if you want to keep richness in there, you have to merge it back by species?
+zres_without <- merge(no_zres_apreds, data[c("species","Synurbic")], by = "species") # add roost status
 
-## ggplot with rug
-set.seed(1)
-ggplot(agg,aes(predictor,yhat,group=seed)) +
-  
-  ## add individual BRTs
-  geom_jitter(size=1,alpha=0.25,colour=pcolor,width=0.1) +
-  
-  ## add mean
-  geom_point(data=pmean,size=2,inherit.aes=F,shape=15,
-             aes(predictor,yhat)) +
-  
-  # # # ## add rug
-  # geom_rug(data=df_cat,inherit.aes=F,
-  #          aes(Var1, ymin),
-  #          sides="b",position="jitter",
-  #          colour="grey",alpha=0.25,
-  #          na.rm=T)+
-  
-  geom_point(data=df_cat, inherit.aes = F, shape=23, 
-             aes(x=Var1,y=ymin,fill=Freq)) +
-  
-  ## theme
+# label
+zres_without$type <- "without"
+
+# rowbind
+all_zres <- bind_rows(zres_with, zres_without)
+
+# scatter plot of values with and without
+# pivot wider
+zres_preds <- all_zres %>% 
+  select(species, cpred, type, Synurbic, dum_zvirus) %>%
+  pivot_wider(names_from = type, values_from = cpred)
+
+# save
+write.csv(zres_preds, "/Volumes/BETKE 2021/bathaus/flat files/zoonotic virus host predictions.csv")
+
+# plots
+# scatter plot
+# facet by known and unknown
+all_zres$known <- ifelse(all_zres$dum_zvirus == 1, "unknown", "known")
+
+# plot for with only
+all_zres %>% 
+  filter(type == "with") %>%
+  ggplot(aes(cpred)) + 
+  geom_density(aes(fill=Synurbic,color=Synurbic), alpha = 0.5) +
+  facet_wrap(~known,ncol=1,strip.position='top',scales="free_y") +
   theme_bw() +
-  theme(axis.text=element_text(size=6),
-        axis.title=element_text(size=7)) +
-  theme(axis.title.x=element_text(margin=margin(t=5,r=0,b=0,l=0))) +
-  theme(axis.title.y=element_text(margin=margin(t=0,r=5,b=0,l=0))) +
-  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank()) +
-  labs(x=feature,y="marginal effect") +
-  scale_y_continuous(limits=c(yrange[1]-0.01,yrange[2]+0.01),
-                     labels=scales::number_format(accuracy=0.01)) +
-  scale_fill_continuous(high = "#525252", low = "#D9D9D9", guide="none")
+  theme(legend.position = "top", 
+        legend.text = element_text(size = 9), 
+        legend.title = element_text(size = 9),
+        legend.key.size = unit(0.4, "cm"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  xlim(0,1) +
+  labs(x = "predicted probablity of zoontic host", fill = "Anthropogenic Roosting", color = "Anthropogenic Roosting") +
+  scale_color_manual(labels = c("no","yes","unknown"), 
+                     values = c("#8470ff","#9DD866","#A0B1BA")) +
+  scale_fill_manual(labels = c("no","yes","unknown"), 
+                    values = c("#8470ff","#9DD866","#A0B1BA")) -> zres_gg
 
-
-# pull relative importance
-vinf <- lapply(vrichness_brts,function(x) x$rinf)
-
-# bind with rbind
-data_vinf <- do.call(rbind,vinf)
-
-# add rankings 
-data_vinf$rank <- rep(1:63, times = 100)
-
-# tidy output
-df_name <- data_vinf %>%
-  group_by(var) %>%
-  summarize(avg = mean(rel.inf),
-            rse = std.error(rel.inf),
-            rvar = var(rel.inf)) %>%
-  ungroup() %>%
-  arrange(desc(avg))
-
-# calculate average rankings
-ranks <- data_vinf %>%
-  group_by(var) %>%
-  summarize(avg = mean(rank),
-            rse = std.error(rank),
-            rvar = var(rank)) %>%
-  ungroup() %>%
-  arrange(avg)
-
-
-
-
-pdp_agg=function(mod, feature){
-  
-  if(mod[["mod"]][["distribution"]][["name"]] == "gaussian"){
-    
-    pdep=plot.gbm(mod[["mod"]], 
-                  i.var = feature,
-                  return.grid = TRUE)
-  }else{
-    
-    pdep=plot.gbm(mod[["mod"]], 
-                  i.var = feature, 
-                  type = "response",
-                  return.grid = TRUE)
-  }
-  
-  pdep$seed=unique(mod[["seed"]])
-  
-  pdep$predictor = pdep[feature][,1]
-  
-  pdep$rank=1:nrow(pdep)
-  
-  pdep$yhat=pdep$y
-  
-  return(pdep)
-  
-}
-
-
-# aggregate
-agg = do.call(rbind, lapply(zbinary_brts,function(x) pdp_agg(x, "Synurbic")))
-
-## get element-wise means
-y=with(agg,tapply(yhat,predictor,mean))
-
-## save as mean
-#pmean=data.frame(predictor=x,yhat=y)
-pmean=data.frame(y)
-names(pmean)="yhat"
-pmean$predictor=rownames(pmean)
-rownames(pmean)=NULL
-
-## make temp data
-temp=data
-temp$predictor=temp["Synurbic"][,1]
-
-## do nothing
-agg=agg
-pmean=pmean
-temp=temp
-
-## get yrange
-yrange=range(agg$yhat,pmean$yhat,na.rm=T)
-
-# pull counts for color
-df_cat <- as.data.frame(table(temp$predictor))
-
-# fix y axis point
-df_cat$ymin <- yrange[1]-0.01
-
-## fix temp to yrange
-#temp$yhat=ifelse(temp$predictor==1,max(yrange),min(yrange))
-
-## ggplot with rug
-set.seed(1)
-ggplot(agg,aes(predictor,yhat,group=seed)) +
-  
-  ## add individual BRTs
-  geom_jitter(size=1,alpha=0.25,colour=pcolor,width=0.1) +
-  
-  ## add mean
-  geom_point(data=pmean,size=2,inherit.aes=F,shape=15,
-             aes(predictor,yhat)) +
-  
-  # # # ## add rug
-  # geom_rug(data=df_cat,inherit.aes=F,
-  #          aes(Var1, ymin),
-  #          sides="b",position="jitter",
-  #          colour="grey",alpha=0.25,
-  #          na.rm=T)+
-  
-  geom_point(data=df_cat, inherit.aes = F, shape=23,
-             aes(x=Var1,y=ymin,fill=Freq)) +
-  
-  ## theme
+zres_scatter <- ggplot(zres_preds, aes(with, without)) + 
+  geom_point(color = "#8DA0CB") +
   theme_bw() +
-  theme(axis.text=element_text(size=6),
-        axis.title=element_text(size=7)) +
-  theme(axis.title.x=element_text(margin=margin(t=5,r=0,b=0,l=0))) +
-  theme(axis.title.y=element_text(margin=margin(t=0,r=5,b=0,l=0))) +
-  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank()) +
-  labs(x=var_name,y="marginal effect") +
-  scale_y_continuous(limits=c(yrange[1]-0.01,yrange[2]+0.01),
-                     labels=scales::number_format(accuracy=0.01)) +
-  scale_fill_continuous(high = "#525252", low = "#D9D9D9", guide="none")
+  labs(x = "probablity of zoontic host with", y = "probablity of zoonotic host without")+
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  xlim(0.15,1) +
+  ylim(0.15,1)
+
+# save
+png("/Volumes/BETKE 2021/bathaus/figs/figure 5.png", width=7,height=3.5,units="in",res=300)
+ggarrange(zres_scatter, zres_gg, labels = c("A","B"))
+dev.off()
+
+# cor test
+cor.test(zres_preds$with, zres_preds$without, method = "pearson")
+# Pearson's product-moment correlation
+# 
+# data:  zres_preds$with and zres_preds$without
+# t = 4810.7, df = 1277, p-value < 2.2e-16
+# alternative hypothesis: true correlation is not equal to 0
+# 95 percent confidence interval:
+#  0.9999692 0.9999753
+# sample estimates:
+#       cor 
+# 0.9999724 
+
+# mega p adjustment
+ps=c(vrichdata$tsum$p.value,
+     zpropdata$tsum$p.value,
+     vresAUC$tsum$p.value,
+     vresSEN$tsum$p.value,
+     vresSpec$tsum$p.value,
+     zresAUC$tsum$p.value,
+     zresSEN$tsum$p.value,
+     zresSpec$tsum$p.value
+     )
+round(p.adjust(ps,method="BH"),4)
+
+round(p.adjust(ps,method="BH"),4)
+# [1] 1 1 1 1 1 1 1 1

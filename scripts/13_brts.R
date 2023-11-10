@@ -59,6 +59,10 @@ rm(c,t,tsub)
 data <- data %>% 
   select(-c(det_inv, biogeographical_realm)) 
 
+# transform citations
+data$cites <- sqrt(data$cites)
+data$vcites <- sqrt(data$vcites)
+
 # save before removing species (need this for predictions)
 fdata <- data
 
@@ -678,7 +682,7 @@ brts <- function(seed, response, nt, shr, int.d, syn, cv = NULL){
 
 #### apply across specified number of splits smax
 # Filtered dataset
-smax=100 # 1 just for testing on personal comp
+smax=5 # 1 just for testing on personal comp
 
 # Richness models with and without synurbic
 vrichness_brts <- lapply(1:smax,function(x) brts(seed = x,response = "virus", nt = 15000, shr = 0.001, int.d = 4, syn = "yes", cv = NULL))
