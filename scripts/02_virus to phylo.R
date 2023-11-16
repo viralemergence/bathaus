@@ -12,11 +12,11 @@ library(Hmisc)
 library(plyr)
 
 ## load species-level virus data
-setwd("~/Desktop/bathaus/virus data")
+setwd("/Volumes/BETKE 2021/bathaus/virus data")
 species=read.csv("viral response_bats VIRION flat.csv")
 
 ## load in Upham phylogeny
-setwd("~/Desktop/bathaus/phylos")
+setwd("/Volumes/BETKE 2021/bathaus/phylos")
 tree=read.nexus('MamPhy_fullPosterior_BDvr_Completed_5911sp_topoCons_NDexp_MCC_v2_target.tre')
 
 ## load in taxonomy
@@ -112,5 +112,5 @@ data=merge(taxa,species,by="species",all.x=T)
 data$virus=ifelse(is.na(data$virus),0,data$virus)
 
 ## write flat file
-setwd("~/Desktop/bathaus/flat files")
+setwd("/Volumes/BETKE 2021/bathaus/flat files")
 write.csv(data,"bathaus_virus to phylo backbone.csv")

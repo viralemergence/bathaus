@@ -36,7 +36,6 @@
 "habitat_breadth_n",0.9
 "foraging_stratum",0.92
 "activity_cycle",0.92
-"biogeographical_realm",0.92
 "Indomalayan",0.92
 "Neotropical",0.92
 "Oceanian",0.92
@@ -51,7 +50,6 @@
 "trophic_level",0.94
 "category",0.97
 "population_trend",0.97
-"iucn2020_binomial",0.99
 "cites",1
 "vcites",1
 "fam_EMBALLONURIDAE",1

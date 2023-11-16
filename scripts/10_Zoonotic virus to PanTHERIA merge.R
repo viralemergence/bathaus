@@ -9,12 +9,11 @@ library(tidyverse)
 library(Hmisc) # capitalize()
 
 # Read in PanTHERIA merge data
-setwd("/Users/brianabetke/Desktop/Bats and Viruses/bathaus")
+setwd("/Volumes/BETKE 2021/bathaus")
 data <- read_csv("flat files/master data and PanTHERIA.csv")
 
 # read in zvirus data
-zvirus <- read_csv("virus data/zoonotic viral response_bats VIRION flat.csv") %>% 
-  select(-...1)
+zvirus <- read_csv("virus data/zoonotic viral response_bats VIRION flat.csv") 
 
 # need to capitalize genus
 zvirus <- zvirus %>% 

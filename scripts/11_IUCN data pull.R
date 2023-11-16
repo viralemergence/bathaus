@@ -11,7 +11,7 @@ library(rredlist)
 
 # Update synurbic data
 ## load in previous trait data
-zoonotic <- read_csv("~/Desktop/Bats and Viruses/bathaus/flat files/zoonotic virus to merged PanTHERIA.csv")
+zoonotic <- read_csv("/Volumes/BETKE 2021/bathaus/flat files/zoonotic virus to merged PanTHERIA.csv")
 
 # view table updates
 table(zoonotic$Synurbic)
@@ -54,7 +54,7 @@ if(pull == "yes"){
   # [10] "Nyctophilus corbeni"    "Pipistrellus kuhlii"    "Pteropus chrysoproctus"
   # [13] "Pteropus pelewensis"    "Rhinolophus borneensis" "Triaenops rufus" 
   
-  # remove them
+  # unique only
   rdata <- unique(rdata)
   
   # write as CSV
@@ -62,7 +62,7 @@ if(pull == "yes"){
 
 }else{ #read in the saved r data instead
 # read in data instead if only need to merge
-rdata <- read_csv("/Users/brianabetke/Desktop/Bats and Viruses/bathaus/IUCN data/IUCN flat file.csv")
+rdata <- read_csv("/Volumes/BETKE 2021/bathaus/IUCN data/IUCN flat file.csv")
 }
 
 # names 
@@ -167,4 +167,4 @@ icname_merge <- merge(zoonotic, rdata[c("icnames","category","population_trend")
 table(is.na(icname_merge$category), icname_merge$Synurbic)
 
 # write as csv for merge file
-write.csv(icname_merge, "/Users/brianabetke/Desktop/Bats and Viruses/bathaus/flat files/IUCN data merge to zoonotic.csv")
+write.csv(icname_merge, "/Volumes/BETKE 2021/bathaus/flat files/IUCN data merge to zoonotic.csv")

@@ -2,17 +2,21 @@
 # Merging synurbic data to virus COMBINE merged dataset
 # babetke@utexas.edu
 
-# Test script for merging the bat data I have at this point and the virus data. Not COMBINE just yet
+# updated virus data 11/14/23
+
+# clear environment
+rm(list=ls())
+graphics.off()
 
 # packages
 library(tidyverse)
 
 # taxonomy, citations, virus, synurb skeleton data
-virus <- read_csv("~/Desktop/Bats and Viruses/bathaus/flat files/filter data_600 species_editable.csv") %>%
+virus <- read_csv("/Volumes/BETKE 2021/bathaus/flat files/master data_1287 species.csv") %>%
   select(!(...1)) 
 
 # Google sheet data
-batroost <- read_csv("~/Desktop/Bats and Viruses/bathaus/Synurbic data/Bat References Spreadsheet.csv") %>%
+batroost <- read_csv("/Volumes/BETKE 2021/bathaus/Synurbic data/Bat References Spreadsheet.csv") %>%
   select(species, Synurbic, Complete)
 
 # look at how many complete observations you have - 333
@@ -25,5 +29,5 @@ merged <- merge(virus, batroost, by = "species", all = TRUE) %>%
   mutate(fam = ifelse(gen == "Miniopterus", "MINIOPTERIDAE", fam))
 
 # Export
-setwd("/Users/brianabetke/Desktop/Bats and Viruses/bathaus")
-write.csv(merged, "flat files/Synurb and filter data Merge.csv", row.names = FALSE)
+setwd("/Volumes/BETKE 2021/bathaus/flat files")
+write.csv(merged, "Synurb and filter data Merge.csv", row.names = FALSE)

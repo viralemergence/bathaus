@@ -10,7 +10,7 @@ graphics.off()
 library(tidyverse)
 
 # Read in the merged dataset
-setwd("/Users/brianabetke/Desktop/Bats and Viruses/bathaus")
+setwd("/Volumes/BETKE 2021/bathaus")
 data <- read_csv("flat files/master data and COMBINE.csv") #%>% 
   #select(-cnames)
 
@@ -80,9 +80,9 @@ GR$MSW05_Binomial <- recode(GR$MSW05_Binomial,
                             ) 
 # Check again 
 setdiff(data$species, GR$MSW05_Binomial)
-# 
+# went from 237 to 193
 
-# assign traits to other synonyms beyond genus change or simple one letter differences
+# assign traits to synonyms
 data$pcnames <- recode(data$species,
                              "Carollia sowelli" = "Carollia brevicauda",
                              "Dermanura incomitatus" = "Dermanura watsoni",
@@ -126,4 +126,3 @@ rm(d)
 
 # write after matching
 write.csv(data_GR,"flat files/master data and PanTHERIA.csv", row.names = FALSE)
-

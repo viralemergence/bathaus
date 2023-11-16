@@ -1,4 +1,6 @@
 # Zoonotic Virus Pull
+# pulling all zoonotic viruses from VIRION
+# Updated 11/14/23
 
 ## clean environment & plots
 rm(list=ls()) 
@@ -9,8 +11,8 @@ library(tidyverse)
 library(vroom)
 
 ## load VIRION
-setwd("~/Desktop/Bats and Viruses/virion/Virion")
-virion=vroom("Virion.csv.gz")
+setwd("~/Desktop/Virion")
+virion=vroom("/Volumes/BETKE 2021/bathaus/Verena data/Virion.v0.2.1.csv.gz")
 
 ## trim to host and virus names NCBI resolved
 virion=virion[virion$HostNCBIResolved==T & virion$VirusNCBIResolved==T,]
@@ -58,6 +60,6 @@ species <- bats %>%
   summarize(zvirus = sum(zoonotic))
 
 # then save a s csv. Send the updated script to 
-setwd("~/Desktop/Bats and Viruses/bathaus/virus data")
+setwd("/Volumes/BETKE 2021/bathaus/virus data")
 write.csv(species,"zoonotic viral response_bats VIRION flat.csv", row.names = FALSE)
 

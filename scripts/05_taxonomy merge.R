@@ -11,7 +11,7 @@ library(tidyverse)
 library(plyr)
 
 ## merge taxonomy/viruses with citation
-setwd("~/Desktop/bathaus/flat files")
+setwd("/Volumes/BETKE 2021/bathaus/flat files")
 data=read.csv("bathaus_virus to phylo backbone.csv")
 cites=read.csv("bathaus citations.csv")
 data=merge(data,cites,by="tip")
@@ -22,7 +22,7 @@ data$X.x=NULL
 data$X.y=NULL
 
 ## merge santini
-setwd("~/Desktop/bathaus/Santini et al 2018")
+setwd("/Volumes/BETKE 2021/Santini et al 2018")
 sdata=read.csv("Santini_dwellers and visitors.csv")
 
 ## check names
@@ -42,7 +42,7 @@ data$filter=ifelse(data$virus==0 & data$cites==0,"drop","keep")
 data$vfilter=ifelse(data$virus==0 & data$vcites==0,"drop","keep")
 
 ## save whole dataset
-setwd("~/Desktop/bathaus/flat files")
+setwd("/Volumes/BETKE 2021/bathaus/flat files")
 write.csv(data,"master data_1287 species.csv")
 
 ## trim based on broad filter

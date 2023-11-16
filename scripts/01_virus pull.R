@@ -2,6 +2,8 @@
 ## pulling all bat viruses from VIRION
 ## danbeck@ou.edu
 
+## Updated to VIRION latest release (v0.2.1) on 11/14/23 by Briana Betke
+
 ## clean environment & plots
 rm(list=ls()) 
 graphics.off()
@@ -11,8 +13,8 @@ library(tidyverse)
 library(vroom)
 
 ## load VIRION
-setwd("/Users/brianabetke/Desktop/Bats and Viruses/virion/Virion")
-virion=vroom("Virion.csv.gz")
+setwd("~/Desktop/Virion")
+virion=vroom("/Volumes/BETKE 2021/bathaus/Verena data/Virion.v0.2.1.csv.gz")
 
 ## prune to Chiroptera
 bats=virion %>% 
@@ -26,5 +28,5 @@ bats$virus=1
 species=aggregate(virus~Host,data=bats,sum)
 
 ## write to flat file
-setwd("~/Desktop/bathaus/virus data")
+setwd("/Volumes/BETKE 2021/bathaus/virus data")
 write.csv(species,"viral response_bats VIRION flat.csv")

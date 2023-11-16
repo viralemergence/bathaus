@@ -6,6 +6,7 @@
 library(tidyverse)
 
 # Read in datafiles
+setwd("/Volumes/BETKE 2021/bathaus")
 dwellers <- read_csv("Santini et al 2018/Chiroptera_dwellers.csv", col_names = TRUE)
 visitors <- read_csv("Santini et al 2018/Chiroptera_visitors.csv", col_names = TRUE)
 

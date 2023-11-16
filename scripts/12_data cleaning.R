@@ -10,7 +10,7 @@ library(tidyverse)
 library(fastDummies) # dummy coding family
 
 ### Read in data
-zoonotic <- read_csv("~/Desktop/Bats and viruses/bathaus/flat files/IUCN data merge to zoonotic.csv")
+zoonotic <- read_csv("/Volumes/BETKE 2021/bathaus/flat files/IUCN data merge to zoonotic.csv")
 
 ## check for complete - finished data should be only Yes
 table(zoonotic$Complete)
@@ -22,7 +22,7 @@ table(is.na(zoonotic$X26.1_GR_Area_km2))
 zoonotic[zoonotic$Complete == "revisit",]$species
 
 ## remove the extinct bats - read in taxonomy
-tax <- read_csv("~/Desktop/Bats and Viruses/bathaus/phylos/taxonomy_mamPhy_5911species.csv")
+tax <- read_csv("/Volumes/BETKE 2021/bathaus/phylos/taxonomy_mamPhy_5911species.csv")
 
 # How many bats are extinct?
 names <- tax[tax$ord == "CHIROPTERA" & tax$extinct. == 1, ]$Species_Name
@@ -46,7 +46,7 @@ rm(names)
 glimpse(data)
 colnames(data)
 
-# remove the virus cols
+# clean out cols
 data <- data %>% 
   select(-c("vfilter","filter","...1","pcnames", "ccnames", "icnames"))
 
@@ -88,10 +88,10 @@ data <- data %>% # Synurbic and variables that are factors according to COMBINE
                 factor)) %>% 
   select(-c("MSW3_sciName_matched"))
 
-length(colnames(data)) # 106 columns
+length(colnames(data)) # 109 columns
 
 # save before trimming
-saveRDS(data, "/Users/brianabetke/Desktop/Bats and Viruses/bathaus/flat files/synurbic and traits only.rds")
+saveRDS(data, "/Volumes/BETKE 2021/bathaus/flat files/synurbic and traits only.rds")
 
 #### Clean out variables with low variance and coverage
 # Variation
@@ -136,7 +136,7 @@ names(mval)=c("comp","column")
 mval$comp=round(mval$comp,2)
 
 # ggplot of coverage
-png("/Users/brianabetke/Desktop/Bats and Viruses/bathaus/figs/trait_coverage.png", width=9.5,height=5.5,units="in",res=600)
+png("/Volumes/BETKE 2021/bathaus/figs/trait_coverage.png", width=9.5,height=5.5,units="in",res=600)
 mval %>% 
   filter(!column %in% c("clade", "gen", "tip", "species", "fam", "virus", "zvirus", "Complete")) %>%
   ggplot(aes(comp)) +
@@ -163,14 +163,15 @@ coverage_table <- mval %>%
   filter(keep == "keep") %>%
   rename(Variable = column,
          Coverage = comp) %>%
-  filter(!Variable %in% c("clade", "gen", "tip", "species", "fam", "virus", "zvirus", "Complete")) %>%
+  filter(!Variable %in% c("clade", "gen", "tip", "species", "fam", "virus", 
+                          "zvirus", "Complete", "iucn2020_binomial","biogeographical_realm")) %>%
   select(-keep) %>%
   relocate(Coverage, .after = Variable)
 
 rownames(coverage_table) <- NULL
 
 # save as csv
-write.csv(coverage_table, "/Users/brianabetke/Desktop/Bats and Viruses/bathaus/flat files/coverage_table.csv", row.names = FALSE)
+write.csv(coverage_table, "/Volumes/BETKE 2021/bathaus/flat files/coverage_table.csv", row.names = FALSE)
 
 ## drop if not well represented
 data=data[keeps]
@@ -178,17 +179,13 @@ rm(mval,keeps,coverage_table)
 
 ## Clean out remaining variables
 data <- data %>% 
-  select(-c("tip","gen","fam","clade","iucn2020_binomial"))
+  select(-c("tip","gen","fam","clade","iucn2020_binomial","biogeographical_realm"))
 
 colnames(data) # resulting in 66 variables total, 65 covariates
-
-# look at the number of NAs per bat species
-max(rowSums(is.na(data[, 4:66])))
-rowSums(is.na(data[, 4:66]))/62 # proportions
 
 # reordering so species and response variables are in front
 data %>% select(species, Synurbic, virus, zvirus, cites, everything()) -> data
 
 # Save as RDS
-saveRDS(data, "/Users/brianabetke/Desktop/Bats and Viruses/bathaus/flat files/cleaned dataset 30 cutoff.rds")
+saveRDS(data, "/Volumes/BETKE 2021/bathaus/flat files/cleaned dataset 30 cutoff.rds")
 
