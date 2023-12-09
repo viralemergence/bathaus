@@ -57,11 +57,11 @@ rm(c,t,tsub)
 
 # remove duplicated diet variable and geographic realm
 data <- data %>% 
-  select(-c(det_inv, biogeographical_realm)) 
+  select(-det_inv) 
 
-# transform citations
-data$cites <- sqrt(data$cites)
-data$vcites <- sqrt(data$vcites)
+# # transform citations
+# data$cites <- sqrt(data$cites)
+# data$vcites <- sqrt(data$vcites)
 
 # save before removing species (need this for predictions)
 fdata <- data
@@ -222,7 +222,7 @@ if(gsrun == "yes"){# run grid search
   
     # grids for each model type
     pgrid <- makegrid(10, 5000)  # smaller grid for poisson models (seem to have low no of trees)
-    bgrid <- makegrid(10, c(5000, 25000)) # binary models, tend to use much larger values
+    bgrid <- makegrid(10, c(5000, 25000)) # binary models
     
     # ### trim just for testing
     # pgrid <- pgrid[71, ]
@@ -242,7 +242,6 @@ if(gsrun == "yes"){# run grid search
     vrespars <- lapply(1:nrow(bgrid),function(x) grid_search(x, data_df = data, hgrid = bgrid, response="dum_virus", cv = TRUE))
     zrespars <- lapply(1:nrow(bgrid),function(x) grid_search(x, data_df = data, hgrid = bgrid, response="dum_zvirus", cv = TRUE))
     
-    # comment out for now because I already ran this
     ## get virus results
     vresults <- data.frame(sapply(vpars,function(x) x$trainRMSE),
                            sapply(vpars,function(x) x$testRMSE),
@@ -405,7 +404,7 @@ zresSpec_gg <- ggplot(zres_search, aes(x = factor(shrinkage), y = spec)) +
         axis.title = element_text(size = 8)) +
   scale_fill_brewer(palette="Accent")
 
-png("/Volumes/BETKE 2021/bathaus/figs/figure S1.png", width=5, height=7,units="in",res=300)
+png("/Volumes/BETKE 2021/bathaus/figs/figure S2.png", width=5, height=7,units="in",res=300)
 guide_area () + 
 (virus_gg + zvirus_gg) / (vresAUC_gg + zresAUC_gg) / 
   (vresSen_gg + zresSen_gg) / (vresSpec_gg + zresSpec_gg) +
@@ -413,7 +412,7 @@ guide_area () +
 dev.off()
 
 # remove plots from envrionment
-rm(virus_gg, zvirus_gg, vresAUC_gg, vresSen_gg, vresAUC_gg, vresSpec_gg, zresAUC_gg, zresSen_gg, zresSpec_gg)
+rm(virus_gg, zvirus_gg, vresAUC_gg, vresSen_gg, vresSpec_gg, zresAUC_gg, zresSen_gg, zresSpec_gg)
 
 # unload patchwork
 detach("package:patchwork", unload = TRUE)
@@ -460,10 +459,11 @@ zres_search %>%
   summarise(medAUC = median(testAUC),
             medSen = median(sen),
             medSpec = median(spec)) %>% 
-  arrange(desc(medAUC))
+  arrange(desc(medSen))
 
 # remove sorts
 rm(sort, psort, vrsort, zrsort)
+rm(overall_search, vres_search, zres_search, zoo_search)
 
 #### Define brt function 
 # seed - the seeds to be used for the unique splits
@@ -682,7 +682,7 @@ brts <- function(seed, response, nt, shr, int.d, syn, cv = NULL){
 
 #### apply across specified number of splits smax
 # Filtered dataset
-smax=5 # 1 just for testing on personal comp
+smax=100 # 1 just for testing on personal comp
 
 # Richness models with and without synurbic
 vrichness_brts <- lapply(1:smax,function(x) brts(seed = x,response = "virus", nt = 15000, shr = 0.001, int.d = 4, syn = "yes", cv = NULL))
@@ -695,8 +695,8 @@ saveRDS(no_vrichness_brts,"/Volumes/BETKE 2021/bathaus/flat files/virus without 
 rm(vrichness_brts, no_vrichness_brts)
 
 # Proportion with and without
-zoo_pft_brts <- lapply(1:smax,function(x) brts(seed = x,response = "zoo_pft", nt = 15000, shr = 0.001, int.d = 4, syn = "yes", cv = NULL))
-no_zoo_pft_brts <- lapply(1:smax,function(x) brts(seed = x,response = "zoo_pft", nt = 15000, shr = 0.001, int.d = 4, syn = "no", cv = NULL))
+zoo_pft_brts <- lapply(1:smax,function(x) brts(seed = x,response = "zoo_pft", nt = 15000, shr = 0.0005, int.d = 4, syn = "yes", cv = NULL))
+no_zoo_pft_brts <- lapply(1:smax,function(x) brts(seed = x,response = "zoo_pft", nt = 15000, shr = 0.0005, int.d = 4, syn = "no", cv = NULL))
 
 saveRDS(zoo_pft_brts, "/Volumes/BETKE 2021/bathaus/flat files/zoo_prop with brts.rds")
 saveRDS(no_zoo_pft_brts, "/Volumes/BETKE 2021/bathaus/flat files/zoo_prop without brts.rds")
@@ -721,8 +721,8 @@ saveRDS(no_zbinary_brts, "/Volumes/BETKE 2021/bathaus/flat files/dum_zvirus with
 
 rm(zbinary_brts,no_zbinary_brts)
 
-# add functions for predicting citations (maybe I don't need to do the with/without data situation for these)
-smax=20 # fewer iterations for citation models
+# add functions for predicting citations
+smax=20 # no. seeds for citation models
 cite_brts <- lapply(1:smax,function(x) brts(seed = x,response = "cites", nt = 15000, shr = 0.001, int.d = 4, syn = "yes", cv = NULL))
 vcite_brts <- lapply(1:smax,function(x) brts(seed = x,response = "vcites", nt = 15000, shr = 0.001, int.d = 4, syn = "yes", cv = NULL))
 

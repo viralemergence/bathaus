@@ -136,7 +136,7 @@ names(mval)=c("comp","column")
 mval$comp=round(mval$comp,2)
 
 # ggplot of coverage
-png("/Volumes/BETKE 2021/bathaus/figs/trait_coverage.png", width=9.5,height=5.5,units="in",res=600)
+png("/Volumes/BETKE 2021/bathaus/figs/figure S1.png", width=9.5,height=5.5,units="in",res=600)
 mval %>% 
   filter(!column %in% c("clade", "gen", "tip", "species", "fam", "virus", "zvirus", "Complete")) %>%
   ggplot(aes(comp)) +

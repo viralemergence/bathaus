@@ -19,59 +19,51 @@ vres_apreds <- read.csv("/Volumes/BETKE 2021/bathaus/flat files/virus host predi
 quantile(vres_apreds$with[vres_apreds$dum_virus==0], c(0.90, 0.95))
 table(vres_apreds$with[vres_apreds$dum_virus==0] >= 0.85)
 # FALSE  TRUE 
-# 804    96 
+# 804    94 
 table(vres_apreds$with[vres_apreds$dum_virus==0] >= 0.89)
 # FALSE  TRUE 
-# 861    39 
+# 863    35 
 
 # how many predicted hosts with non-roost model
 quantile(vres_apreds$without[vres_apreds$dum_virus==0], c(0.90, 0.95))
 table(vres_apreds$without[vres_apreds$dum_virus==0] >= 0.85)
 # FALSE  TRUE 
-# 803    97 
+# 802    96 
 
 table(vres_apreds$without[vres_apreds$dum_virus==0] >= 0.88)
 # FALSE  TRUE 
-# 851    49 
+# 851    47 
 
 # how many species do they share?
 vres_apreds %>% filter(dum_virus == 0 & with > 0.89) %>% pull(species) -> vnames_w
 
 vres_apreds %>% filter(dum_virus == 0 & without > 0.88) %>% pull(species) -> vnames
 
-intersect(vnames, vnames_w) # 39 species so all that with predicted
-# [1] "Barbastella leucomelas"   "Enchisthenes hartii"     
-# [3] "Eptesicus gobiensis"      "Eumops dabbenei"         
-# [5] "Eumops underwoodi"        "Hipposideros ater"       
-# [7] "Idionycteris phyllotis"   "Kerivoula lanosa"        
-# [9] "Miniopterus aelleni"      "Miniopterus brachytragos"
-# [11] "Miniopterus egeri"        "Miniopterus fraterculus" 
-# [13] "Miniopterus griffithsi"   "Miniopterus majori"      
-# [15] "Miniopterus newtoni"      "Miniopterus paululus"    
-# [17] "Miniopterus petersoni"    "Miniopterus shortridgei" 
-# [19] "Murina tubinaris"         "Myotis bocagii"          
-# [21] "Myotis montivagus"        "Myotis tricolor"         
-# [23] "Nyctalus montanus"        "Nycticeinops schlieffeni"
-# [25] "Nyctinomops aurispinosus" "Peropteryx kappleri"     
-# [27] "Pipistrellus tenuis"      "Promops centralis"       
-# [29] "Promops nasutus"          "Pygoderma bilabiatum"    
-# [31] "Rhinolophus osgoodi"      "Rhinolophus swinnyi"     
-# [33] "Rhinolophus yunanensis"   "Rousettus lanosus"       
-# [35] "Scotomanes ornatus"       "Scotophilus robustus"    
-# [37] "Scotophilus viridis"      "Tadarida aegyptiaca"     
-# [39] "Triaenops rufus" 
+intersect(vnames, vnames_w) # 35 species 
+# [1] "Barbastella leucomelas"   "Enchisthenes hartii"      "Eptesicus gobiensis"     
+# [4] "Eumops dabbenei"          "Eumops underwoodi"        "Hipposideros ater"       
+# [7] "Idionycteris phyllotis"   "Kerivoula lanosa"         "Miniopterus aelleni"     
+# [10] "Miniopterus brachytragos" "Miniopterus egeri"        "Miniopterus fraterculus" 
+# [13] "Miniopterus majori"       "Miniopterus paululus"     "Miniopterus petersoni"   
+# [16] "Miniopterus shortridgei"  "Murina tubinaris"         "Myotis bocagii"          
+# [19] "Myotis montivagus"        "Myotis tricolor"          "Nyctalus montanus"       
+# [22] "Nycticeinops schlieffeni" "Nyctinomops aurispinosus" "Peropteryx kappleri"     
+# [25] "Promops centralis"        "Promops nasutus"          "Rhinolophus osgoodi"     
+# [28] "Rhinolophus swinnyi"      "Rhinolophus yunanensis"   "Rousettus lanosus"       
+# [31] "Scotomanes ornatus"       "Scotophilus robustus"     "Scotophilus viridis"     
+# [34] "Tadarida aegyptiaca"      "Triaenops rufus" 
 
-setdiff(vnames, vnames_w) # 10 species ided by without 
-# [1] "Balantiopteryx plicata" "Chaerephon bivittatus"  "Chiroderma salvini"    
-# [4] "Hypsugo anchietae"      "Murina huttoni"         "Phylloderma stenops"   
-# [7] "Pipistrellus rusticus"  "Platyrrhinus recifinus" "Rhinolophus marshalli" 
-# [10] "Tadarida fulminans" 
+setdiff(vnames, vnames_w) # 12 species ided by without 
+# [1] "Chaerephon bivittatus"  "Chiroderma salvini"     "Hypsugo anchietae"     
+# [4] "Miniopterus griffithsi" "Miniopterus newtoni"    "Murina huttoni"        
+# [7] "Phylloderma stenops"    "Pipistrellus rusticus"  "Pipistrellus tenuis"   
+# [10] "Pygoderma bilabiatum"   "Rhinolophus marshalli"  "Tadarida fulminans"
 
 # How many are anthropogenic roosting?
 vres_apreds %>% filter(dum_virus == 0 & with >= 0.89) %>% filter(Synurbic == 1)
-# 20 out of 39
+# 18 out of 35
 vres_apreds %>% filter(dum_virus == 0 & without >= 0.88) %>% filter(Synurbic == 1)
-# 24 of 49
+# 23 of 47
 
 ## Zoonotic hosts
 # with
@@ -142,18 +134,18 @@ traits <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/synurbic and traits on
 # maybe match to these and get tables
 vres_apreds %>% filter(dum_virus == 0 & with >= 0.89) -> vnovel
 
-merge(vnovel, traits[c("species", "fam", "biogeographical_realm")], by = "species") -> vnovel
+# include citations to see if predicted species are also poorly sampled.
+merge(vnovel, traits[c("species", "fam", "biogeographical_realm", "cites", "vcites", "category")], by = "species") -> vnovel
 table(vnovel$fam)
-# 
 # EMBALLONURIDAE   HIPPOSIDERIDAE    MINIOPTERIDAE       MOLOSSIDAE   PHYLLOSTOMIDAE 
-# 1                2               10                6                2 
+# 1                2                8                6                1 
 # PTEROPODIDAE    RHINOLOPHIDAE VESPERTILIONIDAE 
-# 1                3               14 
+# 1                3               13 
 
 vnovel %>% separate_rows(biogeographical_realm, sep = ", ") -> vnovel
 table(vnovel$biogeographical_realm)
 # Afrotropical Australasian  Indomalayan     Nearctic  Neotropical   Palearctic 
-# 17            2            9            3            8            5 
+# 15            2            8            3            7            5 
 
 zres_apreds %>% filter(dum_zvirus == 0 & with >= 0.77) -> znovel
 
@@ -173,13 +165,13 @@ table(znovel$biogeographical_realm)
 # you will need to get the binary status for known and unknown
 vwith <- vres_apreds %>% 
   mutate(status = ifelse(dum_virus == 1, "known", ifelse(dum_virus == 0 & with > 0.89 ,"novel", "cut")),
-         roost = ifelse(Synurbic == 1, "yes", "no"))
+         roost = ifelse(Synurbic == 1, "anthropogenic roosting", "natural roosting"))
 
 vwith %>% filter(status != "cut") %>% drop_na(roost) %>% mutate(status = factor(status), roost = factor(roost))-> clean_vwith
 
 table(vwith$status) # looks correct
 # cut known novel 
-# 861   379    39 
+# 863   381    35 
 
 # read in bat shape files
 bats=readRDS("/Volumes/BETKE 2021/bathaus/bat shp.rds")
@@ -190,16 +182,17 @@ bats$tip=gsub("_"," ",bats$binomial)
 ## check missing
 (miss=setdiff(clean_vwith$species,bats$tip))
 
-# [1] "Dermanura cinereus"        "Dermanura glaucus"         "Dermanura toltecus"       
-# [4] "Hipposideros commersoni"   "Hipposideros gigas"        "Hipposideros vittatus"    
-# [7] "Hsunycteris thomasi"       "Megaderma lyra"            "Mimon crenulatum"         
-# [10] "Miniopterus fuliginosus"   "Miniopterus mossambicus"   "Myonycteris angolensis"   
-# [13] "Myotis flavus"             "Pipistrellus alaschanicus" "Pipistrellus pulveratus"  
-# [16] "Pipistrellus savii"        "Pipistrellus subflavus"    "Pipistrellus tenuis"      
-# [19] "Triaenops menamena"
+# [1] "Dermanura cinereus"        "Dermanura glaucus"        
+# [3] "Dermanura toltecus"        "Hipposideros commersoni"  
+# [5] "Hipposideros gigas"        "Hipposideros vittatus"    
+# [7] "Hsunycteris thomasi"       "Megaderma lyra"           
+# [9] "Mimon crenulatum"          "Miniopterus fuliginosus"  
+# [11] "Miniopterus mossambicus"   "Myonycteris angolensis"   
+# [13] "Myotis flavus"             "Pipistrellus alaschanicus"
+# [15] "Pipistrellus pulveratus"   "Pipistrellus savii"       
+# [17] "Pipistrellus subflavus"    "Triaenops menamena"
 
-
-# so am I changing the names in tip to match our dataset?
+# recode
 bats$tip <- bats$tip %>% recode("Dermanura cinerea" = "Dermanura cinereus",
                     "Dermanura glauca" = "Dermanura glaucus",
                     "Dermanura tolteca" = "Dermanura toltecus",
@@ -216,7 +209,6 @@ bats$tip <- bats$tip %>% recode("Dermanura cinerea" = "Dermanura cinereus",
                     "Hypsugo pulveratus" = "Pipistrellus pulveratus",
                     "Hypsugo savii" = "Pipistrellus savii",
                     "Perimyotis subflavus" = "Pipistrellus subflavus")
-                    # "Pipistrellus anchietae" = "Hypsugo anchietae")
 
 ## check missing
 (miss=setdiff(clean_vwith$species,bats$tip))
@@ -297,10 +289,10 @@ ggplot(wdata,aes(long,lat))+
   facet_grid(roost ~ status) +
   #guides(fill="none") +
   theme_bw() +
-  scale_fill_manual(labels = c("no","yes"), 
-                    values = c("#8470ff","#9DD866")) + 
+  scale_fill_manual(labels = c("anthropogenic roosting","natural roosting"),
+                    values = c("#9DD866","#8470ff")) +
   #scale_alpha_manual(values = c(0.20, 0.25)) +
-  labs(fill = "Anthropogenic Roosting") +
+  labs(fill = "Roosting") +
   theme(panel.grid.major=element_blank(),
         panel.grid.minor=element_blank(),
         axis.text = element_blank(),
