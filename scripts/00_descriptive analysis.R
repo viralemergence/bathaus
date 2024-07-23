@@ -8,11 +8,6 @@ library(tidyverse)
 library(ggridges)
 
 #### Descriptive stats
-data <- readRDS("~/Desktop/Bats and Viruses/bathaus/flat files/cleaned dataset 30 cutoff.rds")
-
-# lab comp directory
-# data <- readRDS("~/Desktop/Bats and Viruses/bathaus/flat files/cleaned dataset 30 cutoff.rds")
-
 # traits is the full dataset B4 cut off, has families in it
 traits <- readRDS("~/Desktop/Bats and Viruses/bathaus/flat files/synurbic and traits only.rds")
 
@@ -20,8 +15,8 @@ traits <- readRDS("~/Desktop/Bats and Viruses/bathaus/flat files/synurbic and tr
 traits$family <- tools::toTitleCase(tolower(traits$fam))
 
 # density plots
-traits %>% filter(!fam %in% c('NYCTERIDAE',"MYSTACINIDAE","CRASEONYCTERIDAE","FURIPTERIDAE","MYZOPODIDAE", "NOCTILIONIDAE")) %>%
-  ggplot(aes(x = virus+1, y = family)) +
+traits %>% filter(!fam %in% c("MYSTACINIDAE","CRASEONYCTERIDAE","FURIPTERIDAE","MYZOPODIDAE", "NOCTILIONIDAE")) %>%
+  ggplot(aes(x = virus+1, y = fct_rev(Family))) +
   geom_density_ridges(aes(fill = Synurbic), alpha = 0.6) +
   #facet_wrap(~fam, ncol = 1) +
   scale_x_log10(limits = c(1, 1000)) +
@@ -39,8 +34,8 @@ traits %>% filter(!fam %in% c('NYCTERIDAE',"MYSTACINIDAE","CRASEONYCTERIDAE","FU
 traits %>%
   mutate(zoo_prop = zvirus/virus) %>%
   mutate(zoo_prop = ifelse(is.nan(zoo_prop), 0, zoo_prop)) %>%
-  filter(!fam %in% c('NYCTERIDAE',"MYSTACINIDAE","CRASEONYCTERIDAE","FURIPTERIDAE","MYZOPODIDAE", "NOCTILIONIDAE")) %>%
-  ggplot(aes(x = zoo_prop, y = family)) +
+  filter(!fam %in% c("MYSTACINIDAE","CRASEONYCTERIDAE","FURIPTERIDAE","MYZOPODIDAE", "NOCTILIONIDAE")) %>%
+  ggplot(aes(x = zoo_prop, y = fct_rev(Family))) +
   geom_density_ridges(aes(fill = Synurbic), alpha = 0.6) +
   #facet_wrap(~fam, ncol = 1) +
   #scale_x_log10() +
@@ -59,11 +54,14 @@ traits %>%
 points <- data.frame(table(traits$family,traits$Synurbic, useNA = "ifany"))
 colnames(points) <- c("Family", "Roost Status", "Frequency")
 
+# try with zeros turned to NA for frequencies
+na_points <- points %>% mutate(clean = na_if(Frequency, 0))
+
 # I could pull out to match the other two plots
 #points[!points$Var1 %in% c('NYCTERIDAE',"MYSTACINIDAE","CRASEONYCTERIDAE","FURIPTERIDAE","MYZOPODIDAE", "NOCTILIONIDAE"), ]
 
-ggplot(points, aes(x = `Roost Status`, y = Family)) +
-  geom_point(aes(size = Frequency, color = `Roost Status`)) +
+ggplot(na_points, aes(x = `Roost Status`, y = fct_rev(Family))) +
+  geom_point(aes(size = clean, color = `Roost Status`)) +
   labs(x="Anthropogenic \nRoosting", y = " ", color = "Anthropogenic \nRoosting") +
   theme_bw() +
   theme(panel.grid.major=element_blank(),
@@ -75,7 +73,7 @@ ggplot(points, aes(x = `Roost Status`, y = Family)) +
   # legend.margin=margin()) +
   scale_color_manual(labels = c("no","yes","NA"), values = c("#8470ff","#9DD866","#A0B1BA")) +
   scale_x_discrete(labels = c('no',"yes","NA")) +
-  scale_size(range = c(0.5, 6)) +
+  scale_size(range = c(0.5, 6), name = "Frequency") +
   guides(color = guide_legend(override.aes = list(size=3))) -> balloon1
 
 library(patchwork)
@@ -139,6 +137,8 @@ dev.off()
 # dev.off()
 
 ## Additional summary stats
+data <- readRDS("~/Desktop/Bats and Viruses/bathaus/flat files/cleaned dataset 30 cutoff.rds")
+
 ## ranges of richness and zoonotic proportions
 range(data$virus)
 mean(data$virus)
