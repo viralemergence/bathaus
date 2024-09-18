@@ -5,182 +5,271 @@
 rm(list=ls()) 
 graphics.off()
 
-# data wranglin
+# Packages
 library(tidyverse)
+library(PresenceAbsence)
 
 # Model predictions
 # read in model prediction csv files
 zres_apreds <- read.csv("/Volumes/BETKE 2021/bathaus/flat files/zoonotic virus host predictions.csv")
 vres_apreds <- read.csv("/Volumes/BETKE 2021/bathaus/flat files/virus host predictions.csv")
 
-#### Get cut offs 
-## Overall virus hosts
-# how many predicted hosts with roosting model?
-quantile(vres_apreds$with[vres_apreds$dum_virus==0], c(0.90, 0.95))
-table(vres_apreds$with[vres_apreds$dum_virus==0] >= 0.85)
-# FALSE  TRUE 
-# 804    94 
-table(vres_apreds$with[vres_apreds$dum_virus==0] >= 0.89)
-# FALSE  TRUE 
-# 863    35 
+set.seed(12345) # seed?
 
-# how many predicted hosts with non-roost model
-quantile(vres_apreds$without[vres_apreds$dum_virus==0], c(0.90, 0.95))
-table(vres_apreds$without[vres_apreds$dum_virus==0] >= 0.85)
-# FALSE  TRUE 
-# 802    96 
+#### threshold predictions
 
-table(vres_apreds$without[vres_apreds$dum_virus==0] >= 0.88)
-# FALSE  TRUE 
-# 851    47 
+### testing thresholds
+# comparing MSS (3) to 85%, 90%, and 95% sensitivity (10)
 
-# how many species do they share?
-vres_apreds %>% filter(dum_virus == 0 & with > 0.89) %>% pull(species) -> vnames_w
+## virus models with roosting
+ts.p95 <- optimal.thresholds(data.frame(vres_apreds[,c('species','dum_virus','with')]),
+                           threshold = 10001,
+                           opt.methods = c(3,4,7,8,10),
+                           req.sens = 0.95,
+                           na.rm = TRUE)
 
-vres_apreds %>% filter(dum_virus == 0 & without > 0.88) %>% pull(species) -> vnames
+ts.p90 <- optimal.thresholds(data.frame(vres_apreds[,c('species','dum_virus','with')]),
+                             threshold = 10001,
+                             opt.methods = c(3,4,7,8,10),
+                             req.sens = 0.90,
+                             na.rm = TRUE)
 
-intersect(vnames, vnames_w) # 35 species 
-# [1] "Barbastella leucomelas"   "Enchisthenes hartii"      "Eptesicus gobiensis"     
-# [4] "Eumops dabbenei"          "Eumops underwoodi"        "Hipposideros ater"       
-# [7] "Idionycteris phyllotis"   "Kerivoula lanosa"         "Miniopterus aelleni"     
-# [10] "Miniopterus brachytragos" "Miniopterus egeri"        "Miniopterus fraterculus" 
-# [13] "Miniopterus majori"       "Miniopterus paululus"     "Miniopterus petersoni"   
-# [16] "Miniopterus shortridgei"  "Murina tubinaris"         "Myotis bocagii"          
-# [19] "Myotis montivagus"        "Myotis tricolor"          "Nyctalus montanus"       
-# [22] "Nycticeinops schlieffeni" "Nyctinomops aurispinosus" "Peropteryx kappleri"     
-# [25] "Promops centralis"        "Promops nasutus"          "Rhinolophus osgoodi"     
-# [28] "Rhinolophus swinnyi"      "Rhinolophus yunanensis"   "Rousettus lanosus"       
-# [31] "Scotomanes ornatus"       "Scotophilus robustus"     "Scotophilus viridis"     
-# [34] "Tadarida aegyptiaca"      "Triaenops rufus" 
+ts.p85 <- optimal.thresholds(data.frame(vres_apreds[,c('species','dum_virus','with')]),
+                             threshold = 10001,
+                             opt.methods = c(3,4,7,8,10),
+                             req.sens = 0.85,
+                             na.rm = TRUE)
+# funtion to sum 
+cut.p95 <- function(x) {sum(vres_apreds$with[vres_apreds$dum_virus==0] > x)}
+cut.p90 <- function(x) {sum(vres_apreds$with[vres_apreds$dum_virus==0] > x)}
+cut.p85 <- function(x) {sum(vres_apreds$with[vres_apreds$dum_virus==0] > x)}
 
-setdiff(vnames, vnames_w) # 12 species ided by without 
-# [1] "Chaerephon bivittatus"  "Chiroderma salvini"     "Hypsugo anchietae"     
-# [4] "Miniopterus griffithsi" "Miniopterus newtoni"    "Murina huttoni"        
-# [7] "Phylloderma stenops"    "Pipistrellus rusticus"  "Pipistrellus tenuis"   
-# [10] "Pygoderma bilabiatum"   "Rhinolophus marshalli"  "Tadarida fulminans"
+sapply(unlist(ts.p95[2]), cut.p95)
+sapply(unlist(ts.p90[2]), cut.p90)
+sapply(unlist(ts.p85[2]), cut.p85)
+# sensitivity of 85% brings the number of species to the same as MSS
 
-# How many are anthropogenic roosting?
-vres_apreds %>% filter(dum_virus == 0 & with >= 0.89) %>% filter(Synurbic == 1)
-# 18 out of 35
-vres_apreds %>% filter(dum_virus == 0 & without >= 0.88) %>% filter(Synurbic == 1)
-# 23 of 47
+## Virus models without
+nts.p95 <- optimal.thresholds(data.frame(vres_apreds[,c('species','dum_virus','without')]),
+                             threshold = 10001,
+                             opt.methods = c(3,4,7,8,10),
+                             req.sens = 0.95,
+                             na.rm = TRUE)
 
-## Zoonotic hosts
-# with
-quantile(zres_apreds$with[zres_apreds$dum_zvirus==0], c(0.90, 0.95))
-table(zres_apreds$with[zres_apreds$dum_zvirus==0] > 0.71)
-# FALSE  TRUE 
-# 911   102 
+nts.p90 <- optimal.thresholds(data.frame(vres_apreds[,c('species','dum_virus','without')]),
+                              threshold = 10001,
+                              opt.methods = c(3,4,7,8,10),
+                              req.sens = 0.90,
+                              na.rm = TRUE)
 
-table(zres_apreds$with[zres_apreds$dum_zvirus==0] > 0.77)
-# FALSE  TRUE 
-# 962    51 
+nts.p85 <- optimal.thresholds(data.frame(vres_apreds[,c('species','dum_virus','without')]),
+                              threshold = 10001,
+                              opt.methods = c(3,4,7,8,10),
+                              req.sens = 0.85,
+                              na.rm = TRUE)
 
-# without
-quantile(zres_apreds$without[zres_apreds$dum_zvirus==0], c(0.90, 0.95))
-table(zres_apreds$without[zres_apreds$dum_zvirus==0] > 0.71)
-# FALSE  TRUE 
-# 910   103
+ncut.p95 <- function(x) {sum(vres_apreds$without[vres_apreds$dum_virus==0] > x)}
+ncut.p90 <- function(x) {sum(vres_apreds$without[vres_apreds$dum_virus==0] > x)}
+ncut.p85 <- function(x) {sum(vres_apreds$without[vres_apreds$dum_virus==0] > x)}
 
-table(zres_apreds$without[zres_apreds$dum_zvirus==0] > 0.77)
-# FALSE  TRUE 
-# 963    50 
+sapply(unlist(nts.p95[2]), ncut.p95)
+sapply(unlist(nts.p90[2]), ncut.p90)
+sapply(unlist(nts.p85[2]), ncut.p85)
+# so sensitivity of 85% brings the number of species to the same as MSS
 
-# how many species do they share?
-zres_apreds %>% filter(dum_zvirus == 0 & with > 0.77) %>% pull(species) -> znames_w
+### Zoonotic hosts
+## virus models with roosting
+zts.p95 <- optimal.thresholds(data.frame(zres_apreds[,c('species','dum_zvirus','with')]),
+                             threshold = 10001,
+                             opt.methods = c(3,4,7,8,10),
+                             req.sens = 0.95,
+                             na.rm = TRUE)
 
-zres_apreds %>% filter(dum_zvirus == 0 & without > 0.77) %>% pull(species) -> znames
+zts.p90 <- optimal.thresholds(data.frame(zres_apreds[,c('species','dum_zvirus','with')]),
+                              threshold = 10001,
+                              opt.methods = c(3,4,7,8,10),
+                              req.sens = 0.90,
+                              na.rm = TRUE)
 
-intersect(znames, znames_w) # 50 species so all that with predicted
-# [1] "Barbastella leucomelas"    "Centurio senex"           
-# [3] "Chiroderma salvini"        "Chiroderma villosum"      
-# [5] "Cynomops paranus"          "Dermanura aztecus"        
-# [7] "Enchisthenes hartii"       "Epomophorus crypturus"    
-# [9] "Eumops dabbenei"           "Eumops underwoodi"        
-# [11] "Glauconycteris variegata"  "Hipposideros ater"        
-# [13] "Idionycteris phyllotis"    "Kerivoula lanosa"         
-# [15] "Lonchophylla mordax"       "Macrophyllum macrophyllum"
-# [17] "Murina huttoni"            "Myotis altarium"          
-# [19] "Myotis bocagii"            "Myotis keaysi"            
-# [21] "Myotis melanorhinus"       "Myotis montivagus"        
-# [23] "Myotis oxyotus"            "Natalus lanatus"          
-# [25] "Natalus mexicanus"         "Nycteris macrotis"        
-# [27] "Nycticeinops schlieffeni"  "Nyctinomops aurispinosus" 
-# [29] "Peropteryx kappleri"       "Peropteryx macrotis"      
-# [31] "Phylloderma stenops"       "Phyllostomus elongatus"   
-# [33] "Platyrrhinus vittatus"     "Promops centralis"        
-# [35] "Promops nasutus"           "Pygoderma bilabiatum"     
-# [37] "Rhinolophus fumigatus"     "Rhinolophus landeri"      
-# [39] "Rhinolophus osgoodi"       "Rousettus lanosus"        
-# [41] "Saccopteryx bilineata"     "Scotomanes ornatus"       
-# [43] "Scotophilus dinganii"      "Scotophilus leucogaster"  
-# [45] "Scotophilus viridis"       "Sturnira erythromos"      
-# [47] "Tadarida aegyptiaca"       "Taphozous mauritianus"    
-# [49] "Triaenops rufus"           "Uroderma magnirostrum"
+zts.p85 <- optimal.thresholds(data.frame(zres_apreds[,c('species','dum_zvirus','with')]),
+                              threshold = 10001,
+                              opt.methods = c(3,4,7,8,10),
+                              req.sens = 0.85,
+                              na.rm = TRUE)
 
-setdiff(znames_w, znames) # one more from with than without
-# "Myotis muricola" 
 
-# How many are anthropogenic roosting?
-zres_apreds %>% filter(dum_zvirus == 0 & with >= 0.77) %>% filter(Synurbic == 1)
-# 30 out of 51 unknown
-zres_apreds %>% filter(dum_zvirus == 0 & without >= 0.77) %>% filter(Synurbic == 1)
-# 30 of 50 unknown
+zcut.p95 <- function(x) {sum(zres_apreds$with[zres_apreds$dum_zvirus==0] > x)}
+zcut.p90 <- function(x) {sum(zres_apreds$with[zres_apreds$dum_zvirus==0] > x)}
+zcut.p85 <- function(x) {sum(zres_apreds$with[zres_apreds$dum_zvirus==0] > x)}
+
+sapply(unlist(zts.p95[2]), zcut.p95)
+sapply(unlist(zts.p90[2]), zcut.p90)
+sapply(unlist(zts.p85[2]), zcut.p85)
+# sensitivity of 85% brings the number of species to under
+
+## without
+# 95%
+nzts.p95 <- optimal.thresholds(data.frame(zres_apreds[,c('species','dum_zvirus','without')]),
+                              threshold = 10001,
+                              opt.methods = c(3,4,7,8,10),
+                              req.sens = 0.95,
+                              na.rm = TRUE)
+
+nzts.p90 <- optimal.thresholds(data.frame(zres_apreds[,c('species','dum_zvirus','without')]),
+                               threshold = 10001,
+                               opt.methods = c(3,4,7,8,10),
+                               req.sens = 0.90,
+                               na.rm = TRUE)
+
+nzts.p85 <- optimal.thresholds(data.frame(zres_apreds[,c('species','dum_zvirus','without')]),
+                               threshold = 10001,
+                               opt.methods = c(3,4,7,8,10),
+                               req.sens = 0.85,
+                               na.rm = TRUE)
+
+nzcut.p95 <- function(x) {sum(zres_apreds$without[zres_apreds$dum_zvirus==0] > x)}
+nzcut.p90 <- function(x) {sum(zres_apreds$without[zres_apreds$dum_zvirus==0] > x)}
+nzcut.p85 <- function(x) {sum(zres_apreds$without[zres_apreds$dum_zvirus==0] > x)}
+
+sapply(unlist(nzts.p95[2]), nzcut.p95) 
+sapply(unlist(nzts.p90[2]), nzcut.p90)
+sapply(unlist(nzts.p85[2]), nzcut.p85)
+
+# clean
+rm(list = ls()[!ls() %in% c("vres_apreds","zres_apreds")])
+
+### threshold - Moving forward with MSS
+# virus host with 
+t.vmod <- optimal.thresholds(data.frame(vres_apreds[,c('species','dum_virus','with')]),
+                             threshold = 10001,
+                             opt.methods = 3,
+                             req.sens = 0.95,
+                             na.rm = TRUE)
+
+# virus host wihout
+t.nvmod <- optimal.thresholds(data.frame(vres_apreds[,c('species','dum_virus','without')]),
+                              threshold = 10001,
+                              opt.methods = 3,
+                              req.sens = 0.95,
+                              na.rm = TRUE)
+# zoonotic with 
+t.zmod <- optimal.thresholds(data.frame(zres_apreds[,c('species','dum_zvirus','with')]),
+                             threshold = 10001,
+                             opt.methods = 3,
+                             req.sens = 0.95,
+                             na.rm = TRUE)
+# zoonotic without
+t.nzmod <- optimal.thresholds(data.frame(zres_apreds[,c('species','dum_zvirus','without')]),
+                             threshold = 10001,
+                             opt.methods = 3,
+                             req.sens = 0.95,
+                             na.rm = TRUE)
+
+# binary results
+vres_apreds %>% mutate(bin_with = with > t.vmod$with,
+                       bin_without = without > t.nvmod$without) -> pred
+
+zres_apreds %>% mutate(bin_with = with > t.zmod$with,
+                       bin_without = without > t.nzmod$without) -> zpred
+
+# novel hosts
+# virus
+table(pred$with[pred$dum_virus==0] > t.vmod$with)
+table(pred$without[pred$dum_virus==0] > t.nvmod$without)
+
+# zoonotic
+table(zpred$with[zpred$dum_zvirus==0] > t.zmod$with)
+table(zpred$without[zpred$dum_zvirus==0] > t.nzmod$without)
+
+# Looking at overlap
+pred %>% filter(dum_virus == 0 & with >= t.vmod$with) %>% pull(species) -> vnovel
+pred %>% filter(dum_virus == 0 & without >= t.nvmod$without) %>% pull(species) -> n_vnovel
+setdiff(vnovel, n_vnovel) # 1 species different
+intersect(vnovel, n_vnovel) # 110 in common
+
+zpred %>% filter(dum_zvirus == 0 & with >= t.zmod$with) %>% pull(species) -> znovel
+zpred %>% filter(dum_zvirus == 0 & without >= t.nzmod$without) %>% pull(species) -> n_znovel
+setdiff(znovel, n_znovel) # 27 species different
+intersect(znovel, n_znovel) # 162 in common
+
+# how many are anthropogenic? 
+pred %>% 
+  mutate(status = ifelse(dum_virus == 1, "known", ifelse(dum_virus == 0 & bin_with == 1,"novel", "cut")),
+         roost = ifelse(Synurbic == 1, "anthropogenic roosting", "natural roosting")) -> pred
+
+table(pred$status, pred$roost, useNA = "ifany") # 65 anthropogenic
+
+zpred %>% 
+  mutate(status = ifelse(dum_zvirus == 1, "known", ifelse(dum_zvirus == 0 & bin_with == 1,"novel", "cut")),
+         roost = ifelse(Synurbic == 1, "anthropogenic roosting", "natural roosting")) -> zpred
+
+table(zpred$status, zpred$roost, useNA = "ifany") # 120 out of 189 thats almost 65%!!!
+
+# # bar graph?
+# zpred %>% filter(status == "novel") %>%
+# ggplot(aes(x = roost, fill = roost)) +
+#   geom_bar() +
+#   scale_fill_manual(values = c("#8470ff","#9DD866","#A0B1BA")) +
+#   theme_bw() +
+#   theme(legend.position="none")
 
 # Family and biogeographical realm break downs?
-# need to read in trait data before dummys? 
+# need to read in trait data before dummys?
 traits <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/synurbic and traits only.rds")
 
-# maybe match to these and get tables
-vres_apreds %>% filter(dum_virus == 0 & with >= 0.89) -> vnovel
+zpred %>% filter(status == "novel") -> novel
+
+# props by roostin
+prop.table(table(novel$roost, useNA = "ifany"))
 
 # include citations to see if predicted species are also poorly sampled.
-merge(vnovel, traits[c("species", "fam", "biogeographical_realm", "cites", "vcites", "category")], by = "species") -> vnovel
-table(vnovel$fam)
-# EMBALLONURIDAE   HIPPOSIDERIDAE    MINIOPTERIDAE       MOLOSSIDAE   PHYLLOSTOMIDAE 
-# 1                2                8                6                1 
-# PTEROPODIDAE    RHINOLOPHIDAE VESPERTILIONIDAE 
-# 1                3               13 
+merge(novel, traits[c("species", "fam", "biogeographical_realm", "category")], by = "species") -> novel
+table(novel$fam)
+# EMBALLONURIDAE   HIPPOSIDERIDAE    MINIOPTERIDAE       MOLOSSIDAE   PHYLLOSTOMIDAE
+# 1                2                8                6                1
+# PTEROPODIDAE    RHINOLOPHIDAE VESPERTILIONIDAE
+# 1                3               13
 
-vnovel %>% separate_rows(biogeographical_realm, sep = ", ") -> vnovel
-table(vnovel$biogeographical_realm)
-# Afrotropical Australasian  Indomalayan     Nearctic  Neotropical   Palearctic 
-# 15            2            8            3            7            5 
+novel %>% separate_rows(biogeographical_realm, sep = ", ") %>% count(biogeographical_realm)
 
-zres_apreds %>% filter(dum_zvirus == 0 & with >= 0.77) -> znovel
+novel %>% filter(roost == "anthropogenic roosting") %>% separate_rows(biogeographical_realm, sep = ", ") -> anth_novel
+ant_br <- data.frame(table(anth_novel$biogeographical_realm))
+colnames(ant_br) <- c("realm","count")
+ant_br$roost <- "anthropogenic roosting"
 
-merge(znovel, traits[c("species", "fam", "biogeographical_realm")], by = "species") -> znovel
-table(znovel$fam)
-# EMBALLONURIDAE   HIPPOSIDERIDAE       MOLOSSIDAE        NATALIDAE       NYCTERIDAE 
-# 4                2                7                2                1 
-# PHYLLOSTOMIDAE     PTEROPODIDAE    RHINOLOPHIDAE VESPERTILIONIDAE 
-# 13                2                3               17 
+novel %>% filter(roost == "natural roosting") %>% separate_rows(biogeographical_realm, sep = ", ") -> nat_novel
+nat_br <- data.frame(table(nat_novel$biogeographical_realm))
+colnames(nat_br) <- c("realm","count")
+nat_br$roost <- "natural roosting"
 
-znovel %>% separate_rows(biogeographical_realm, sep = ", ") -> znovel
-table(znovel$biogeographical_realm)
-# Afrotropical  Indomalayan     Nearctic  Neotropical   Palearctic 
-# 15            6            4           27            5 
+# bind
+realms <- rbind(ant_br,nat_br)
+ggplot(realms, aes(x = realm, fill = roost, weight = count, by = roost)) +
+  geom_bar(position = "dodge") +
+  scale_fill_manual(values = c("#8470ff","#9DD866","#A0B1BA")) +
+  theme_bw() +
+  theme(legend.position = "top")
 
 #### maps
 # you will need to get the binary status for known and unknown
-vwith <- vres_apreds %>% 
-  mutate(status = ifelse(dum_virus == 1, "known", ifelse(dum_virus == 0 & with > 0.89 ,"novel", "cut")),
-         roost = ifelse(Synurbic == 1, "anthropogenic roosting", "natural roosting"))
+# vwith <- vres_apreds %>% 
+#   mutate(status = ifelse(dum_virus == 1, "known", ifelse(dum_virus == 0 & with > 0.89 ,"novel", "cut")),
+#          roost = ifelse(Synurbic == 1, "anthropogenic roosting", "natural roosting"))
 
-vwith %>% filter(status != "cut") %>% drop_na(roost) %>% mutate(status = factor(status), roost = factor(roost))-> clean_vwith
+zpred %>% filter(status != "cut") %>% drop_na(roost) %>% mutate(status = factor(status), roost = factor(roost))-> clean
 
-table(vwith$status) # looks correct
-# cut known novel 
-# 863   381    35 
+# table(vwith$status) # looks correct
+# # cut known novel 
+# # 863   381    35 
 
 # read in bat shape files
-bats=readRDS("/Volumes/BETKE 2021/bathaus/bat shp.rds")
+bats=readRDS("/Volumes/BETKE 2021/bathaus/bat ranges/bat shp.rds")
 
 ## make species names match your dataset format
 bats$tip=gsub("_"," ",bats$binomial)
 
 ## check missing
-(miss=setdiff(clean_vwith$species,bats$tip))
+(miss=setdiff(clean$species,bats$tip))
 
 # [1] "Dermanura cinereus"        "Dermanura glaucus"        
 # [3] "Dermanura toltecus"        "Hipposideros commersoni"  
@@ -192,8 +281,19 @@ bats$tip=gsub("_"," ",bats$binomial)
 # [15] "Pipistrellus pulveratus"   "Pipistrellus savii"       
 # [17] "Pipistrellus subflavus"    "Triaenops menamena"
 
+
+# [1] "Dermanura glaucus"       "Dermanura toltecus"      "Harpiocephalus mordax"  
+# [4] "Hipposideros commersoni" "Hipposideros gigas"      "Hipposideros vittatus"  
+# [7] "Hsunycteris thomasi"     "Megaderma lyra"          "Mimon crenulatum"       
+# [10] "Miniopterus fuliginosus" "Miniopterus mossambicus" "Myonycteris angolensis" 
+# [13] "Myotis flavus"           "Myotis midastactus"      "Natalus lanatus"        
+# [16] "Nyctophilus timoriensis" "Pipistrellus cadornae"   "Pipistrellus deserti"   
+# [19] "Pipistrellus pulveratus" "Pipistrellus savii"      "Pipistrellus subflavus" 
+# [22] "Pipistrellus tenuis"     "Triaenops menamena" 
+
+
 # recode
-bats$tip <- bats$tip %>% recode("Dermanura cinerea" = "Dermanura cinereus",
+bats$tip <- bats$tip %>% recode(#"Dermanura cinerea" = "Dermanura cinereus",
                     "Dermanura glauca" = "Dermanura glaucus",
                     "Dermanura tolteca" = "Dermanura toltecus",
                     "Macronycteris commersoni"= "Hipposideros commersoni",
@@ -305,3 +405,25 @@ ggplot(wdata,aes(long,lat))+
         legend.box.spacing = unit(0, "cm")) +
   coord_map("mercator",xlim=c(-180,180)) 
 dev.off()
+
+# quick little bar plot for esa
+zpred %>% select(bin_with, status, roost) %>% filter(status == "novel") -> hm
+hm$model <- "with"
+colnames(hm) <- c("bin", "status", "roost","model")
+
+zpred %>% select(bin_without, status, roost) %>% filter(status == "novel" & bin_without == 1) -> hm2
+hm2$model <- "without"
+colnames(hm2) <- c("bin", "status", "roost","model")
+
+# bind 
+hm_tot <- rbind(hm,hm2)
+
+# graph 
+ggplot(hm_tot) +
+  aes(x = model, fill = roost) +
+  geom_bar(position = "stack") +
+  scale_fill_manual(values = c("#8470ff","#9DD866","#A0B1BA")) +
+  theme_bw() +
+  labs(y = "novel hosts", x = "models") #+
+  #theme(legend.position = "top")
+

@@ -181,7 +181,7 @@ rm(mval,keeps,coverage_table)
 data <- data %>% 
   select(-c("tip","gen","fam","clade","iucn2020_binomial","biogeographical_realm"))
 
-colnames(data) # resulting in 66 variables total, 65 covariates
+colnames(data) # resulting in 66 variables total, 64 covariates
 
 # reordering so species and response variables are in front
 data %>% select(species, Synurbic, virus, zvirus, cites, everything()) -> data
@@ -189,3 +189,39 @@ data %>% select(species, Synurbic, virus, zvirus, cites, everything()) -> data
 # Save as RDS
 saveRDS(data, "/Volumes/BETKE 2021/bathaus/flat files/cleaned dataset 30 cutoff.rds")
 
+## version with transformed vars
+# look into distribution of continuous variables
+# pull numeric vars
+num <- select(data, where(is.numeric))
+
+# remove % diet variables
+num <- select(num, !starts_with(c("det","dphy")))
+
+# remove ordinal type variables
+num <- num %>% select(!c(litters_per_year_n, litter_size_n, island_dwelling, habitat_breadth_n))
+
+# histograms
+Hmisc::hist.data.frame(num)
+
+# log plus constant
+log_data <- data
+log_data$log_cites <- log1p(log_data$cites)
+log_data$log_vcites <- log1p(log_data$vcites)
+log_data$log_lower_elevation_m <- log1p(log_data$lower_elevation_m)
+log_data$log_X26.1_GR_Area_km2 <- log1p(log_data$X26.1_GR_Area_km2)
+log_data$log_X27.1_HuPopDen_Min_n.km2 <- log1p(log_data$X27.1_HuPopDen_Min_n.km2)
+log_data$log_X27.2_HuPopDen_Mean_n.km2 <- log1p(log_data$X27.2_HuPopDen_Mean_n.km2)
+log_data$log_X27.3_HuPopDen_5p_n.km2 <- log1p(log_data$X27.3_HuPopDen_5p_n.km2)
+
+# log no constant
+log_data$log_adult_body_length_mm <- log10(log_data$adult_body_length_mm)
+log_data$log_adult_forearm_length_mm <- log10(log_data$adult_forearm_length_mm)
+log_data$log_adult_mass_g <- log10(log_data$adult_mass_g)
+
+log_data <- log_data %>%
+  select(!c(cites, vcites, lower_elevation_m, X26.1_GR_Area_km2,
+            X27.1_HuPopDen_Min_n.km2, X27.2_HuPopDen_Mean_n.km2, X27.3_HuPopDen_5p_n.km2,
+            adult_body_length_mm, adult_forearm_length_mm, adult_mass_g))
+
+# Save as RDS
+saveRDS(log_data, "/Volumes/BETKE 2021/bathaus/flat files/log cleaned dataset 30 cutoff.rds")

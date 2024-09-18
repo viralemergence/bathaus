@@ -18,22 +18,22 @@ library(ggridges)
 #data <- readRDS("~/Desktop/Bats and Viruses/bathaus/flat files/cleaned dataset 30 cutoff.rds")
 
 # lab comp directory
-data <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/cleaned dataset 30 cutoff.rds")
+data <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/log cleaned dataset 30 cutoff.rds")
 
 ###################### BRT Results
 # Read in rds files for model outputs from drive
 # richness models
-vrichness_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/virus with brts.rds")
-no_vrichness_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/virus without brts.rds")
+vrichness_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/log virus with brts.rds")
+no_vrichness_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/log virus without brts.rds")
 # zoonotic proportion models
-zoo_prop_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/zoo_prop with brts.rds")
-no_zoo_prop_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/zoo_prop without brts.rds")
+zoo_prop_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/log zoo_prop with brts.rds")
+no_zoo_prop_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/log zoo_prop without brts.rds")
 # virus reservoir
-vbinary_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/dum_virus with brts.rds")
-no_vbinary_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/dum_virus without brts.rds")
+vbinary_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/cv log dum_virus with brts.rds")
+no_vbinary_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/cv log dum_virus without brts.rds")
 # zoonotic virus reservoir
-zbinary_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/dum_zvirus with brts.rds")
-no_zbinary_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/dum_zvirus without brts.rds")
+zbinary_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/cv log dum_zvirus with brts.rds")
+no_zbinary_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/cv log dum_zvirus without brts.rds")
 # citation models
 cites_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/citation brts.rds")
 vcites_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/virus citation brts.rds")
@@ -41,67 +41,67 @@ vcites_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/virus citation br
 ##### Summary stats of model performance
 ## Richness models - pseudo R2
 # with
-mean(sapply(vrichness_brts,function(x) x$testr2)) # 0.6367943
-std.error(sapply(vrichness_brts,function(x) x$testr2)) # 0.01623836
+mean(sapply(vrichness_brts,function(x) x$testr2)) # 0.50546
+std.error(sapply(vrichness_brts,function(x) x$testr2)) # 0.04015271
 
 # without
-mean(sapply(no_vrichness_brts,function(x) x$testr2)) # 0.6354426
-std.error(sapply(no_vrichness_brts,function(x) x$testr2)) # 0.01640279
+mean(sapply(no_vrichness_brts,function(x) x$testr2)) # 0.5039281
+std.error(sapply(no_vrichness_brts,function(x) x$testr2)) # 0.04065847
 
 ## Zoonotic proportion - pseudo R2
 # with
-mean(sapply(zoo_prop_brts,function(x) x$testr2)) # 0.1495972
-std.error(sapply(zoo_prop_brts,function(x) x$testr2)) # 0.005234146
+mean(sapply(zoo_prop_brts,function(x) x$testr2)) # 0.3637963
+std.error(sapply(zoo_prop_brts,function(x) x$testr2)) # 0.01233192
 
 # without
-mean(sapply(no_zoo_prop_brts,function(x) x$testr2)) # 0.1495524
-std.error(sapply(no_zoo_prop_brts,function(x) x$testr2)) # 0.005232724
+mean(sapply(no_zoo_prop_brts,function(x) x$testr2)) # 0.364138
+std.error(sapply(no_zoo_prop_brts,function(x) x$testr2)) # 0.01233704
 
 ## Virus reservoir - AUC
 # With
 # AUC
-mean(sapply(vbinary_brts,function(x) x$testAUC)) # 0.9025166
-std.error(sapply(vbinary_brts,function(x) x$testAUC)) # 0.001932486
+mean(sapply(vbinary_brts,function(x) x$testAUC)) # 0.9163051
+std.error(sapply(vbinary_brts,function(x) x$testAUC)) # 0.00275984
 #sen
-mean(sapply(vbinary_brts,function(x) x$sen)) # 0.6623377
-std.error(sapply(vbinary_brts,function(x) x$sen)) # 0.005751966
+mean(sapply(vbinary_brts,function(x) x$sen)) # 0.6634783
+std.error(sapply(vbinary_brts,function(x) x$sen)) # 0.008922315
 # spec
-mean(sapply(vbinary_brts,function(x) x$spec)) # 0.9293889
-std.error(sapply(vbinary_brts,function(x) x$spec)) # 0.001905445
+mean(sapply(vbinary_brts,function(x) x$spec)) # 0.9398936
+std.error(sapply(vbinary_brts,function(x) x$spec)) # 0.002663913
 
 # without
 # AUC
-mean(sapply(no_vbinary_brts,function(x) x$testAUC)) # 0.9024412
-std.error(sapply(no_vbinary_brts,function(x) x$testAUC)) # 0.001959942
+mean(sapply(no_vbinary_brts,function(x) x$testAUC)) # 0.91643
+std.error(sapply(no_vbinary_brts,function(x) x$testAUC)) # 0.002748235
 # sen
-mean(sapply(no_vbinary_brts,function(x) x$sen)) # 0.6606494
-std.error(sapply(no_vbinary_brts,function(x) x$sen)) # 0.005718265
+mean(sapply(no_vbinary_brts,function(x) x$sen)) # 0.6643478
+std.error(sapply(no_vbinary_brts,function(x) x$sen)) # 0.008560119
 # spec
-mean(sapply(no_vbinary_brts,function(x) x$spec)) # 0.9297778
-std.error(sapply(no_vbinary_brts,function(x) x$spec)) # 0.001907448
+mean(sapply(no_vbinary_brts,function(x) x$spec)) # 0.9403191
+std.error(sapply(no_vbinary_brts,function(x) x$spec)) # 0.002489295
 
 ## Zoonotic virus reservoir - AUC
 # With
 # AUC
-mean(sapply(zbinary_brts,function(x) x$testAUC)) # 0.9138378
-std.error(sapply(zbinary_brts,function(x) x$testAUC)) # 0.002015201
+mean(sapply(zbinary_brts,function(x) x$testAUC)) # 0.9332433
+std.error(sapply(zbinary_brts,function(x) x$testAUC)) # 0.002605374
 # sen
-mean(sapply(zbinary_brts,function(x) x$sen)) # 0.6172222
-std.error(sapply(zbinary_brts,function(x) x$sen)) # 0.006036973
+mean(sapply(zbinary_brts,function(x) x$sen)) # 0.6268293
+std.error(sapply(zbinary_brts,function(x) x$sen)) # 0.008931014
 # spec
-mean(sapply(zbinary_brts,function(x) x$spec)) # 0.9600493
-std.error(sapply(zbinary_brts,function(x) x$spec)) # 0.001355677
+mean(sapply(zbinary_brts,function(x) x$spec)) # 0.9674419
+std.error(sapply(zbinary_brts,function(x) x$spec)) # 0.001797708
 
 # without
 # AUC
-mean(sapply(no_zbinary_brts,function(x) x$testAUC)) # 0.9138314
-std.error(sapply(no_zbinary_brts,function(x) x$testAUC)) # 0.002017853
+mean(sapply(no_zbinary_brts,function(x) x$testAUC)) # 0.9333296
+std.error(sapply(no_zbinary_brts,function(x) x$testAUC)) # 0.002602445
 #sen
-mean(sapply(no_zbinary_brts,function(x) x$sen)) # 0.6168519
-std.error(sapply(no_zbinary_brts,function(x) x$sen)) # 0.006011903
+mean(sapply(no_zbinary_brts,function(x) x$sen)) # 0.6273171
+std.error(sapply(no_zbinary_brts,function(x) x$sen)) # 0.009006547
 #spec
-mean(sapply(no_zbinary_brts,function(x) x$spec)) # 0.9601478
-std.error(sapply(no_zbinary_brts,function(x) x$spec)) # 0.001348789
+mean(sapply(no_zbinary_brts,function(x) x$spec)) # 0.9674419
+std.error(sapply(no_zbinary_brts,function(x) x$spec)) # 0.001787857
 
 ## need to look at summary stats for citation models
 # cites
@@ -148,26 +148,26 @@ perf_agg=function(mod_with, mod_without, measure){
 # virus models
 virus_perf <- perf_agg(vrichness_brts, no_vrichness_brts, "testr2")
 write_csv(virus_perf, "/Volumes/BETKE 2021/bathaus/flat files/virus performance.csv")
-rm(vrichness_brts, no_vrichness_brts)
+#rm(vrichness_brts, no_vrichness_brts)
 
 # zoonotic models
 zoop_perf <- perf_agg(zoo_prop_brts , no_zoo_prop_brts, "testr2")
 write_csv(zoop_perf, "/Volumes/BETKE 2021/bathaus/flat files/zoonitic proportion performance.csv")
-rm(no_zoo_prop_brts, zoo_prop_brts)
+#rm(no_zoo_prop_brts, zoo_prop_brts)
 
 # virus host models
 vres_perf <- perf_agg(vbinary_brts, no_vbinary_brts, "testAUC")
 vres_SEN <- perf_agg(vbinary_brts, no_vbinary_brts, "sen")
 vres_Spec <- perf_agg(vbinary_brts, no_vbinary_brts, "spec")
 write_csv(vres_perf, "/Volumes/BETKE 2021/bathaus/flat files/virus reservoir performance.csv")
-rm(vbinary_brts, no_vbinary_brts)
+#rm(vbinary_brts, no_vbinary_brts)
 
 # zoonotic host models
 zoores_perf <- perf_agg(zbinary_brts, no_zbinary_brts, "testAUC")
 zoores_SEN <- perf_agg(zbinary_brts, no_zbinary_brts, "sen")
 zoores_Spec <- perf_agg(zbinary_brts, no_zbinary_brts, "spec")
 write_csv(zoores_perf, "/Volumes/BETKE 2021/bathaus/flat files/zoonotic virus reservoir performance.csv")
-rm(zbinary_brts, no_zbinary_brts)
+#rm(zbinary_brts, no_zbinary_brts)
 
 # create t test function
 tfun=function(perf_df, fcol){
@@ -240,16 +240,16 @@ vrichdata$csum
 # * <chr> <chr>    <chr>         <dbl> <int> <int> <ord>     
 #   1 y     mod_with mod_without 0.00828   100   100 negligible
 
-# # boxplot with significance?
-# v_box <-vrichdata[["plot"]] + 
-#             labs(x = "Model Type", y = "Model Performance (Pseudo R2)", title = "Virus Richness") +
-#             geom_line(data = tibble(x=c(1, 2),y = c(0.96, 0.96)), aes(x=x,y=y), inherit.aes = FALSE) +
-#             geom_text(data = tibble(x=1.5,y = 0.999), 
-#                       aes(x=x,y=y, label = paste("T-test: p = ", round(vrichdata$tsum$p.value, 4), sep = "")), inherit.aes = FALSE) +
-#             geom_text(data = tibble(x=1.5,y = 0.925), 
-#                       aes(x=x,y=y, label = paste("Cohen's d = ", round(vrichdata$csum$effsize, 4), sep = "")), inherit.aes = FALSE) +
-#             theme(plot.title = element_text(hjust = 0.5, size = 12, face = "bold")) 
-# v_box
+# boxplot with significance?
+v_box <-vrichdata[["plot"]] +
+            labs(x = "Model Type", y = "Model Performance (Pseudo R2)", title = "Virus Richness") +
+            geom_line(data = tibble(x=c(1, 2),y = c(0.96, 0.96)), aes(x=x,y=y), inherit.aes = FALSE) +
+            geom_text(data = tibble(x=1.5,y = 0.999),
+                      aes(x=x,y=y, label = paste("T-test: p = ", round(vrichdata$tsum$p.value, 4), sep = "")), inherit.aes = FALSE) +
+            geom_text(data = tibble(x=1.5,y = 0.925),
+                      aes(x=x,y=y, label = paste("Cohen's d = ", round(vrichdata$csum$effsize, 4), sep = "")), inherit.aes = FALSE) +
+            theme(plot.title = element_text(hjust = 0.5, size = 12, face = "bold"))
+v_box
 
 ## Zoonotic proportion
 zpropdata <- tfun(zoop_perf, "#FC8D62")
@@ -274,18 +274,18 @@ zpropdata$csum
 # * <chr> <chr>    <chr>          <dbl> <int> <int> <ord>     
 #   1 y     mod_with mod_without 0.000856   100   100 negligible
 
-# # boxplot
-# z_box <- zpropdata[["plot"]] + labs(x = "Model Type", y = "Model Performance (Pseudo R2)") +
-#             labs(x = "Model Type", y = NULL, title = "Zoonotic Proportion") +
-#             geom_line(data = tibble(x=c(1, 2),y = c(0.29, 0.29)), aes(x=x,y=y), inherit.aes = FALSE) +
-#             geom_text(data = tibble(x=1.5,y = 0.3), 
-#                       aes(x=x,y=y, label = paste("T-test: p = ", round(zpropdata$tsum$p.value, 4), sep = "")), inherit.aes = FALSE) +
-#             geom_text(data = tibble(x=1.5,y = 0.28), 
-#                       aes(x=x,y=y, label = paste("Cohen's d = ", round(zpropdata$csum$effsize, 4), sep = "")), inherit.aes = FALSE) +
-#             theme(plot.title = element_text(hjust = 0.5, size = 12, face = "bold"))
-# 
-# z_box
-# 
+# boxplot
+z_box <- zpropdata[["plot"]] + labs(x = "Model Type", y = "Model Performance (Pseudo R2)") +
+            labs(x = "Model Type", y = NULL, title = "Zoonotic Proportion") +
+            geom_line(data = tibble(x=c(1, 2),y = c(0.29, 0.29)), aes(x=x,y=y), inherit.aes = FALSE) +
+            geom_text(data = tibble(x=1.5,y = 0.3),
+                      aes(x=x,y=y, label = paste("T-test: p = ", round(zpropdata$tsum$p.value, 4), sep = "")), inherit.aes = FALSE) +
+            geom_text(data = tibble(x=1.5,y = 0.28),
+                      aes(x=x,y=y, label = paste("Cohen's d = ", round(zpropdata$csum$effsize, 4), sep = "")), inherit.aes = FALSE) +
+            theme(plot.title = element_text(hjust = 0.5, size = 12, face = "bold"))
+
+z_box
+
 # v_box + z_box
 
 ## virus reservoir status
@@ -359,18 +359,18 @@ ps=c(vresAUC$tsum$p.value,
 round(p.adjust(ps,method="BH"),4)
 # [1] 0.9782 0.9782 0.9782
 
-# # Plot AUC
-# # boxplots
-# vb_box  <- vresAUC[["plot"]] + labs(x = "Model Type", y = "Model Performance (Test AUC)", title = "Virus Host") +
-#               geom_line(data = tibble(x=c(1, 2),y = c(0.96, 0.96)), aes(x=x,y=y), inherit.aes = FALSE) +
-#               geom_text(data = tibble(x=1.5,y = 0.965), 
-#                         aes(x=x,y=y, label = paste("T-test: p = ", round(vresAUC$tsum$p.value, 4), sep = "")), inherit.aes = FALSE) +
-#               geom_text(data = tibble(x=1.5,y = 0.955), 
-#                         aes(x=x,y=y, label = paste("Cohen's d = ", round(vresAUC$csum$effsize, 4), sep = "")), inherit.aes = FALSE) +
-#               theme(plot.title = element_text(hjust = 0.5, size = 12, face = "bold"))
-# vb_box
+# Plot AUC
+# boxplots
+vb_box  <- vresAUC[["plot"]] + labs(x = "Model Type", y = "Model Performance (Test AUC)", title = "Virus Host") +
+              geom_line(data = tibble(x=c(1, 2),y = c(0.96, 0.96)), aes(x=x,y=y), inherit.aes = FALSE) +
+              geom_text(data = tibble(x=1.5,y = 0.965),
+                        aes(x=x,y=y, label = paste("T-test: p = ", round(vresAUC$tsum$p.value, 4), sep = "")), inherit.aes = FALSE) +
+              geom_text(data = tibble(x=1.5,y = 0.955),
+                        aes(x=x,y=y, label = paste("Cohen's d = ", round(vresAUC$csum$effsize, 4), sep = "")), inherit.aes = FALSE) +
+              theme(plot.title = element_text(hjust = 0.5, size = 12, face = "bold"))
+vb_box
 
-rm(no_vbinary_brts, vbinary_brts)
+#rm(no_vbinary_brts, vbinary_brts)
 
 ## zoonotic reservoir status
 # need t stats for all metrics
@@ -442,17 +442,17 @@ ps=c(zresAUC$tsum$p.value,
 round(p.adjust(ps,method="BH"),4)
 # [1] 0.9982 0.9982 0.9982
 
-# # plot AUC
-# # boxplots
-# zb_box <-  zresAUC[["plot"]] + labs(x = "Model Type", y = NULL, title = "Zoonotic Virus Host") +
-#     geom_line(data = tibble(x=c(1, 2),y = c(0.96, 0.96)), aes(x=x,y=y), inherit.aes = FALSE) +
-#     geom_text(data = tibble(x=1.5,y = 0.965), 
-#               aes(x=x,y=y, label = paste("T-test: p = ", round(zresAUC$tsum$p.value, 4), sep = "")), inherit.aes = FALSE) +
-#     geom_text(data = tibble(x=1.5,y = 0.955), 
-#               aes(x=x,y=y, label = paste("Cohen's d = ", round(zresAUC$csum$effsize, 4), sep = "")), inherit.aes = FALSE) +
-#     theme(plot.title = element_text(hjust = 0.5, size = 12, face = "bold"))
-# 
-# zb_box
+# plot AUC
+# boxplots
+zb_box <-  zresAUC[["plot"]] + labs(x = "Model Type", y = NULL, title = "Zoonotic Virus Host") +
+    geom_line(data = tibble(x=c(1, 2),y = c(0.96, 0.96)), aes(x=x,y=y), inherit.aes = FALSE) +
+    geom_text(data = tibble(x=1.5,y = 0.965),
+              aes(x=x,y=y, label = paste("T-test: p = ", round(zresAUC$tsum$p.value, 4), sep = "")), inherit.aes = FALSE) +
+    geom_text(data = tibble(x=1.5,y = 0.955),
+              aes(x=x,y=y, label = paste("Cohen's d = ", round(zresAUC$csum$effsize, 4), sep = "")), inherit.aes = FALSE) +
+    theme(plot.title = element_text(hjust = 0.5, size = 12, face = "bold"))
+
+zb_box
 
 # patch them together and save
 png("/Volumes/BETKE 2021/bathaus/figs/ttest performance boxplots.png",width=8,height=8,units="in",res=600)
@@ -472,6 +472,10 @@ ps=c(vrichdata$tsum$p.value,
 round(p.adjust(ps,method="BH"),4)
 # 0.9982 0.9982 0.9982 0.9982 0.9982 0.9982 0.9982 0.9982
 
+# clean 
+rm(list = ls()[!ls() %in% c("data","vrichness_brts","no_vrichness_brts","zoo_prop_brts","no_zoo_prop_brts","vbinary_brts",
+                            "no_vbinary_brts","zbinary_brts", "no_zbinary_brts")])
+
 ################### Variable Importance Plots and rankings
 # Pull all the relative importance into a dataframe, get the mean, sd, and variation.
 # Then create a plot similar to the one I made for the variants 
@@ -484,7 +488,7 @@ vinfPlot <- function(data_name, bar_color){
   data_vinf <- do.call(rbind,vinf)
   
   # add rankings 
-  data_vinf$rank <- rep(1:63, times = 100)
+  data_vinf$rank <- rep(1:63, times = 50)
   
   # tidy output
   df_name <- data_vinf %>%
@@ -728,7 +732,7 @@ ggplot(ranks, aes(x=type, y=rank, color = type)) +
   #coord_flip() +
   scale_y_reverse() +
   theme_bw() +
-  labs(x = "Response", y = "Feature Rank") +
+  labs(x = "Response", y = "Predictor Rank") +
   scale_color_manual(breaks = c("virus richness","zoonotic proportion","virus host","zoonotic host"), 
                      values = c("#E78AC3", "#FC8D62", "#66C2A5", "#8DA0CB")) +
   theme(panel.grid.major=element_blank(),
@@ -883,8 +887,8 @@ make_pdp_fact <- function(model, feature, var_name, pcolor) {
     #          colour="grey",alpha=0.25,
     #          na.rm=T)+
     
-    geom_point(data=df_cat, inherit.aes = F, shape=23,
-               aes(x=Var1,y=ymin,fill=Freq)) +
+    # geom_point(data=df_cat, inherit.aes = F, shape=23,
+    #            aes(x=Var1,y=ymin,fill=Freq)) +
 
     ## theme
     theme_bw() +

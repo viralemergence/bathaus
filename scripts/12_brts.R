@@ -1,7 +1,8 @@
 # BRT analysis for bat viruses
 # babetke@utexas.edu
+# updated 07/24/24
 
-# clear envrionement and graphics
+# clear environment and graphics
 rm(list=ls()) 
 graphics.off()
 
@@ -14,13 +15,13 @@ library(ROCR)
 library(caret) 
 library(InformationValue)
 
-# read in rds
-# data <- readRDS("~/Desktop/Bats and Viruses/bathaus/flat files/cleaned dataset 30 cutoff.rds")
+## lab comp directory
+#data <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/cleaned dataset 30 cutoff.rds")
 
-# # lab comp directory
-data <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/cleaned dataset 30 cutoff.rds")
+## logged predictors
+data <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/Log cleaned dataset 30 cutoff.rds")
 
-# how many NAs are there - 237
+# how many NAs are there - 234
 length(data$Synurbic[is.na(data$Synurbic)])
 
 # zoonotic virus proportions
@@ -55,13 +56,8 @@ data <- merge(data, tsub, by = "species")
 # remove
 rm(c,t,tsub)
 
-# remove duplicated diet variable and geographic realm
-data <- data %>% 
-  select(-det_inv) 
-
-# # transform citations
-# data$cites <- sqrt(data$cites)
-# data$vcites <- sqrt(data$vcites)
+# remove redundant diet variable
+data$det_inv <- NULL
 
 # save before removing species (need this for predictions)
 fdata <- data
@@ -73,7 +69,7 @@ data$species <- NULL
 # ifelse for running grid search function
 gsrun = "no" 
 if(gsrun == "yes"){# run grid search 
-
+  
   # Set up BRT tuning via search grid
   # function to make grids?
   ## hyperparameter grid, maybe allow the number of seeds to change?
@@ -220,83 +216,83 @@ if(gsrun == "yes"){# run grid search
     
   }
   
-    # grids for each model type
-    pgrid <- makegrid(10, 5000)  # smaller grid for poisson models (seem to have low no of trees)
-    bgrid <- makegrid(10, c(5000, 25000)) # binary models
-    
-    # ### trim just for testing
-    # pgrid <- pgrid[71, ]
-    # pgrid$n.trees <- 5000
-    # pgrid$shrinkage <- 0.001
-    # pgrid$row <- 1
-    
-    ### run for all types of responses
-    # Virus Richness and transformed zoonotic proportion
-    vpars <- lapply(1:nrow(pgrid),function(x) grid_search(x, data_df = data, hgrid = pgrid, response="virus"))
-    pftpars <- lapply(1:nrow(pgrid),function(x) grid_search(x, data_df = data, hgrid = pgrid, response="zoo_pft"))
-    
-    # trim just for testing
-    # bgrid <- bgrid[84, ]
-    
-    # Reservoir status models
-    vrespars <- lapply(1:nrow(bgrid),function(x) grid_search(x, data_df = data, hgrid = bgrid, response="dum_virus", cv = TRUE))
-    zrespars <- lapply(1:nrow(bgrid),function(x) grid_search(x, data_df = data, hgrid = bgrid, response="dum_zvirus", cv = TRUE))
-    
-    ## get virus results
-    vresults <- data.frame(sapply(vpars,function(x) x$trainRMSE),
-                           sapply(vpars,function(x) x$testRMSE),
-                           sapply(vpars,function(x) x$wrow),
-                           sapply(vpars,function(x) x$best))
-    names(vresults) <- c("trainRMSE","testRMSE","row","best")
-
-    # Merge with hgrid
-    vcomplete <- merge(vresults, pgrid, by = "row")
-    
-    # get zoonotic results
-    zpresults <- data.frame(sapply(pftpars,function(x) x$trainRMSE),
-                           sapply(pftpars,function(x) x$testRMSE),
-                           sapply(pftpars,function(x) x$wrow),
-                           sapply(pftpars,function(x) x$best))
-    names(zpresults) <- c("trainRMSE","testRMSE","row","best")
-    
-    # Merge with hgrid
-    zpcomplete <- merge(zpresults, pgrid, by = "row")
-    
-    # Overall virus reservoir models not sure if you want a separate grid for this b/c of what you ran b4
-    ## get virus reservoir model results
-    vrresults <- data.frame(sapply(vrespars,function(x) x$trainAUC),
-                           sapply(vrespars,function(x) x$testAUC),
-                           sapply(vrespars,function(x) x$spec),
-                           sapply(vrespars,function(x) x$sen),
-                           sapply(vrespars,function(x) x$wrow),
-                           sapply(vrespars,function(x) x$best))
-    names(vrresults) <- c("trainAUC","testAUC","spec","sen","row","best")
-    
-    # Merge with hgrid
-    vrcomplete <- merge(vrresults, bgrid, by = "row")
-    
-    # zoonotic virus reservoir models
-    ## get virus results
-    zrresults <- data.frame(sapply(zrespars,function(x) x$trainAUC),
-                           sapply(zrespars,function(x) x$testAUC),
-                           sapply(zrespars,function(x) x$spec),
-                           sapply(zrespars,function(x) x$sen),
-                           sapply(zrespars,function(x) x$wrow),
-                           sapply(zrespars,function(x) x$best))
-    names(zrresults) <- c("trainAUC","testAUC","spec","sen","row","best")
-    
-    # Merge with hgrid
-    zrcomplete <- merge(zrresults, bgrid, by = "row")
-    
-    # write as csv
-    write_csv(vcomplete, "/Volumes/BETKE 2021/bathaus/flat files/virus grid search.csv")
-    write_csv(zpcomplete, "/Volumes/BETKE 2021/bathaus/flat files/pft zoonotic grid search.csv")
-    write_csv(vrcomplete, "/Volumes/BETKE 2021/bathaus/flat files/virus reservoir grid search.csv")
-    write.csv(zrcomplete, "/Volumes/BETKE 2021/bathaus/flat files/zoonotic virus reservoir grid search.csv")
-    # may actually want to combine all of these for multiplots? or do it for like model outcomes.
-    
+  # grids for each model type
+  pgrid <- makegrid(10, 5000)  # smaller grid for poisson models (seem to have low no of trees)
+  bgrid <- makegrid(10, c(5000, 25000)) # binary models
+  
+  # ### trim just for testing
+  # pgrid <- pgrid[71, ]
+  # pgrid$n.trees <- 5000
+  # pgrid$shrinkage <- 0.001
+  # pgrid$row <- 1
+  
+  ### run for all types of responses
+  # Virus Richness and transformed zoonotic proportion
+  vpars <- lapply(1:nrow(pgrid),function(x) grid_search(x, data_df = data, hgrid = pgrid, response="virus"))
+  pftpars <- lapply(1:nrow(pgrid),function(x) grid_search(x, data_df = data, hgrid = pgrid, response="zoo_pft"))
+  
+  # trim just for testing
+  # bgrid <- bgrid[84, ]
+  
+  # Reservoir status models
+  vrespars <- lapply(1:nrow(bgrid),function(x) grid_search(x, data_df = data, hgrid = bgrid, response="dum_virus", cv = TRUE))
+  zrespars <- lapply(1:nrow(bgrid),function(x) grid_search(x, data_df = data, hgrid = bgrid, response="dum_zvirus", cv = TRUE))
+  
+  ## get virus results
+  vresults <- data.frame(sapply(vpars,function(x) x$trainRMSE),
+                         sapply(vpars,function(x) x$testRMSE),
+                         sapply(vpars,function(x) x$wrow),
+                         sapply(vpars,function(x) x$best))
+  names(vresults) <- c("trainRMSE","testRMSE","row","best")
+  
+  # Merge with hgrid
+  vcomplete <- merge(vresults, pgrid, by = "row")
+  
+  # get zoonotic results
+  zpresults <- data.frame(sapply(pftpars,function(x) x$trainRMSE),
+                          sapply(pftpars,function(x) x$testRMSE),
+                          sapply(pftpars,function(x) x$wrow),
+                          sapply(pftpars,function(x) x$best))
+  names(zpresults) <- c("trainRMSE","testRMSE","row","best")
+  
+  # Merge with hgrid
+  zpcomplete <- merge(zpresults, pgrid, by = "row")
+  
+  # Overall virus reservoir models not sure if you want a separate grid for this b/c of what you ran b4
+  ## get virus reservoir model results
+  vrresults <- data.frame(sapply(vrespars,function(x) x$trainAUC),
+                          sapply(vrespars,function(x) x$testAUC),
+                          sapply(vrespars,function(x) x$spec),
+                          sapply(vrespars,function(x) x$sen),
+                          sapply(vrespars,function(x) x$wrow),
+                          sapply(vrespars,function(x) x$best))
+  names(vrresults) <- c("trainAUC","testAUC","spec","sen","row","best")
+  
+  # Merge with hgrid
+  vrcomplete <- merge(vrresults, bgrid, by = "row")
+  
+  # zoonotic virus reservoir models
+  ## get virus results
+  zrresults <- data.frame(sapply(zrespars,function(x) x$trainAUC),
+                          sapply(zrespars,function(x) x$testAUC),
+                          sapply(zrespars,function(x) x$spec),
+                          sapply(zrespars,function(x) x$sen),
+                          sapply(zrespars,function(x) x$wrow),
+                          sapply(zrespars,function(x) x$best))
+  names(zrresults) <- c("trainAUC","testAUC","spec","sen","row","best")
+  
+  # Merge with hgrid
+  zrcomplete <- merge(zrresults, bgrid, by = "row")
+  
+  # write as csv
+  write_csv(vcomplete, "/Volumes/BETKE 2021/bathaus/flat files/virus grid search.csv")
+  write_csv(zpcomplete, "/Volumes/BETKE 2021/bathaus/flat files/pft zoonotic grid search.csv")
+  write_csv(vrcomplete, "/Volumes/BETKE 2021/bathaus/flat files/virus reservoir grid search.csv")
+  write.csv(zrcomplete, "/Volumes/BETKE 2021/bathaus/flat files/zoonotic virus reservoir grid search.csv")
+  # may actually want to combine all of these for multiplots? or do it for like model outcomes.
+  
 } else {# read in grid search results
-
+  
   # overall_search <- read_csv("~/Desktop/Bats and Viruses/bathaus/flat files/virus grid search.csv")
   # zoo_search <- read_csv("~/Desktop/Bats and Viruses/bathaus/flat files/pft zoonotic grid search.csv")
   # vres_search <- read_csv("~/Desktop/Bats and Viruses/bathaus/flat files/virus reservoir grid search.csv")
@@ -406,7 +402,7 @@ zresSpec_gg <- ggplot(zres_search, aes(x = factor(shrinkage), y = spec)) +
 
 png("/Volumes/BETKE 2021/bathaus/figs/figure S2.png", width=5, height=7,units="in",res=300)
 guide_area () + 
-(virus_gg + zvirus_gg) / (vresAUC_gg + zresAUC_gg) / 
+  (virus_gg + zvirus_gg) / (vresAUC_gg + zresAUC_gg) / 
   (vresSen_gg + zresSen_gg) / (vresSpec_gg + zresSpec_gg) +
   plot_layout(guides = "collect", heights = c(1, 15)) & theme(legend.position = "top", legend.text = element_text(size = 8), legend.title = element_text(size = 8))
 dev.off()
@@ -495,16 +491,17 @@ brts <- function(seed, response, nt, shr, int.d, syn, cv = NULL){
   }
   
   # ifelse to determine distribution. If not any of the below options, throw error
-  dist <- ifelse((response == "virus" | response == "zvirus" | response == "cites" | response == "vcites"), "poisson", 
+  dist <- ifelse((response == "virus" | response == "zvirus" | response == "log_cites" | response == "log_vcites"), "poisson", 
                  ifelse((response == "dum_zvirus" | response == "dum_virus"),"bernoulli", 
                         ifelse(response == "zoo_pft","gaussian","Error")))
   
   # remove citations if predicting citations
-  if(response == "cites" | response == "vcites") {
-    ndata$cites = NULL
-    ndata$vcites = NULL
-  # } else if(response == "vcites"){
-  #   ndata$vcites = NULL
+  if(response == "log_cites" | response == "log_vcites") {
+    ndata$response = as.integer(exp(ndata$response)-1) # backtransform to count
+    ndata$log_cites = NULL
+    ndata$log_vcites = NULL
+    # } else if(response == "vcites"){
+    #   ndata$vcites = NULL
   } else {
     ndata = ndata
   }
@@ -591,8 +588,8 @@ brts <- function(seed, response, nt, shr, int.d, syn, cv = NULL){
     
     # then mean cites
     pdata <- fdata
-    pdata$cites <- mean(pdata$cites)
-    pdata$vcites <- mean(pdata$vcites) #just incase we also mean to do this as well
+    pdata$log_cites <- mean(pdata$log_cites)
+    pdata$log_vcites <- mean(pdata$log_vcites)
     pred_data$cpred <- predict(gbmOut, pdata, n.trees=best.iter, type="response")
     
     ## print
@@ -634,8 +631,8 @@ brts <- function(seed, response, nt, shr, int.d, syn, cv = NULL){
     
     # then mean cites
     pdata <- fdata
-    pdata$cites <- mean(pdata$cites)
-    pdata$vcites <- mean(pdata$vcites) #just incase we also mean to do this as well
+    pdata$log_cites <- mean(pdata$log_cites)
+    pdata$log_vcites <- mean(pdata$log_vcites) #just incase we also mean to do this as well
     pred_data$cpred <- predict(gbmOut, pdata, n.trees=best.iter, type="response")
     
     if(dist == "poisson"){
@@ -679,52 +676,49 @@ brts <- function(seed, response, nt, shr, int.d, syn, cv = NULL){
   
 }
 
-
-#### apply across specified number of splits smax
-# Filtered dataset
-smax=100 # 1 just for testing on personal comp
-
-# Richness models with and without synurbic
-vrichness_brts <- lapply(1:smax,function(x) brts(seed = x,response = "virus", nt = 15000, shr = 0.001, int.d = 4, syn = "yes", cv = NULL))
-no_vrichness_brts <- lapply(1:smax,function(x) brts( seed = x,response = "virus", nt = 15000, shr = 0.001, int.d = 4, syn = "no", cv = NULL))
+#####apply across specified number of splits smax
+smax=50
+#### transformed versions
+logvrichness_brts <- lapply(1:smax,function(x) brts(seed = x,response = "virus", nt = 15000, shr = 0.001, int.d = 4, syn = "yes", cv = NULL))
+logno_vrichness_brts <- lapply(1:smax,function(x) brts( seed = x,response = "virus", nt = 15000, shr = 0.001, int.d = 4, syn = "no", cv = NULL))
 
 # save then remove
-saveRDS(vrichness_brts,"/Volumes/BETKE 2021/bathaus/flat files/virus with brts.rds")
-saveRDS(no_vrichness_brts,"/Volumes/BETKE 2021/bathaus/flat files/virus without brts.rds")
+saveRDS(logvrichness_brts,"/Volumes/BETKE 2021/bathaus/flat files/virus with brts.rds")
+saveRDS(logno_vrichness_brts,"/Volumes/BETKE 2021/bathaus/flat files/virus without brts.rds")
 
-rm(vrichness_brts, no_vrichness_brts)
+rm(logvrichness_brts, logno_vrichness_brts)
 
 # Proportion with and without
-zoo_pft_brts <- lapply(1:smax,function(x) brts(seed = x,response = "zoo_pft", nt = 15000, shr = 0.0005, int.d = 4, syn = "yes", cv = NULL))
-no_zoo_pft_brts <- lapply(1:smax,function(x) brts(seed = x,response = "zoo_pft", nt = 15000, shr = 0.0005, int.d = 4, syn = "no", cv = NULL))
+logzoo_pft_brts <- lapply(1:smax,function(x) brts(seed = x,response = "zoo_pft", nt = 15000, shr = 0.0005, int.d = 4, syn = "yes", cv = NULL))
+logno_zoo_pft_brts <- lapply(1:smax,function(x) brts(seed = x,response = "zoo_pft", nt = 15000, shr = 0.0005, int.d = 4, syn = "no", cv = NULL))
 
-saveRDS(zoo_pft_brts, "/Volumes/BETKE 2021/bathaus/flat files/zoo_prop with brts.rds")
-saveRDS(no_zoo_pft_brts, "/Volumes/BETKE 2021/bathaus/flat files/zoo_prop without brts.rds")
+saveRDS(logzoo_pft_brts, "/Volumes/BETKE 2021/bathaus/flat files/zoo_prop with brts.rds")
+saveRDS(logno_zoo_pft_brts, "/Volumes/BETKE 2021/bathaus/flat files/zoo_prop without brts.rds")
 
 rm(zoo_pft_brts,no_zoo_pft_brts)
 
 # Overall virus reservoir status
-vbinary_brts <- lapply(1:smax,function(x) brts(seed = x,response = "dum_virus", nt = 5000, shr = 0.01, int.d = 3, syn = "yes", cv = NULL))
-no_vbinary_brts <- lapply(1:smax,function(x) brts(seed = x,response ="dum_virus", nt = 5000, shr = 0.01, int.d = 3, syn = "no", cv = NULL))
+logvbinary_brts <- lapply(1:smax,function(x) brts(seed = x,response = "dum_virus", nt = 5000, shr = 0.01, int.d = 3, syn = "yes", cv = TRUE))
+logno_vbinary_brts <- lapply(1:smax,function(x) brts(seed = x,response ="dum_virus", nt = 5000, shr = 0.01, int.d = 3, syn = "no", cv = TRUE))
 
-saveRDS(vbinary_brts, "/Volumes/BETKE 2021/bathaus/flat files/dum_virus with brts.rds")
-saveRDS(no_vbinary_brts, "/Volumes/BETKE 2021/bathaus/flat files/dum_virus without brts.rds")
+saveRDS(logvbinary_brts, "/Volumes/BETKE 2021/bathaus/flat files/dum_virus with brts.rds")
+saveRDS(logno_vbinary_brts, "/Volumes/BETKE 2021/bathaus/flat files/dum_virus without brts.rds")
 
-rm(vbinary_brts,no_vbinary_brts)
+rm(logvbinary_brts,logno_vbinary_brts)
 
 # Zoonotic virus reservoir
-zbinary_brts <- lapply(1:smax,function(x) brts(seed = x,response = "dum_zvirus",  nt = 15000, shr = 0.0005, int.d = 3, syn = "yes", cv = NULL))
-no_zbinary_brts <- lapply(1:smax,function(x) brts(seed = x,response ="dum_zvirus",  nt = 15000, shr = 0.0005, int.d = 3, syn = "no", cv = NULL))
+logzbinary_brts <- lapply(1:smax,function(x) brts(seed = x,response = "dum_zvirus",  nt = 15000, shr = 0.0005, int.d = 3, syn = "yes", cv = TRUE))
+logno_zbinary_brts <- lapply(1:smax,function(x) brts(seed = x,response ="dum_zvirus",  nt = 15000, shr = 0.0005, int.d = 3, syn = "no", cv = TRUE))
 
-saveRDS(zbinary_brts, "/Volumes/BETKE 2021/bathaus/flat files/dum_zvirus with brts.rds")
-saveRDS(no_zbinary_brts, "/Volumes/BETKE 2021/bathaus/flat files/dum_zvirus without brts.rds")
+saveRDS(logzbinary_brts, "/Volumes/BETKE 2021/bathaus/flat files/dum_zvirus with brts.rds")
+saveRDS(logno_zbinary_brts, "/Volumes/BETKE 2021/bathaus/flat files/dum_zvirus without brts.rds")
 
-rm(zbinary_brts,no_zbinary_brts)
+rm(logzbinary_brts,logno_zbinary_brts)
 
-# add functions for predicting citations
+# citation models
 smax=20 # no. seeds for citation models
-cite_brts <- lapply(1:smax,function(x) brts(seed = x,response = "cites", nt = 15000, shr = 0.001, int.d = 4, syn = "yes", cv = NULL))
-vcite_brts <- lapply(1:smax,function(x) brts(seed = x,response = "vcites", nt = 15000, shr = 0.001, int.d = 4, syn = "yes", cv = NULL))
+logcite_brts <- lapply(1:smax,function(x) brts(seed = x,response = "log_cites", nt = 15000, shr = 0.001, int.d = 4, syn = "yes", cv = NULL))
+logvcite_brts <- lapply(1:smax,function(x) brts(seed = x,response = "log_vcites", nt = 15000, shr = 0.001, int.d = 4, syn = "yes", cv = NULL))
 
-saveRDS(cite_brts, "/Volumes/BETKE 2021/bathaus/flat files/citation brts.rds")
-saveRDS(vcite_brts, "/Volumes/BETKE 2021/bathaus/flat files/virus citation brts.rds")
+saveRDS(logcite_brts, "/Volumes/BETKE 2021/bathaus/flat files/citation brts.rds")
+saveRDS(logvcite_brts, "/Volumes/BETKE 2021/bathaus/flat files/virus citation brts.rds")
