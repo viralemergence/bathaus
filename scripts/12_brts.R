@@ -544,7 +544,7 @@ brts <- function(seed, response, nt, shr, int.d, syn, cv = NULL){
   # AUC, sen, spec, ROC for binary models
   if(dist == "bernoulli"){ 
     
-    ## known - isn't this the same as ytest?
+    ## known 
     result <- test$response
     
     ## sensitiviy and specificity
@@ -632,7 +632,7 @@ brts <- function(seed, response, nt, shr, int.d, syn, cv = NULL){
     # then mean cites
     pdata <- fdata
     pdata$log_cites <- mean(pdata$log_cites)
-    pdata$log_vcites <- mean(pdata$log_vcites) #just incase we also mean to do this as well
+    pdata$log_vcites <- mean(pdata$log_vcites)
     pred_data$cpred <- predict(gbmOut, pdata, n.trees=best.iter, type="response")
     
     if(dist == "poisson"){

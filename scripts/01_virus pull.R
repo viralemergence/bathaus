@@ -48,7 +48,7 @@ bats %>% drop_na(Host, Virus) %>% mutate(ID = paste(Host, Virus)) %>%
 
 # merge by ID
 dat <- merge(dat, tot, by = "ID") 
-# it looks like none of the pairs have a mixture of detections with virus family and without
+# it looks like none of the pairs have a mixture of detentions with virus family and without
 
 # remove
 rm(vh_uni,miss,tot,non,dat)

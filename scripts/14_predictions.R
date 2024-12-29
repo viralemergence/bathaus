@@ -1,3 +1,4 @@
+# 14_predictions
 # Host model predictions and maps
 # babetke@utexas.edu
 
@@ -9,17 +10,19 @@ graphics.off()
 library(tidyverse)
 library(PresenceAbsence)
 
-# Model predictions
+###### Model predictions
 # read in model prediction csv files
 zres_apreds <- read.csv("/Volumes/BETKE 2021/bathaus/flat files/zoonotic virus host predictions.csv")
 vres_apreds <- read.csv("/Volumes/BETKE 2021/bathaus/flat files/virus host predictions.csv")
 
-set.seed(12345) # seed?
+set.seed(12345) # seed
 
 #### threshold predictions
-
+testrun = "no"
+# run threshold test and MSS. if yes, if not, skip to MSS method
+if(testrun == "yes"){
 ### testing thresholds
-# comparing MSS (3) to 85%, 90%, and 95% sensitivity (10)
+### comparing MSS (3) to 85%, 90%, and 95% sensitivity (10)
 
 ## virus models with roosting
 ts.p95 <- optimal.thresholds(data.frame(vres_apreds[,c('species','dum_virus','with')]),
@@ -39,7 +42,7 @@ ts.p85 <- optimal.thresholds(data.frame(vres_apreds[,c('species','dum_virus','wi
                              opt.methods = c(3,4,7,8,10),
                              req.sens = 0.85,
                              na.rm = TRUE)
-# funtion to sum 
+# function to sum 
 cut.p95 <- function(x) {sum(vres_apreds$with[vres_apreds$dum_virus==0] > x)}
 cut.p90 <- function(x) {sum(vres_apreds$with[vres_apreds$dum_virus==0] > x)}
 cut.p85 <- function(x) {sum(vres_apreds$with[vres_apreds$dum_virus==0] > x)}
@@ -146,7 +149,7 @@ t.vmod <- optimal.thresholds(data.frame(vres_apreds[,c('species','dum_virus','wi
                              req.sens = 0.95,
                              na.rm = TRUE)
 
-# virus host wihout
+# virus host without
 t.nvmod <- optimal.thresholds(data.frame(vres_apreds[,c('species','dum_virus','without')]),
                               threshold = 10001,
                               opt.methods = 3,
@@ -164,6 +167,34 @@ t.nzmod <- optimal.thresholds(data.frame(zres_apreds[,c('species','dum_zvirus','
                              opt.methods = 3,
                              req.sens = 0.95,
                              na.rm = TRUE)
+} else {
+  ### threshold - Just MSS pull
+  # virus host with 
+  t.vmod <- optimal.thresholds(data.frame(vres_apreds[,c('species','dum_virus','with')]),
+                               threshold = 10001,
+                               opt.methods = 3,
+                               req.sens = 0.95,
+                               na.rm = TRUE)
+  
+  # virus host without
+  t.nvmod <- optimal.thresholds(data.frame(vres_apreds[,c('species','dum_virus','without')]),
+                                threshold = 10001,
+                                opt.methods = 3,
+                                req.sens = 0.95,
+                                na.rm = TRUE)
+  # zoonotic with 
+  t.zmod <- optimal.thresholds(data.frame(zres_apreds[,c('species','dum_zvirus','with')]),
+                               threshold = 10001,
+                               opt.methods = 3,
+                               req.sens = 0.95,
+                               na.rm = TRUE)
+  # zoonotic without
+  t.nzmod <- optimal.thresholds(data.frame(zres_apreds[,c('species','dum_zvirus','without')]),
+                                threshold = 10001,
+                                opt.methods = 3,
+                                req.sens = 0.95,
+                                na.rm = TRUE)
+}
 
 # binary results
 vres_apreds %>% mutate(bin_with = with > t.vmod$with,
@@ -192,238 +223,384 @@ zpred %>% filter(dum_zvirus == 0 & without >= t.nzmod$without) %>% pull(species)
 setdiff(znovel, n_znovel) # 27 species different
 intersect(znovel, n_znovel) # 162 in common
 
-# how many are anthropogenic? 
+# Bin knowns and novel. Spell out roosting status for figs
 pred %>% 
   mutate(status = ifelse(dum_virus == 1, "known", ifelse(dum_virus == 0 & bin_with == 1,"novel", "cut")),
          roost = ifelse(Synurbic == 1, "anthropogenic roosting", "natural roosting")) -> pred
-
-table(pred$status, pred$roost, useNA = "ifany") # 65 anthropogenic
 
 zpred %>% 
   mutate(status = ifelse(dum_zvirus == 1, "known", ifelse(dum_zvirus == 0 & bin_with == 1,"novel", "cut")),
          roost = ifelse(Synurbic == 1, "anthropogenic roosting", "natural roosting")) -> zpred
 
-table(zpred$status, zpred$roost, useNA = "ifany") # 120 out of 189 thats almost 65%!!!
+# how many are anthropogenic? 
+# overall virus
+filter(pred, bin_with == 1 & status == "novel" & roost == "anthropogenic roosting") %>% pull(species) #65
+filter(pred, bin_without == 1 & status == "novel" & roost == "anthropogenic roosting") %>% pull(species) #64
 
-# # bar graph?
-# zpred %>% filter(status == "novel") %>%
-# ggplot(aes(x = roost, fill = roost)) +
-#   geom_bar() +
-#   scale_fill_manual(values = c("#8470ff","#9DD866","#A0B1BA")) +
-#   theme_bw() +
-#   theme(legend.position="none")
+# zoonotic
+filter(zpred, bin_with == 1 & status == "novel" & roost == "anthropogenic roosting") %>% pull(species) # 120
+filter(zpred, bin_without == 1 & status == "novel" & roost == "anthropogenic roosting") %>% pull(species) #106
 
-# Family and biogeographical realm break downs?
-# need to read in trait data before dummys?
+# Family and biogeographical realm break downs
+# need to read in trait data before family dummys
 traits <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/synurbic and traits only.rds")
 
+# novel zoonotic
 zpred %>% filter(status == "novel") -> novel
 
-# props by roostin
+# props by roosting
 prop.table(table(novel$roost, useNA = "ifany"))
 
 # include citations to see if predicted species are also poorly sampled.
-merge(novel, traits[c("species", "fam", "biogeographical_realm", "category")], by = "species") -> novel
-table(novel$fam)
-# EMBALLONURIDAE   HIPPOSIDERIDAE    MINIOPTERIDAE       MOLOSSIDAE   PHYLLOSTOMIDAE
-# 1                2                8                6                1
-# PTEROPODIDAE    RHINOLOPHIDAE VESPERTILIONIDAE
-# 1                3               13
+merge(traits[c("species", "fam", "biogeographical_realm", "category", "population_trend", "cites", "vcites")], novel, by = "species") -> novel
 
+# family breakdown
+table(novel$fam)
+
+# Distribution of citations (all heavily right skewed)
+hist(log(novel$cites+1))
+hist(novel$vcites)
+
+# biogeographical realms
 novel %>% separate_rows(biogeographical_realm, sep = ", ") %>% count(biogeographical_realm)
 
-novel %>% filter(roost == "anthropogenic roosting") %>% separate_rows(biogeographical_realm, sep = ", ") -> anth_novel
-ant_br <- data.frame(table(anth_novel$biogeographical_realm))
-colnames(ant_br) <- c("realm","count")
-ant_br$roost <- "anthropogenic roosting"
+# Conservation
+table(novel$category)
+table(novel$population_trend)
 
-novel %>% filter(roost == "natural roosting") %>% separate_rows(biogeographical_realm, sep = ", ") -> nat_novel
-nat_br <- data.frame(table(nat_novel$biogeographical_realm))
-colnames(nat_br) <- c("realm","count")
-nat_br$roost <- "natural roosting"
+# conservation status v roosting ecology
+table(novel$category, novel$roost, useNA = "ifany")
+table(novel$population_trend, novel$roost, useNA = "ifany")
 
-# bind
-realms <- rbind(ant_br,nat_br)
-ggplot(realms, aes(x = realm, fill = roost, weight = count, by = roost)) +
-  geom_bar(position = "dodge") +
-  scale_fill_manual(values = c("#8470ff","#9DD866","#A0B1BA")) +
-  theme_bw() +
-  theme(legend.position = "top")
+## look at traits of the 27 extra predicted by anth
+names <- setdiff(znovel, n_znovel)
 
-#### maps
-# you will need to get the binary status for known and unknown
-# vwith <- vres_apreds %>% 
-#   mutate(status = ifelse(dum_virus == 1, "known", ifelse(dum_virus == 0 & with > 0.89 ,"novel", "cut")),
-#          roost = ifelse(Synurbic == 1, "anthropogenic roosting", "natural roosting"))
+dif_traits <- traits %>% 
+  filter(species %in% names)
 
-zpred %>% filter(status != "cut") %>% drop_na(roost) %>% mutate(status = factor(status), roost = factor(roost))-> clean
+# citation distributions
+hist(dif_traits$cites)
+hist(dif_traits$vcites)
 
-# table(vwith$status) # looks correct
-# # cut known novel 
-# # 863   381    35 
+# family
+table(dif_traits$fam)
 
-# read in bat shape files
-bats=readRDS("/Volumes/BETKE 2021/bathaus/bat ranges/bat shp.rds")
+# roosting status
+table(dif_traits$Synurbic) # fairly even distribution of nat (12) and anthro (14)
 
-## make species names match your dataset format
-bats$tip=gsub("_"," ",bats$binomial)
+# geographic realm
+dif_traits %>% separate_rows(biogeographical_realm, sep = ", ") %>% count(biogeographical_realm)
 
-## check missing
-(miss=setdiff(clean$species,bats$tip))
+# conservation status
+table(dif_traits$category)
+table(dif_traits$population_trend)
 
-# [1] "Dermanura cinereus"        "Dermanura glaucus"        
-# [3] "Dermanura toltecus"        "Hipposideros commersoni"  
-# [5] "Hipposideros gigas"        "Hipposideros vittatus"    
-# [7] "Hsunycteris thomasi"       "Megaderma lyra"           
-# [9] "Mimon crenulatum"          "Miniopterus fuliginosus"  
-# [11] "Miniopterus mossambicus"   "Myonycteris angolensis"   
-# [13] "Myotis flavus"             "Pipistrellus alaschanicus"
-# [15] "Pipistrellus pulveratus"   "Pipistrellus savii"       
-# [17] "Pipistrellus subflavus"    "Triaenops menamena"
+###### Make some maps!!!
+# libraries
+library(fasterize)
+library(rgdal)
+library(raster)
+library(sf)
+library(geodata) # loads in terra package
 
+# reading IUCN file
+# ranges obtained from https://www.iucnredlist.org/resources/spatial-data-download
+iucn <- st_read("/Volumes/BETKE 2021/bathaus/MAMMALS_TERRESTRIAL_ONLY/MAMMALS_TERRESTRIAL_ONLY.shp") %>%
+  filter(order_=="CHIROPTERA")
 
-# [1] "Dermanura glaucus"       "Dermanura toltecus"      "Harpiocephalus mordax"  
-# [4] "Hipposideros commersoni" "Hipposideros gigas"      "Hipposideros vittatus"  
-# [7] "Hsunycteris thomasi"     "Megaderma lyra"          "Mimon crenulatum"       
-# [10] "Miniopterus fuliginosus" "Miniopterus mossambicus" "Myonycteris angolensis" 
-# [13] "Myotis flavus"           "Myotis midastactus"      "Natalus lanatus"        
-# [16] "Nyctophilus timoriensis" "Pipistrellus cadornae"   "Pipistrellus deserti"   
-# [19] "Pipistrellus pulveratus" "Pipistrellus savii"      "Pipistrellus subflavus" 
-# [22] "Pipistrellus tenuis"     "Triaenops menamena" 
+# look at the unique names
+iucn_names <- data.frame(unique(iucn$sci_name))
 
+# how many mismatches are there for the entire dataset?
+(alt_miss=setdiff(zpred$species,iucn_names$unique.iucn.sci_name.)) # 139 mismatches
 
-# recode
-bats$tip <- bats$tip %>% recode(#"Dermanura cinerea" = "Dermanura cinereus",
-                    "Dermanura glauca" = "Dermanura glaucus",
-                    "Dermanura tolteca" = "Dermanura toltecus",
-                    "Macronycteris commersoni"= "Hipposideros commersoni",
-                    "Macronycteris gigas" = "Hipposideros gigas",
-                    "Macronycteris vittatus" = "Hipposideros vittatus",
-                    "Lonchophylla thomasi" = "Hsunycteris thomasi",
-                    "Lyroderma lyra" = "Megaderma lyra",
-                    "Gardnerycteris crenulatum" = "Mimon crenulatum",
-                    #"Miniopterus fuliginosus" = "Miniopterus schreibersii",
-                    "Miniopterus orianae" = "Miniopterus oceanensis",
-                    "Lissonycteris angolensis" = "Myonycteris angolensis",
-                    "Hypsugo alaschanicus" = "Pipistrellus alaschanicus",
-                    "Hypsugo pulveratus" = "Pipistrellus pulveratus",
-                    "Hypsugo savii" = "Pipistrellus savii",
-                    "Perimyotis subflavus" = "Pipistrellus subflavus")
+# reconcile for entire dataset
+iucn$sci_name <- iucn$sci_name %>% # recode("old name" = "new name")
+  recode("Thainycteris aureocollaris" = "Arielulus aureocollaris",
+  "Mops aloysiisabaudiae" = "Chaerephon aloysiisabaudiae",
+  "Mops ansorgei"= "Chaerephon ansorgei",
+  "Mops atsinanana"  = "Chaerephon atsinanana",  
+  "Mops bemmeleni" = "Chaerephon bemmeleni",
+  "Mops bivittatus" = "Chaerephon bivittatus",
+  "Mops bregullae" = "Chaerephon bregullae",
+  "Mops chapini" = "Chaerephon chapini",
+  "Mops gallagheri" = "Chaerephon gallagheri",
+  "Mops jobensis" = "Chaerephon jobensis",
+  "Mops johorensis" = "Chaerephon johorensis",
+  "Mops major" = "Chaerephon major",
+  "Mops nigeriae" = "Chaerephon nigeriae",
+  "Mops plicatus" = "Chaerephon plicatus", 
+  "Mops pumilus" = "Chaerephon pumilus",
+  "Mops russatus" = "Chaerephon russatus",
+  "Mops solomonis" = "Chaerephon solomonis",
+  "Mops tomensis" = "Chaerephon tomensis",
+  "Dermanura azteca" = "Dermanura aztecus",
+  "Dermanura cinerea" = "Dermanura cinereus",
+  "Dermanura glauca" = "Dermanura glaucus",
+  "Dermanura gnoma" = "Dermanura gnomus",
+  "Dermanura rosenbergi" = "Dermanura rosenbergii",
+  "Dermanura tolteca" = "Dermanura toltecus",
+  "Diaemus youngii" = "Diaemus youngi",
+  "Diclidurus isabella" = "Diclidurus isabellus",
+  "Paremballonura atrata" = "Emballonura atrata",
+  "Paremballonura tiavato" = "Emballonura tiavato",
+  "Epomophorus dobsonii" = "Epomops dobsonii",
+  "Rhyneptesicus nasutus" = "Eptesicus nasutus",
+  "Hypsugo affinis" = "Falsistrellus affinis",
+  #"Glischropus aquilus"
+  #"Harpiocephalus harpia" = "Harpiocephalus mordax",
+  "Doryrhina camerunensis" = "Hipposideros camerunensis",
+  "Macronycteris commersoni"= "Hipposideros commersoni",
+  "Doryrhina cyclops" = "Hipposideros cyclops",
+  "Macronycteris gigas" = "Hipposideros gigas",
+  "Macronycteris thomensis" = "Hipposideros thomensis",
+  "Macronycteris vittatus" = "Hipposideros vittatus",
+  "Lonchophylla cadenai" = "Hsunycteris cadenai",
+  "Lonchophylla pattoni" = "Hsunycteris pattoni",
+  #"Lonchophylla thomasi" = "Hsunycteris thomasi",
+  "Pipistrellus anchietae" = "Hypsugo anchietae",
+  #"Lonchophylla inexpectata"
+  "Lophostoma occidentalis" = "Lophostoma aequatorialis",
+  # "Lophostoma yasuni"
+  "Lyroderma lyra" = "Megaderma lyra",
+  "Nesonycteris fardoulisi" = "Melonycteris fardoulisi",
+  "Nesonycteris woodfordi" = "Melonycteris woodfordi",
+  "Epomophorus intermedius" = "Micropteropus intermedius",
+  "Epomophorus pusillus" = "Micropteropus pusillus",
+  "Gardnerycteris crenulatum" = "Mimon crenulatum",
+  "Gardnerycteris koepckeae"= "Mimon koepckeae",
+  #"Miniopterus fuliginosus"
+  #"Miniopterus mossambicus"
+  "Miniopterus orianae" = "Miniopterus oceanensis",
+  #"Molossus barnesi"
+  "Ozimops beccarii" = "Mormopterus beccarii",
+  "Setirostris eleryi" = "Mormopterus eleryi",
+  "Ozimops halli" = "Mormopterus halli",
+  "Ozimops kitcheneri" = "Mormopterus kitcheneri",
+  "Ozimops loriae" = "Mormopterus loriae",
+  "Ozimops lumsdenae" = "Mormopterus lumsdenae",
+  "Micronomus norfolkensis" = "Mormopterus norfolkensis",
+  "Ozimops planiceps" = "Mormopterus planiceps",
+  "Murina cineracea" ="Murina feae",
+  # Murina guilleni
+  # Murina jaintiana
+  "Murina lorelieae" = "Murina loreliae",
+  #"Murina pluvialis"
+  #"Murina tiensa"
+  #"Myotis flavus",
+  #"Myotis hajastanicus"
+  #"Myotis handleyi"
+  #"Myotis simus" = "Myotis midastactus",
+  #"Myotis phanluongi"
+  #"Natalus lanatus"
+  "Notopteris macdonaldii" = "Notopteris macdonaldi",
+  "Notopteris neocaledonicus" = "Notopteris neocaledonica",
+  # Nycticeius aenobarbus
+  "Nyctimene varius" = "Nyctimene minutus",
+  "Nyctinomops kalinowskii" = "Mormopterus kalinowskii",
+  #"Nyctophilus timoriensis"
+  #"Paracoelops megalotis"
+  "Paratriaenops furcula" = "Paratriaenops furculus",
+  "Hypsugo alaschanicus" = "Pipistrellus alaschanicus",
+  "Hypsugo anthonyi" = "Pipistrellus anthonyi",
+  "Hypsugo arabicus" = "Pipistrellus arabicus",
+  "Hypsugo ariel" = "Pipistrellus ariel",
+  "Hypsugo cadornae" = "Pipistrellus cadornae",
+  # "Pipistrellus deserti"
+  "Hypsugo eisentrauti" = "Pipistrellus eisentrauti",
+  "Hypsugo joffrei" = "Pipistrellus joffrei",
+  "Hypsugo kitcheneri" = "Pipistrellus kitcheneri",
+  "Hypsugo lophurus" = "Pipistrellus lophurus",
+  "Hypsugo macrotis" = "Pipistrellus macrotis",
+  "Hypsugo musciculus" = "Pipistrellus musciculus",
+  "Hypsugo pulveratus" = "Pipistrellus pulveratus",
+  "Hypsugo savii" = "Pipistrellus savii",
+  "Perimyotis subflavus" = "Pipistrellus subflavus",
+  #"Pipistrellus tenuis"
+  "Hypsugo vordermanni"="Pipistrellus vordermanni",
+  "Ptenochirus jagorii" = "Ptenochirus jagori",
+  # "Pteropus argentatus"
+  "Pteropus medius" = "Pteropus giganteus",
+  "Pteropus vetula" = "Pteropus vetulus",
+  #"Pteropus yapensis"
+  #Rhinolophus chaseni
+  #Rhinolophus francisi
+  "Baeodon alleni" = "Rhogeessa alleni",
+  "Baeodon gracilis" = "Rhogeessa gracilis",
+  "Boneia bidens" = "Rousettus bidens",
+  "Pilonycteris celebensis" = "Rousettus celebensis",
+  "Austronomus australis" = "Tadarida australis",
+  "Mops jobimena" = "Tadarida jobimena",
+  "Austronomus kuboriensis" = "Tadarida kuboriensis",
+  #"Triaenops parvus"
+  #"Triaenops rufus"
+  #"Uroderma bakeri"
+  "Vampyriscus bidens" = "Vampyressa bidens",
+  "Vampyriscus brocki" = "Vampyressa brocki",
+  #"Vampyressa elisabethae"
+  "Vampyriscus nymphaea" = "Vampyressa nymphaea",
+  #Vampyressa sinchi
+  )
 
-## check missing
-(miss=setdiff(clean_vwith$species,bats$tip))
+# account for synonyms retained in the data
+# pull names, change to synonym names and bind back
+# list the names that need to be filtered and changed
+cnames <- c("Harpiocephalus harpia","Lophostoma carrikeri","Lonchophylla thomasi","Lophostoma occidentalis",
+            "Miniopterus schreibersii","Myotis formosus","Molossus coibensis","Murina harrisoni","Myotis aurascens",
+            "Natalus mexicanus", "Myotis simus","Natalus stramineus","Nyctophilus corbeni","Hipposideros pomona",
+            "Pipistrellus kuhlii","Pteropus chrysoproctus","Pteropus pelewensis","Rhinolophus borneensis","Triaenops persicus")
 
-## drop missing
-clean_vwith=clean_vwith[!clean_vwith$species%in%miss,]
+iucn_cnames <- iucn %>% 
+  filter(sci_name %in% cnames)
 
-## trim
-bats=bats[bats$tip%in%clean_vwith$species,]
+iucn_cnames$sci_name <- iucn_cnames$sci_name %>% 
+  recode("Harpiocephalus harpia" = "Harpiocephalus mordax",
+  "Lophostoma carrikeri" = "Lophostoma yasuni",
+  "Lonchophylla thomasi" = "Hsunycteris thomasi",
+  "Lophostoma occidentalis" = "Lophostoma aequatorialis",
+  "Miniopterus schreibersii" = "Miniopterus fuliginosus",
+  "Myotis formosus" = "Myotis flavus",
+  "Molossus coibensis" = "Molossus barnesi",
+  "Murina harrisoni" = "Murina tiensa",
+  "Myotis aurascens" = "Myotis hajastanicus",
+  "Natalus mexicanus" = "Natalus lanatus", 
+  "Myotis simus" = "Myotis midastactus",
+  "Natalus stramineus" = "Natalus saturatus",
+  "Nyctophilus corbeni" = "Nyctophilus timoriensis",
+  "Hipposideros pomona" = "Paracoelops megalotis",
+  "Pipistrellus kuhlii" = "Pipistrellus deserti",
+  "Pteropus chrysoproctus" = "Pteropus argentatus",
+  "Pteropus pelewensis"= "Pteropus yapensis",
+  "Rhinolophus borneensis" = "Rhinolophus chaseni",
+  "Triaenops persicus" = "Triaenops rufus"
+)
 
-## save id
-bats$id=rownames(bats@data)
+# rbind to iucn
+iucn <- rbind(iucn, iucn_cnames)
 
-## simplify
-library(rgeos)
-tol=0.2
+# check mismatches again - 33 
+setdiff(zpred$species,iucn$sci_name)
 
-## loop through and simplify
-lset=list()
-for(i in 1:length(unique(bats$tip))){
+### on to the actual maps
+## make a blank raster from https://geodata.ucdavis.edu/climate/worldclim/1_4/grid/cur/
+setwd("/Volumes/BETKE 2021/bathaus/alt_2-5m_bil")
+r <- disaggregate(raster("alt.bil")*0,2)
+
+# pull species names of novel hosts only
+zpred %>% filter(status == "novel" & roost == "anthropogenic roosting") %>% pull(species) -> nov_anth
+zpred %>% filter(status == "novel" & roost == "natural roosting") %>% pull(species) -> nov_nat
+zpred %>% filter(status == "known" & roost == "anthropogenic roosting") %>% pull(species) -> kn_anth
+zpred %>% filter(status == "known" & roost == "natural roosting") %>% pull(species) -> kn_nat
+zpred %>% pull(species) -> all_bats
+
+# filter by novel hosts
+iucn_nanth <- iucn[iucn$sci_name %in% nov_anth,] # novel anthropogenic
+iucn_nnat <- iucn[iucn$sci_name %in% nov_nat,] # novel natural
+iucn_kanth <- iucn[iucn$sci_name %in% kn_anth,] # known anthropogenic
+iucn_knat <- iucn[iucn$sci_name %in% kn_nat,] # known natural
+iucn_all <- iucn[iucn$sci_name %in% all_bats,] # all bat species
+
+# create raster layers
+map_nanth <- fasterize(iucn_nanth, r, fun="sum")
+map_nnat <- fasterize(iucn_nnat, r, fun="sum")
+map_kanth <- fasterize(iucn_kanth, r, fun="sum")
+map_knat <- fasterize(iucn_knat, r, fun="sum")
+map_all <- fasterize(iucn_all, r, fun="sum")
+
+# zero for continental area
+fix <- function(x) {sum(x,r,na.rm=TRUE)+r}
+
+map_nanth <- fix(map_nanth)
+map_nnat <-fix(map_nnat)
+map_kanth <- fix(map_kanth)
+map_knat <- fix(map_knat)
+map_all <- fix(map_all)
+
+# divide rasters for bat diversity
+nanth_div <- map_nanth/map_all
+nnat_div <- map_nnat/map_all
+kanth_div <- map_kanth/map_all
+knat_div <- map_knat/map_all
+
+# Fix continent again
+nanth_div <- fix(nanth_div)
+nnat_div <- fix(nnat_div)
+kanth_div <- fix(kanth_div)
+knat_div <- fix(knat_div)
+
+# clean 
+rm(map_nanth, map_nnat, map_kanth, map_knat, r, map_all)
+
+# raster stack
+raster::stack(kanth_div,nanth_div) -> anthro
+raster::stack(knat_div, nnat_div) -> natural
+
+# time to map!!
+library(rasterVis)
+library(RColorBrewer)
+
+# color palettes
+mycolors <- colorRampPalette(rev(brewer.pal(10,"Spectral")))(21)
+mycolors[1] <- "#C0C0C0"
+
+# anthro color palette 
+green <- colorRampPalette(c("#9DD866", "#003300"))(15)
+green <- append(green, "#C0C0C0", 0)
+# view colors
+scales::show_col(green)
+
+# natural color palette
+purple <- colorRampPalette(c("#907eff", "#0d0b19"))(15)
+purple <- append(purple, "#C0C0C0", 0)
+scales::show_col(purple)
+
+# map function with custom color palettes for each plot
+range_maps <- function(map_name, pal){
   
-  ## subset run
-  set=bats[bats$tip==unique(bats$tip)[i],]
+  rasterVis::levelplot(map_name,  
+                       margin = FALSE,
+                       col.regions = pal,
+                       layout = c(2,1),
+                       #at = seq(0, 15, 1),
+                       alpha = 0.5, 
+                       scales=list(draw=FALSE),
+                       par.strip.text=list(cex=0),
+                       xlab = NULL, ylab = NULL,
+                       maxpixels = 5e6)
   
-  ## save data
-  sdata=set@data
-  
-  ## simplify
-  shp=gSimplify(set,tol,topologyPreserve=TRUE)
-  
-  ## fortify
-  shp=data.frame(fortify(shp,region="ID"))
-  
-  ## merge with sdata by id
-  sdata=sdata[c("id","tip","binomial")]
-  shp=merge(shp,sdata,by="id",all.x=T)
-  
-  ## save
-  lset[[i]]=shp
-  
-  ## print
-  print(paste(i,"in",length(unique(bats$tip))))
 }
 
-## convert to data
-bset=do.call(rbind.data.frame,lset)
+# raster stacks
+range_maps(anthro, green) -> anth_only
+range_maps(natural, purple) -> nat_only
 
-## clean
-rm(bats)
+# clean up plots 
+anth_only$par.settings$layout.heights[
+  c('bottom.padding',
+    'top.padding',
+    'key.sub.padding',
+    'axis.xlab.padding',
+    'key.axis.padding'
+    #'between'
+  ) ] <- -0.15
+anth_only$par.settings$layout.widths[
+  c('ylab.axis.padding')
+] <- -1.25
+anth_only$aspect.fill <- TRUE
 
-## merge with data
-clean_vwith %>% rename(tip = species) -> clean_vwith
-bats=merge(bset,clean_vwith,by="tip",all.x=T)
+nat_only$par.settings$layout.heights[
+  c( 'bottom.padding',
+     'top.padding',
+     'key.sub.padding',
+     'axis.xlab.padding',
+     'key.axis.padding'
+  ) ] <- -0.15
+nat_only$par.settings$layout.widths[
+  c('ylab.axis.padding')
+] <- -1.25
+nat_only$aspect.fill <- TRUE
 
-## get world map
-library(ggalt)
-require(proj4)
-library(ggthemes)
-library(viridis)
-library(mapproj)
-wdata=map_data("world")
-#wdata=wdata[-which(wdata$region=='Antarctica'),]
-
-alpha <- ifelse(bats$status == "known", 0.20, 0.40)
-
-## plot (this may take some time)
-png("/Volumes/BETKE 2021/bathaus/figs/figure 6.png", width=6,height=4,units="in",res=600)
-ggplot(wdata,aes(long,lat))+
-  
-  ## base layer
-  geom_polygon(aes(group=group),
-               fill="grey90",colour="grey90",size=0.2)+
-  
-  ## add shapefiles
-  geom_polygon(data=bats,
-               aes(group=paste(tip,group),
-                   fill=roost), alpha = alpha) +
-  facet_grid(roost ~ status) +
-  #guides(fill="none") +
-  theme_bw() +
-  scale_fill_manual(labels = c("anthropogenic roosting","natural roosting"),
-                    values = c("#9DD866","#8470ff")) +
-  #scale_alpha_manual(values = c(0.20, 0.25)) +
-  labs(fill = "Roosting") +
-  theme(panel.grid.major=element_blank(),
-        panel.grid.minor=element_blank(),
-        axis.text = element_blank(),
-        axis.title = element_blank(),
-        axis.ticks = element_blank()) +
-  theme(legend.position = "top",
-        legend.text = element_text(size = 9), 
-        legend.title = element_text(size = 9),
-        legend.key.size = unit(0.4, "cm"),
-        legend.box.spacing = unit(0, "cm")) +
-  coord_map("mercator",xlim=c(-180,180)) 
+# save
+png("/Volumes/BETKE 2021/bathaus/figs/figure 5.png", width=7,height=3.5,units="in",res=600)
+cowplot::plot_grid(anth_only, nat_only, ncol = 1)
 dev.off()
-
-# quick little bar plot for esa
-zpred %>% select(bin_with, status, roost) %>% filter(status == "novel") -> hm
-hm$model <- "with"
-colnames(hm) <- c("bin", "status", "roost","model")
-
-zpred %>% select(bin_without, status, roost) %>% filter(status == "novel" & bin_without == 1) -> hm2
-hm2$model <- "without"
-colnames(hm2) <- c("bin", "status", "roost","model")
-
-# bind 
-hm_tot <- rbind(hm,hm2)
-
-# graph 
-ggplot(hm_tot) +
-  aes(x = model, fill = roost) +
-  geom_bar(position = "stack") +
-  scale_fill_manual(values = c("#8470ff","#9DD866","#A0B1BA")) +
-  theme_bw() +
-  labs(y = "novel hosts", x = "models") #+
-  #theme(legend.position = "top")
-

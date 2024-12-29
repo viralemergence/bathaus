@@ -31,8 +31,8 @@ if(pull == "yes"){
   trait_data <- read_csv("~/Desktop/Bats and Viruses/bathaus/COMBINE Datasets/COMBINE_archives/trait_data_reported.csv") %>%
     filter(order == "Chiroptera")
   
-  ## rredlist scrape - key
-  bapi="b0f54860abaf1e70f96157345f999eda91e1652e9f199c9d83712c5f64ea6dde"
+  ## rredlist scrape
+  bapi="insertyourownkey"
   
   ## run IUCN function
   rdata=lapply(trait_data$iucn2020_binomial,function(x){

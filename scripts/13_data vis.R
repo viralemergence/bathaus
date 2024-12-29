@@ -1,7 +1,7 @@
 # brt visualizations
 # babetke@utexas.edu
 
-#clean environment
+# clean environment
 rm(list=ls())
 graphics.off()
 
@@ -14,102 +14,76 @@ library(rstatix)
 library(ggridges)
 #library(ggrepel)
 
-#### Descriptive stats
-#data <- readRDS("~/Desktop/Bats and Viruses/bathaus/flat files/cleaned dataset 30 cutoff.rds")
-
-# lab comp directory
+# read in trait data
 data <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/log cleaned dataset 30 cutoff.rds")
 
 ###################### BRT Results
 # Read in rds files for model outputs from drive
 # richness models
-vrichness_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/log virus with brts.rds")
-no_vrichness_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/log virus without brts.rds")
+vrichness_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/virus with brts.rds")
+no_vrichness_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/virus without brts.rds")
 # zoonotic proportion models
-zoo_prop_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/log zoo_prop with brts.rds")
-no_zoo_prop_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/log zoo_prop without brts.rds")
+zoo_prop_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/zoo_prop with brts.rds")
+no_zoo_prop_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/zoo_prop without brts.rds")
 # virus reservoir
-vbinary_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/cv log dum_virus with brts.rds")
-no_vbinary_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/cv log dum_virus without brts.rds")
+vbinary_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/dum_virus with brts.rds")
+no_vbinary_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/dum_virus without brts.rds")
 # zoonotic virus reservoir
-zbinary_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/cv log dum_zvirus with brts.rds")
-no_zbinary_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/cv log dum_zvirus without brts.rds")
+zbinary_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/dum_zvirus with brts.rds")
+no_zbinary_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/dum_zvirus without brts.rds")
 # citation models
 cites_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/citation brts.rds")
 vcites_brts <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/virus citation brts.rds")
 
 ##### Summary stats of model performance
-## Richness models - pseudo R2
-# with
-mean(sapply(vrichness_brts,function(x) x$testr2)) # 0.50546
-std.error(sapply(vrichness_brts,function(x) x$testr2)) # 0.04015271
+pull_stats <- function(mod){
+  
+  if(mod[[1]][["mod"]][["distribution"]][["name"]] == "bernoulli"){
+    
+    # pull performance stats
+    auc <- mean(sapply(mod,function(x) x$testAUC))
+    sen <- mean(sapply(mod,function(x) x$sen))
+    spec <- mean(sapply(mod,function(x) x$spec))
+    se.auc <- std.error(sapply(mod,function(x) x$testAUC)) 
+    se.sen <- std.error(sapply(mod,function(x) x$sen))
+    se.spec <- std.error(sapply(mod,function(x) x$spec)) 
+    
+    # df of stats
+    df <- data.frame(stat = character(), auc = numeric(), sen = numeric(), spec = numeric())
+    df[1,] <- c("mean", auc, sen, spec)
+    df[2,] <- c("se", se.auc, se.sen, se.spec)
+    return(df)
+    
+  }else{
+    
+    # pseudo r2
+    test.r2 = mean(sapply(mod,function(x) x$testr2)) 
+    se.r2 = std.error(sapply(mod,function(x) x$testr2))
+    
+    #return
+    data.frame(test.r2 = test.r2, se.r2 = se.r2)
+  }
+}
 
-# without
-mean(sapply(no_vrichness_brts,function(x) x$testr2)) # 0.5039281
-std.error(sapply(no_vrichness_brts,function(x) x$testr2)) # 0.04065847
+## Richness models - pseudo R2
+pull_stats(vrichness_brts)
+pull_stats(no_vrichness_brts)
 
 ## Zoonotic proportion - pseudo R2
-# with
-mean(sapply(zoo_prop_brts,function(x) x$testr2)) # 0.3637963
-std.error(sapply(zoo_prop_brts,function(x) x$testr2)) # 0.01233192
-
-# without
-mean(sapply(no_zoo_prop_brts,function(x) x$testr2)) # 0.364138
-std.error(sapply(no_zoo_prop_brts,function(x) x$testr2)) # 0.01233704
+pull_stats(zoo_prop_brts)
+pull_stats(no_zoo_prop_brts)
 
 ## Virus reservoir - AUC
-# With
-# AUC
-mean(sapply(vbinary_brts,function(x) x$testAUC)) # 0.9163051
-std.error(sapply(vbinary_brts,function(x) x$testAUC)) # 0.00275984
-#sen
-mean(sapply(vbinary_brts,function(x) x$sen)) # 0.6634783
-std.error(sapply(vbinary_brts,function(x) x$sen)) # 0.008922315
-# spec
-mean(sapply(vbinary_brts,function(x) x$spec)) # 0.9398936
-std.error(sapply(vbinary_brts,function(x) x$spec)) # 0.002663913
-
-# without
-# AUC
-mean(sapply(no_vbinary_brts,function(x) x$testAUC)) # 0.91643
-std.error(sapply(no_vbinary_brts,function(x) x$testAUC)) # 0.002748235
-# sen
-mean(sapply(no_vbinary_brts,function(x) x$sen)) # 0.6643478
-std.error(sapply(no_vbinary_brts,function(x) x$sen)) # 0.008560119
-# spec
-mean(sapply(no_vbinary_brts,function(x) x$spec)) # 0.9403191
-std.error(sapply(no_vbinary_brts,function(x) x$spec)) # 0.002489295
+pull_stats(vbinary_brts)
+pull_stats(no_vbinary_brts)
 
 ## Zoonotic virus reservoir - AUC
-# With
-# AUC
-mean(sapply(zbinary_brts,function(x) x$testAUC)) # 0.9332433
-std.error(sapply(zbinary_brts,function(x) x$testAUC)) # 0.002605374
-# sen
-mean(sapply(zbinary_brts,function(x) x$sen)) # 0.6268293
-std.error(sapply(zbinary_brts,function(x) x$sen)) # 0.008931014
-# spec
-mean(sapply(zbinary_brts,function(x) x$spec)) # 0.9674419
-std.error(sapply(zbinary_brts,function(x) x$spec)) # 0.001797708
+pull_stats(zbinary_brts)
+pull_stats(no_zbinary_brts)
 
-# without
-# AUC
-mean(sapply(no_zbinary_brts,function(x) x$testAUC)) # 0.9333296
-std.error(sapply(no_zbinary_brts,function(x) x$testAUC)) # 0.002602445
-#sen
-mean(sapply(no_zbinary_brts,function(x) x$sen)) # 0.6273171
-std.error(sapply(no_zbinary_brts,function(x) x$sen)) # 0.009006547
-#spec
-mean(sapply(no_zbinary_brts,function(x) x$spec)) # 0.9674419
-std.error(sapply(no_zbinary_brts,function(x) x$spec)) # 0.001787857
-
-## need to look at summary stats for citation models
-# cites
-mean(sapply(cites_brts,function(x) x$testr2)) # 0.1209731
-std.error(sapply(cites_brts,function(x) x$testr2)) # 0.07554686
-#vcites
-mean(sapply(vcites_brts,function(x) x$testr2)) # -0.08667685
-std.error(sapply(vcites_brts,function(x) x$testr2)) # 0.1400668
+## Summary stats for citation models
+pull_stats(cites_brts)
+pull_stats(vcites_brts)
 
 ### ttests
 ## function for extracting data, perform unpaired t test, Cohen's d
@@ -144,30 +118,21 @@ perf_agg=function(mod_with, mod_without, measure){
   
   }
 
-# call and save as csv files
 # virus models
 virus_perf <- perf_agg(vrichness_brts, no_vrichness_brts, "testr2")
-write_csv(virus_perf, "/Volumes/BETKE 2021/bathaus/flat files/virus performance.csv")
-#rm(vrichness_brts, no_vrichness_brts)
 
 # zoonotic models
 zoop_perf <- perf_agg(zoo_prop_brts , no_zoo_prop_brts, "testr2")
-write_csv(zoop_perf, "/Volumes/BETKE 2021/bathaus/flat files/zoonitic proportion performance.csv")
-#rm(no_zoo_prop_brts, zoo_prop_brts)
 
 # virus host models
 vres_perf <- perf_agg(vbinary_brts, no_vbinary_brts, "testAUC")
 vres_SEN <- perf_agg(vbinary_brts, no_vbinary_brts, "sen")
 vres_Spec <- perf_agg(vbinary_brts, no_vbinary_brts, "spec")
-write_csv(vres_perf, "/Volumes/BETKE 2021/bathaus/flat files/virus reservoir performance.csv")
-#rm(vbinary_brts, no_vbinary_brts)
 
 # zoonotic host models
 zoores_perf <- perf_agg(zbinary_brts, no_zbinary_brts, "testAUC")
 zoores_SEN <- perf_agg(zbinary_brts, no_zbinary_brts, "sen")
 zoores_Spec <- perf_agg(zbinary_brts, no_zbinary_brts, "spec")
-write_csv(zoores_perf, "/Volumes/BETKE 2021/bathaus/flat files/zoonotic virus reservoir performance.csv")
-#rm(zbinary_brts, no_zbinary_brts)
 
 # create t test function
 tfun=function(perf_df, fcol){
@@ -195,7 +160,7 @@ tfun=function(perf_df, fcol){
   ## effect size
   csum=cohens_d(y~response,data=adata,paired=F,var.equal=F)
 
-  ## Add plot function?
+  ## Plot function
   set.seed(3)
   plot <- ggplot(adata)+
     geom_boxplot(aes(x=x,y=y,group=x),width=0.25,outlier.alpha = 0,fill=fcol) +
@@ -224,33 +189,6 @@ vrichdata <- tfun(virus_perf, "#E78AC3")
 vrichdata$tsum
 vrichdata$csum
 
-# Welch Two Sample t-test
-# 
-# data:  y by response
-# t = 0.058567, df = 197.98, p-value = 0.9534
-# alternative hypothesis: true difference in means between group mod_with and group mod_without is not equal to 0
-# 95 percent confidence interval:
-#   -0.04416452  0.04686808
-# sample estimates:
-#   mean in group mod_with mean in group mod_without 
-# 0.6367943                 0.6354426
-
-# # A tibble: 1 × 7
-# .y.   group1   group2      effsize    n1    n2 magnitude 
-# * <chr> <chr>    <chr>         <dbl> <int> <int> <ord>     
-#   1 y     mod_with mod_without 0.00828   100   100 negligible
-
-# boxplot with significance?
-v_box <-vrichdata[["plot"]] +
-            labs(x = "Model Type", y = "Model Performance (Pseudo R2)", title = "Virus Richness") +
-            geom_line(data = tibble(x=c(1, 2),y = c(0.96, 0.96)), aes(x=x,y=y), inherit.aes = FALSE) +
-            geom_text(data = tibble(x=1.5,y = 0.999),
-                      aes(x=x,y=y, label = paste("T-test: p = ", round(vrichdata$tsum$p.value, 4), sep = "")), inherit.aes = FALSE) +
-            geom_text(data = tibble(x=1.5,y = 0.925),
-                      aes(x=x,y=y, label = paste("Cohen's d = ", round(vrichdata$csum$effsize, 4), sep = "")), inherit.aes = FALSE) +
-            theme(plot.title = element_text(hjust = 0.5, size = 12, face = "bold"))
-v_box
-
 ## Zoonotic proportion
 zpropdata <- tfun(zoop_perf, "#FC8D62")
 
@@ -258,206 +196,41 @@ zpropdata <- tfun(zoop_perf, "#FC8D62")
 zpropdata$tsum
 zpropdata$csum
 
-# Welch Two Sample t-test
-# 
-# data:  y by response
-# t = 0.0060513, df = 198, p-value = 0.9952
-# alternative hypothesis: true difference in means between group mod_with and group mod_without is not equal to 0
-# 95 percent confidence interval:
-#   -0.01455050  0.01464007
-# sample estimates:
-#   mean in group mod_with mean in group mod_without 
-# 0.1495972                 0.1495524 
-
-# # A tibble: 1 × 7
-# .y.   group1   group2       effsize    n1    n2 magnitude 
-# * <chr> <chr>    <chr>          <dbl> <int> <int> <ord>     
-#   1 y     mod_with mod_without 0.000856   100   100 negligible
-
-# boxplot
-z_box <- zpropdata[["plot"]] + labs(x = "Model Type", y = "Model Performance (Pseudo R2)") +
-            labs(x = "Model Type", y = NULL, title = "Zoonotic Proportion") +
-            geom_line(data = tibble(x=c(1, 2),y = c(0.29, 0.29)), aes(x=x,y=y), inherit.aes = FALSE) +
-            geom_text(data = tibble(x=1.5,y = 0.3),
-                      aes(x=x,y=y, label = paste("T-test: p = ", round(zpropdata$tsum$p.value, 4), sep = "")), inherit.aes = FALSE) +
-            geom_text(data = tibble(x=1.5,y = 0.28),
-                      aes(x=x,y=y, label = paste("Cohen's d = ", round(zpropdata$csum$effsize, 4), sep = "")), inherit.aes = FALSE) +
-            theme(plot.title = element_text(hjust = 0.5, size = 12, face = "bold"))
-
-z_box
-
-# v_box + z_box
-
 ## virus reservoir status
-# need t stats for all metrics
+# t stats for all metrics
 vresAUC <- tfun(vres_perf, "#66C2A5")
 vresSEN <- tfun(vres_SEN, "#66C2A5")
 vresSpec <- tfun(vres_Spec, "#66C2A5")
 
-# view stats
+# view stats - AUC
 vresAUC$tsum
 vresAUC$csum
 
-# Welch Two Sample t-test
-# 
-# data:  y by response
-# t = 0.027393, df = 197.96, p-value = 0.9782
-# alternative hypothesis: true difference in means between group mod_with and group mod_without is not equal to 0
-# 95 percent confidence interval:
-#   -0.005352452  0.005503245
-# sample estimates:
-#   mean in group mod_with mean in group mod_without 
-# 0.9025166                 0.9024412 
-
-# # A tibble: 1 × 7
-# .y.   group1   group2      effsize    n1    n2 magnitude 
-# * <chr> <chr>    <chr>         <dbl> <int> <int> <ord>     
-#   1 y     mod_with mod_without 0.00387   100   100 negligible
-
+# view stats - Sensitivity
 vresSEN$tsum
 vresSEN$csum
 
-# Welch Two Sample t-test
-# 
-# data:  y by response
-# t = 0.20816, df = 197.99, p-value = 0.8353
-# alternative hypothesis: true difference in means between group mod_with and group mod_without is not equal to 0
-# 95 percent confidence interval:
-#   -0.01430616  0.01768278
-# sample estimates:
-#   mean in group mod_with mean in group mod_without 
-# 0.6623377                 0.6606494 
-
-# # A tibble: 1 × 7
-# .y.   group1   group2      effsize    n1    n2 magnitude 
-# * <chr> <chr>    <chr>         <dbl> <int> <int> <ord>     
-#   1 y     mod_with mod_without  0.0294   100   100 negligible
-
+# view stats - Specificity
 vresSpec$tsum
 vresSpec$csum
 
-# Welch Two Sample t-test
-# 
-# data:  y by response
-# t = -0.14424, df = 198, p-value = 0.8855
-# alternative hypothesis: true difference in means between group mod_with and group mod_without is not equal to 0
-# 95 percent confidence interval:
-#   -0.005705691  0.004927913
-# sample estimates:
-#   mean in group mod_with mean in group mod_without 
-# 0.9293889                 0.9297778 
-
-# # A tibble: 1 × 7
-# .y.   group1   group2      effsize    n1    n2 magnitude 
-# * <chr> <chr>    <chr>         <dbl> <int> <int> <ord>     
-#   1 y     mod_with mod_without -0.0204   100   100 negligible
-
-# pvalue adjustment for values
-ps=c(vresAUC$tsum$p.value,
-     vresSEN$tsum$p.value,
-     vresSpec$tsum$p.value)
-round(p.adjust(ps,method="BH"),4)
-# [1] 0.9782 0.9782 0.9782
-
-# Plot AUC
-# boxplots
-vb_box  <- vresAUC[["plot"]] + labs(x = "Model Type", y = "Model Performance (Test AUC)", title = "Virus Host") +
-              geom_line(data = tibble(x=c(1, 2),y = c(0.96, 0.96)), aes(x=x,y=y), inherit.aes = FALSE) +
-              geom_text(data = tibble(x=1.5,y = 0.965),
-                        aes(x=x,y=y, label = paste("T-test: p = ", round(vresAUC$tsum$p.value, 4), sep = "")), inherit.aes = FALSE) +
-              geom_text(data = tibble(x=1.5,y = 0.955),
-                        aes(x=x,y=y, label = paste("Cohen's d = ", round(vresAUC$csum$effsize, 4), sep = "")), inherit.aes = FALSE) +
-              theme(plot.title = element_text(hjust = 0.5, size = 12, face = "bold"))
-vb_box
-
-#rm(no_vbinary_brts, vbinary_brts)
-
 ## zoonotic reservoir status
-# need t stats for all metrics
+# t stats for all metrics
 zresAUC <- tfun(zoores_perf, "#8DA0CB")
 zresSEN <- tfun(zoores_SEN, "#8DA0CB")
 zresSpec <- tfun(zoores_Spec, "#8DA0CB")
 
+# view stats - AUC
 zresAUC$tsum
 zresAUC$csum
 
-# Welch Two Sample t-test
-# 
-# data:  y by response
-# t = 0.0022392, df = 198, p-value = 0.9982
-# alternative hypothesis: true difference in means between group mod_with and group mod_without is not equal to 0
-# 95 percent confidence interval:
-#   -0.005617415  0.005630186
-# sample estimates:
-#   mean in group mod_with mean in group mod_without 
-# 0.9138378                 0.9138314 
-
-# # A tibble: 1 × 7
-# .y.   group1   group2       effsize    n1    n2 magnitude 
-# * <chr> <chr>    <chr>          <dbl> <int> <int> <ord>     
-#   1 y     mod_with mod_without 0.000317   100   100 negligible
-
+# view stats - Sensitivity
 zresSEN$tsum
 zresSEN$csum
 
-# Welch Two Sample t-test
-# 
-# data:  y by response
-# t = 0.043471, df = 198, p-value = 0.9654
-# alternative hypothesis: true difference in means between group mod_with and group mod_without is not equal to 0
-# 95 percent confidence interval:
-#   -0.01643094  0.01717169
-# sample estimates:
-#   mean in group mod_with mean in group mod_without 
-# 0.6172222                 0.6168519 
-
-# # A tibble: 1 × 7
-# .y.   group1   group2      effsize    n1    n2 magnitude 
-# * <chr> <chr>    <chr>         <dbl> <int> <int> <ord>     
-#   1 y     mod_with mod_without 0.00615   100   100 negligible
-
+# view stats - Specificity
 zresSpec$tsum
 zresSpec$csum
-
-# Welch Two Sample t-test
-# 
-# data:  y by response
-# t = -0.051519, df = 197.99, p-value = 0.959
-# alternative hypothesis: true difference in means between group mod_with and group mod_without is not equal to 0
-# 95 percent confidence interval:
-#   -0.003869715  0.003672670
-# sample estimates:
-#   mean in group mod_with mean in group mod_without 
-# 0.9600493                 0.9601478 
-
-# # A tibble: 1 × 7
-# .y.   group1   group2       effsize    n1    n2 magnitude 
-# * <chr> <chr>    <chr>          <dbl> <int> <int> <ord>     
-#   1 y     mod_with mod_without -0.00729   100   100 negligible
-
-# pvalue adjustment for values
-ps=c(zresAUC$tsum$p.value,
-     zresSEN$tsum$p.value,
-     zresSpec$tsum$p.value)
-round(p.adjust(ps,method="BH"),4)
-# [1] 0.9982 0.9982 0.9982
-
-# plot AUC
-# boxplots
-zb_box <-  zresAUC[["plot"]] + labs(x = "Model Type", y = NULL, title = "Zoonotic Virus Host") +
-    geom_line(data = tibble(x=c(1, 2),y = c(0.96, 0.96)), aes(x=x,y=y), inherit.aes = FALSE) +
-    geom_text(data = tibble(x=1.5,y = 0.965),
-              aes(x=x,y=y, label = paste("T-test: p = ", round(zresAUC$tsum$p.value, 4), sep = "")), inherit.aes = FALSE) +
-    geom_text(data = tibble(x=1.5,y = 0.955),
-              aes(x=x,y=y, label = paste("Cohen's d = ", round(zresAUC$csum$effsize, 4), sep = "")), inherit.aes = FALSE) +
-    theme(plot.title = element_text(hjust = 0.5, size = 12, face = "bold"))
-
-zb_box
-
-# patch them together and save
-png("/Volumes/BETKE 2021/bathaus/figs/ttest performance boxplots.png",width=8,height=8,units="in",res=600)
-(v_box + z_box) / (vb_box + zb_box)
-dev.off()
 
 # all perf. adjustment
 ps=c(vrichdata$tsum$p.value,
@@ -470,9 +243,8 @@ ps=c(vrichdata$tsum$p.value,
      zresSpec$tsum$p.value
 )
 round(p.adjust(ps,method="BH"),4)
-# 0.9982 0.9982 0.9982 0.9982 0.9982 0.9982 0.9982 0.9982
 
-# clean 
+# clean out everything but brts and data
 rm(list = ls()[!ls() %in% c("data","vrichness_brts","no_vrichness_brts","zoo_prop_brts","no_zoo_prop_brts","vbinary_brts",
                             "no_vbinary_brts","zbinary_brts", "no_zbinary_brts")])
 
@@ -514,26 +286,26 @@ vinfPlot <- function(data_name, bar_color){
   
   #Clean up variable names
   df_name$var <- recode(df_name$var,
-                         "cites" = "Citation Count",
-                         "vcites" = "Virus Citation Count",
-                         "X26.1_GR_Area_km2" = "Geographic Area",
+                         "log_cites" = "Log Citation Count",
+                         "log_vcites" = "Log Virus Citation Count",
+                         "log_X26.1_GR_Area_km2" = "Log Geographic Area",
                          "X30.1_AET_Mean_mm" = "Mean Monthly AET",
                          "X26.2_GR_MaxLat_dd" = "Maximum Latitude",
                          "X26.3_GR_MinLat_dd" = "Minimum Latitude",
                          "habitat_breadth_n" = "Habitat Breadth",
                          "litters_per_year_n" = "Litters Per Year",
-                         "adult_body_length_mm" = "Adult Body Length",
+                         "log_adult_body_length_mm" = "Log Adult Body Length",
                          "X28.2_Temp_Mean_01degC" = "Mean Monthly Temperature",
-                         "X27.2_HuPopDen_Mean_n.km2" = "Mean Human Density",
+                         "log_X27.2_HuPopDen_Mean_n.km2" = "Log Mean Human Density",
                          "X28.1_Precip_Mean_mm" = "Mean Monthly Precipitation",
                          "litter_size_n" = "Litter Size",
                          "upper_elevation_m" = "Upper Elevation Limit",
                          "disected_by_mountains" = "Disected by Mountains",
-                         "adult_forearm_length_mm" = "Adult Forearm Length",
+                         "log_adult_forearm_length_mm" = "Log Adult Forearm Length",
                          "altitude_breadth_m" = "Altitude Breadth",
                          "X26.4_GR_MidRangeLat_dd" = "Median Latitudinal Range",
                          "foraging_stratum" = "Foraging stratum",
-                         "adult_mass_g" = "Adult Mass",
+                         "log_adult_mass_g" = "Log Adult Mass",
                          "X30.2_PET_Mean_mm" = "Mean Monthly PET",
                          "det_vfish" = "Diet Fish",
                          "X26.5_GR_MaxLong_dd" = "Maximum Longitude",
@@ -541,12 +313,12 @@ vinfPlot <- function(data_name, bar_color){
                          "det_diet_breadth_n" = "Diet Breadth",
                          "X26.6_GR_MinLong_dd" = "Minimum Longitude",
                          "det_vend" = "Diet Vend",
-                         "X27.1_HuPopDen_Min_n.km2" = "Min Human Density",
+                         "log_X27.1_HuPopDen_Min_n.km2" = "Log Min Human Density",
                          "dphy_vertebrate" = "Diet Vertebrate",
-                         "lower_elevation_m" = "Lower Elevation Limit",
+                         "log_lower_elevation_m" = "Log Lower Elevation Limit",
                          "det_nect" = "Diet Nectar",
                          "X27.4_HuPopDen_Change" = "Human Density Change",
-                         "X27.3_HuPopDen_5p_n.km2" = "Human Density 5th Percentile",
+                         "log_X27.3_HuPopDen_5p_n.km2" = "Log Human Density 5th Percentile",
                          "X26.7_GR_MidRangeLong_dd" = "Median Longitudinal Range",
                          "det_fruit" = "Diet Fruit",
                          "fam_PHYLLOSTOMIDAE" = "Phyllostomidae",
@@ -593,7 +365,7 @@ vinfPlot <- function(data_name, bar_color){
   return(list(df_name, ranks, fig_name))
 }
 
-# Pick colors - try to avoid using the same colors as in Fig 1
+# Pick colors
 library(RColorBrewer)
 brewer.pal(n = 8, name = "Set2")
 
@@ -604,15 +376,15 @@ vbinary_fig <- vinfPlot(vbinary_brts, "#66C2A5")
 zbinary_fig <- vinfPlot(zbinary_brts, "#8DA0CB")
 
 # save var inf for table?
-write.csv(vrich_fig[[1]], "/Volumes/BETKE 2021/bathaus/flat files/virus richness var inf.csv")
-write.csv(zprop_fig[[1]], "/Volumes/BETKE 2021/bathaus/flat files/zoonotic prop var inf.csv")
-write.csv(vbinary_fig[[1]], "/Volumes/BETKE 2021/bathaus/flat files/virus host var inf.csv")
-write.csv(zbinary_fig[[1]], "/Volumes/BETKE 2021/bathaus/flat files/zoonotic virus host var inf.csv")
+# write.csv(vrich_fig[[1]], "/Volumes/BETKE 2021/bathaus/flat files/virus richness var inf.csv")
+# write.csv(zprop_fig[[1]], "/Volumes/BETKE 2021/bathaus/flat files/zoonotic prop var inf.csv")
+# write.csv(vbinary_fig[[1]], "/Volumes/BETKE 2021/bathaus/flat files/virus host var inf.csv")
+# write.csv(zbinary_fig[[1]], "/Volumes/BETKE 2021/bathaus/flat files/zoonotic virus host var inf.csv")
 
 # look at plots
 vrich_gg <- vrich_fig[[3]] + 
   scale_y_sqrt() + 
-  labs(x = " ", y = "Relative Importance") +
+  labs(x = " ", y = "Sqrt Relative Importance") +
   theme(axis.title.y = element_text(size = 10, hjust = -8, vjust = 5)) +
   ggtitle("Virus Richness")
 
@@ -629,7 +401,7 @@ h_patch <- vrich_gg + zprop_gg & ylab(NULL) & theme(plot.margin = margin(5.5, 5.
 # Use the tag label as a y-axis label
 png("/Volumes/BETKE 2021/bathaus/figs/figure S3.png",width=7,height=6,units="in",res=600)
 wrap_elements(h_patch) +
-  labs(tag = "Relative Importance") +
+  labs(tag = "Sqrt Relative Importance") +
   theme(
     plot.tag = element_text(size = 10),
     plot.tag.position = "bottom"
@@ -639,7 +411,7 @@ dev.off()
 # binary models
 vbinary_gg <- vbinary_fig[[3]] + 
   scale_y_sqrt() + 
-  labs(x = " ", y = "Relative Importance") +
+  labs(x = " ", y = "Sqrt Relative Importance") +
   theme(axis.title.y = element_text(size = 10, hjust = -8, vjust = 5)) +
   ggtitle("Virus Host")
 
@@ -656,7 +428,7 @@ h_patch <- vbinary_gg + zbinary_gg & ylab(NULL) & theme(plot.margin = margin(5.5
 # Use the tag label as a y-axis label
 png("/Volumes/BETKE 2021/bathaus/figs/figure S4.png",width=7,height=6,units="in",res=600)
 wrap_elements(h_patch) +
-  labs(tag = "Relative Importance") +
+  labs(tag = "Sqrt Relative Importance") +
   theme(
     plot.tag = element_text(size = 10),
     plot.tag.position = "bottom"
@@ -681,55 +453,55 @@ zb$type <- "zoonotic host"
 
 # rbind
 ranks <- rbind(virus, zoop, vb, zb)
-# try making lolipop plot for synurbic by filtering out anthropogenic roosting values and ggsegement - maybe match colors to var inf plot model colors?
-# anthrank <- filter(ranks, var == "Synurbic") %>% 
-#   mutate(group = ifelse(type == "virus richness" | type == "zoonotic proportion", "richness", "host"))
 
-# maybe write csv to put these in paper
-write.csv(ranks, "/Volumes/BETKE 2021/bathaus/flat files/anthropogenic roost rankings.csv")
+# # save
+# write.csv(ranks, "/Volumes/BETKE 2021/bathaus/flat files/anthropogenic roost rankings.csv")
 
 # summary
 ranks %>% group_by(type) %>% summarise(med = median(rank), rge = range(rank))
-# type                  med   rge
-# <chr>               <dbl> <int>
-# 1 virus host             28    15
-# 2 virus host             28    51
-# 3 virus richness         37    26
-# 4 virus richness         37    44
-# 5 zoonotic host          35    28
-# 6 zoonotic host          35    47
-# 7 zoonotic proportion    42    28
-# 8 zoonotic proportion    42    50
-
-# # geom segment
-# png("/Volumes/BETKE 2021/bathaus/figs/synurbic ranks.png",width=6.5,height=5,units="in",res=600)
-# ggplot(anthrank, aes(x=type, y=ranks, color = type)) +
-#   geom_segment(aes(x=type, xend=type, y=ranks, yend=0)) +
-#   geom_point(size=5) +
-#   coord_flip() +
-#   scale_y_reverse() +
-#   theme_bw() +
-#   labs(x = "Response", y = "Rank") +
-#   scale_color_manual(breaks = c("virus richness","zoonotic proportion","virus host","zoonotic host"), 
-#                      values = c("#E78AC3", "#FC8D62", "#66C2A5", "#8DA0CB")) +
-#   theme(panel.grid.major=element_blank())
-# dev.off()
-# 
 
 # define factor levels
 #ranks <- read.csv("/Volumes/BETKE 2021/bathaus/flat files/anthropogenic roost rankings.csv")
 ranks$type <- factor(ranks$type, levels = c("virus richness","zoonotic proportion","virus host","zoonotic host"))
 
 # ranking plot
-set.seed(19846)
+# https://schmidtpaul.github.io/DSFAIR/compactletterdisplay.html
+# https://statdoe.com/cld-customisation/
+
+# library(multcomp) # reads in mass package which masks select function from dplyr
+library(multcompView)
+
+# pairwaise comparisons
+mod <- lm(rank ~ type, data = ranks)
+
+# get (adjusted) weight means per group
+means <- emmeans::emmeans(object = mod,
+                       specs = "type")
+
+# add letters to each mean 
+mod_cld <- multcomp::cld(object = means,
+                       adjust = "BH",
+                       Letters = letters,
+                       alpha = 0.05)
+
+# show output
+mod_cld
+
+# pull min and max for positioning
+lab <- ranks %>% 
+  group_by(type) %>% 
+  summarise(med = median(rank), min = min(rank), max = max(rank))
+
+# pull letters and add to label df
+lab <- merge(lab, mod_cld[c("type",".group")], by = "type")
+
+# then it needs to be added to the plot
+png("/Volumes/BETKE 2021/bathaus/figs/figure 2.png",width=5,height=4.5,units="in",res=600)
 ggplot(ranks, aes(x=type, y=rank, color = type)) + 
   geom_violin() +
   geom_boxplot(width = 0.20) +
   geom_jitter(size=1,alpha=0.25,width=0.2) +
-  # geom_bar(stat = "identity") +
-  # geom_errorbar(aes(ymin = med-rse, ymax = med+rse)) +
-  #geom_pointrange(aes(ymin = avg-rse, ymax = avg+rse)) +
-  #coord_flip() +
+  coord_cartesian(ylim = c(63, 1)) +
   scale_y_reverse() +
   theme_bw() +
   labs(x = "Response", y = "Predictor Rank") +
@@ -738,21 +510,20 @@ ggplot(ranks, aes(x=type, y=rank, color = type)) +
   theme(panel.grid.major=element_blank(),
         panel.grid.minor=element_blank(),
         axis.text = element_text(size = 8),
-        legend.position = "none") -> ranks_gg
-
-# ttests for ranks
-trank <- ranks %>% t_test(rank ~ type, p.adjust.method = "BH")
-trank <- trank %>% add_xy_position(x = "type")
-
-png("/Volumes/BETKE 2021/bathaus/figs/figure 2.png",width=5,height=3.5,units="in",res=600)
-ranks_gg + ggpubr::stat_pvalue_manual(trank, label = "p.adj.signif", y.position = c(-2,-4,-6,-8,-10,-12), tip.length = 0.01)
+        legend.position = "none") +
+  geom_text(data = lab, aes(x = type, y = min, label = .group), size = 3, vjust=-2, hjust = 0.5, color = "black")
 dev.off()
 
-# save ttest 
-saveRDS(trank, "/Volumes/BETKE 2021/bathaus/flat files/rank ttests.rds")
+# Export pairwise and adjusted pvals for supplemental table
+tabs <- emmeans::emmeans(mod, pairwise~type, adjust = "BH")
+tabs <- summary(tabs$contrasts)
 
-# clear
-rm(virus, zoop, vb, zb, ranks, ranks_gg, trank, vrich_fig, zprop_fig, vbinary_fig, zbinary_fig)
+# save test results for supplement 
+saveRDS(tabs, "/Volumes/BETKE 2021/bathaus/flat files/rank lm.rds")
+
+# clean out everything but brts and data
+rm(list = ls()[!ls() %in% c("data","vrichness_brts","no_vrichness_brts","zoo_prop_brts","no_zoo_prop_brts","vbinary_brts",
+                            "no_vbinary_brts","zbinary_brts", "no_zbinary_brts")])
 
 #################### Partial Dependence plots
 # so calculate pdep for every model
@@ -945,82 +716,82 @@ rm(vsyn, zsyn, vbsyn, zbsyn)
 
 # Remaining pdps
 # starting with richness
-vit_rich <- make_pdp_cont(vrichness_brts, "vcites","Virus Citation Count", "#E78AC3")
-cit_rich <- make_pdp_cont(vrichness_brts, "cites","Citation Count", "#E78AC3")
-gr_rich <- make_pdp_cont(vrichness_brts, "X26.1_GR_Area_km2", "Geographic Area (km2)", "#E78AC3")
-bl_rich <- make_pdp_cont(vrichness_brts, "adult_body_length_mm", "Adult Body Length", "#E78AC3")
-mx_rich <- make_pdp_cont(vrichness_brts, "X26.2_GR_MaxLat_dd","Maximum Latitude", "#E78AC3")
-minln_rich <- make_pdp_cont(vrichness_brts, "X26.6_GR_MinLong_dd", "Minimum Longitude", "#E78AC3")
+vit_rich <- make_pdp_cont(vrichness_brts, "log_vcites","Log Virus Citation Count", "#E78AC3")
+cit_rich <- make_pdp_cont(vrichness_brts, "log_cites","Log Citation Count", "#E78AC3")
+gr_rich <- make_pdp_cont(vrichness_brts, "log_X26.1_GR_Area_km2", "Log Geographic Area (km2)", "#E78AC3")
+hp_rich <- make_pdp_cont(vrichness_brts, "log_X27.2_HuPopDen_Mean_n.km2", "Log Mean Human Density", "#E78AC3")
 up_rich <- make_pdp_cont(vrichness_brts, "upper_elevation_m", "Upper Elevation Limit", "#E78AC3")
-ls_rich <- make_pdp_cont(vrichness_brts, "litter_size_n", "Litter Size", "#E78AC3")
-fa_rich <- make_pdp_cont(vrichness_brts, "adult_forearm_length_mm", "Adult Forearm Length", "#E78AC3")
+bl_rich <- make_pdp_cont(vrichness_brts, "log_adult_body_length_mm", "Log Adult Body Length", "#E78AC3")
+mxlon_rich <- make_pdp_cont(vrichness_brts,  "X26.5_GR_MaxLong_dd","Maximum Longitude", "#E78AC3")
+hpp_rich <- make_pdp_cont(vrichness_brts, "log_X27.3_HuPopDen_5p_n.km2", "Log Human Density 5th %ile", "#E78AC3")
 hb_rich <- make_pdp_cont(vrichness_brts, "habitat_breadth_n", "Habitat Breadth", "#E78AC3")
+ab_rich <- make_pdp_cont(vrichness_brts, "altitude_breadth_m","Altitude Breadth","#E78AC3")
 
 png("/Volumes/BETKE 2021/bathaus/figs/figure S5.png", width=4,height=6.5,units="in",res=300)
-vit_rich + cit_rich + gr_rich + bl_rich + mx_rich + minln_rich + up_rich + ls_rich + fa_rich + hb_rich + plot_layout(nrow = 5, ncol = 2, byrow = TRUE)
+vit_rich + cit_rich + gr_rich + hp_rich + up_rich + bl_rich + mxlon_rich + hpp_rich + hb_rich + ab_rich + plot_layout(nrow = 5, ncol = 2, byrow = TRUE)
 dev.off()
 
 # clean
-rm(vit_rich, cit_rich, gr_rich, bl_rich, mx_rich, minln_rich, up_rich, ls_rich, fa_rich, hb_rich)
+rm(vit_rich, cit_rich, gr_rich, hp_rich, up_rich, bl_rich, mxlon_rich, hpp_rich, hb_rich, ab_rich)
 
 # zoonotic proportion
-cit_zoop <- make_pdp_cont(zoo_prop_brts, "cites","Citation Count", "#FC8D62")
-gr_zoop <- make_pdp_cont(zoo_prop_brts, "X26.1_GR_Area_km2", "Geographic Area (km2)", "#FC8D62")
-ml_zoop <- make_pdp_cont(zoo_prop_brts, "X26.2_GR_MaxLat_dd","Maximum Latitude", "#FC8D62")
-fa_zoop <- make_pdp_cont(zoo_prop_brts, "adult_forearm_length_mm", "Adult Forearm Length", "#FC8D62")
-hp_zoop <- make_pdp_cont(zoo_prop_brts, "X27.2_HuPopDen_Mean_n.km2", "Mean Human Density", "#FC8D62")
-vit_zoop <- make_pdp_cont(zoo_prop_brts, "vcites","Virus Citation Count", "#FC8D62")
-mp_zoop <- make_pdp_cont(zoo_prop_brts, "X30.2_PET_Mean_mm", "Mean Monthly PET", "#FC8D62")
-am_zoop <- make_pdp_cont(zoo_prop_brts, "adult_mass_g", "Adult Mass", "#FC8D62")
-bl_zoop <- make_pdp_cont(zoo_prop_brts, "adult_body_length_mm", "Adult Body Length", "#FC8D62")
+nt_zoop <-make_pdp_fact(zoo_prop_brts, "Nearctic", "Nearctic", "#FC8D62")
+cit_zoop <- make_pdp_cont(zoo_prop_brts, "log_cites","Log Citation Count", "#FC8D62")
+gr_zoop <- make_pdp_cont(zoo_prop_brts, "log_X26.1_GR_Area_km2", "Log Geographic Area (km2)", "#FC8D62")
 minln_zoop <- make_pdp_cont(zoo_prop_brts, "X26.6_GR_MinLong_dd", "Minimum Longitude", "#FC8D62")
+vit_zoop <- make_pdp_cont(zoo_prop_brts, "log_vcites","Log Virus Citation Count", "#FC8D62")
+mi_zoop <- make_pdp_cont(zoo_prop_brts, "X26.3_GR_MinLat_dd", "Minimum Latitude", "#FC8D62")
+ls_zoop <- make_pdp_cont(zoo_prop_brts, "litter_size_n", "Litter Size", "#FC8D62")
+mxlon_zoop <- make_pdp_cont(zoo_prop_brts,"X26.5_GR_MaxLong_dd","Maximum Longitude", "#FC8D62")
+up_zoop <- make_pdp_cont(zoo_prop_brts, "upper_elevation_m", "Upper Elevation Limit", "#FC8D62")
+med_zoop <- make_pdp_cont(zoo_prop_brts, "X26.4_GR_MidRangeLat_dd", "Median Latitudinal Range", "#FC8D62")
 
 # save
 png("/Volumes/BETKE 2021/bathaus/figs/figure S6.png", width=4,height=6.5,units="in",res=300)
-cit_zoop + gr_zoop + ml_zoop + fa_zoop + hp_zoop + vit_zoop + mp_zoop + am_zoop + bl_zoop + minln_zoop + plot_layout(nrow = 5, ncol = 2, byrow = TRUE)
+nt_zoop + cit_zoop + gr_zoop + minln_zoop + vit_zoop + mi_zoop + ls_zoop + mxlon_zoop + up_zoop + med_zoop + plot_layout(nrow = 5, ncol = 2, byrow = TRUE)
 dev.off()
 
 # clean
-rm(cit_zoop, gr_zoop, ml_zoop, fa_zoop, hp_zoop, vit_zoop, mp_zoop, am_zoop, bl_zoop, minln_zoop)
+rm(nt_zoop, cit_zoop, gr_zoop, minln_zoop, vit_zoop, mi_zoop, ls_zoop, mxlon_zoop, up_zoop, med_zoop)
 
 # virus host status
-cit_vres <- make_pdp_cont(vbinary_brts, "cites","Citation Count", "#66C2A5")
-vit_vres <- make_pdp_cont(vbinary_brts, "vcites","Virus Citation Count", "#66C2A5")
-gr_vres <- make_pdp_cont(vbinary_brts, "X26.1_GR_Area_km2", "Geographic Area (km2)", "#66C2A5")
+cit_vres <- make_pdp_cont(vbinary_brts, "log_cites","Log Citation Count", "#66C2A5")
+vit_vres <- make_pdp_cont(vbinary_brts, "log_vcites","Log Virus Citation Count", "#66C2A5")
+gr_vres <- make_pdp_cont(vbinary_brts, "log_X26.1_GR_Area_km2", "Log Geographic Area (km2)", "#66C2A5")
 at_vres <- make_pdp_cont(vbinary_brts, "X30.1_AET_Mean_mm", "Mean Monthly AET", "#66C2A5")
 mp_vres <- make_pdp_cont(vbinary_brts, "X30.2_PET_Mean_mm", "Mean Monthly PET", "#66C2A5")
-ml_vres <- make_pdp_cont(vbinary_brts, "X26.2_GR_MaxLat_dd","Maximum Latitude", "#66C2A5")
-mi_vres <- make_pdp_cont(vbinary_brts, "X26.3_GR_MinLat_dd", "Minimum Latitude", "#66C2A5")
 mt_vres <- make_pdp_cont(vbinary_brts, "X28.2_Temp_Mean_01degC","Mean Monthly Temperature", "#66C2A5")
-op_vres <- make_pdp_fact(vbinary_brts, "fam_MINIOPTERIDAE", "Miniopteridae", "#66C2A5")
-bl_vres <- make_pdp_cont(vbinary_brts, "adult_body_length_mm", "Adult Body Length", "#66C2A5")
+mi_vres <- make_pdp_cont(vbinary_brts, "X26.3_GR_MinLat_dd", "Minimum Latitude", "#66C2A5")
+ml_vres <- make_pdp_cont(vbinary_brts, "X26.2_GR_MaxLat_dd","Maximum Latitude", "#66C2A5")
+fa_vres <- make_pdp_cont(vbinary_brts, "log_adult_forearm_length_mm", "Log Adult Forearm Length", "#66C2A5")
+hp_vres <- make_pdp_cont(vbinary_brts, "log_X27.2_HuPopDen_Mean_n.km2", "Log Mean Human Density", "#66C2A5")
 
 # save
 png("/Volumes/BETKE 2021/bathaus/figs/figure S7.png", width=4,height=6.5,units="in",res=300)
-cit_vres + vit_vres + gr_vres + at_vres + mp_vres + ml_vres + mi_vres + mt_vres + op_vres + bl_vres + plot_layout(nrow = 5, ncol = 2, byrow = TRUE)
+cit_vres + vit_vres + gr_vres + at_vres + mp_vres + mt_vres + mi_vres + ml_vres + fa_vres + hp_vres + plot_layout(nrow = 5, ncol = 2, byrow = TRUE)
 dev.off()
 
-rm(cit_vres, vit_vres, gr_vres, at_vres, mp_vres, ml_vres, mi_vres, mt_vres, op_vres, bl_vres)
+rm(cit_vres, vit_vres, gr_vres, at_vres, mp_vres, mt_vres, mi_vres, ml_vres, fa_vres, hp_vres)
 
 # zoonotic host models
-cit_zres <- make_pdp_cont(zbinary_brts, "cites","Citation Count", "#8DA0CB")
-vit_zres <- make_pdp_cont(zbinary_brts, "vcites","Virus Citation Count", "#8DA0CB")
-gr_zres <- make_pdp_cont(zbinary_brts, "X26.1_GR_Area_km2", "Geographic Area (km2)", "#8DA0CB")
+vit_zres <- make_pdp_cont(zbinary_brts, "log_vcites","Log Virus Citation Count", "#8DA0CB")
+cit_zres <- make_pdp_cont(zbinary_brts, "log_cites","Log Citation Count", "#8DA0CB")
+gr_zres <- make_pdp_cont(zbinary_brts, "log_X26.1_GR_Area_km2", "Log Geographic Area (km2)", "#8DA0CB")
 ml_zres <- make_pdp_cont(zbinary_brts, "X26.2_GR_MaxLat_dd","Maximum Latitude", "#8DA0CB")
-at_zres <- make_pdp_cont(zbinary_brts, "X30.1_AET_Mean_mm", "Mean Monthly AET", "#8DA0CB")
-milon_zres <- make_pdp_cont(zbinary_brts, "X26.6_GR_MinLong_dd", "Minimum Longitude", "#8DA0CB")
-fa_zres <- make_pdp_cont(zbinary_brts, "adult_forearm_length_mm", "Adult Forearm Length", "#8DA0CB")
 mp_zres <- make_pdp_cont(zbinary_brts,  "X30.2_PET_Mean_mm", "Mean Monthly PET", "#8DA0CB")
-bl_zres <- make_pdp_cont(zbinary_brts, "adult_body_length_mm", "Adult Body Length", "#8DA0CB")
+at_zres <- make_pdp_cont(zbinary_brts, "X30.1_AET_Mean_mm", "Mean Monthly AET", "#8DA0CB")
+mi_zres <- make_pdp_cont(zbinary_brts, "X26.3_GR_MinLat_dd", "Minimum Latitude", "#8DA0CB")
 up_zres <- make_pdp_cont(zbinary_brts, "upper_elevation_m", "Upper Elevation Limit", "#8DA0CB")
+milon_zres <- make_pdp_cont(zbinary_brts, "X26.6_GR_MinLong_dd", "Minimum Longitude", "#8DA0CB")
+mt_zres <- make_pdp_cont(zbinary_brts, "X28.2_Temp_Mean_01degC","Mean Monthly Temperature", "#8DA0CB")
 
 # save
 png("/Volumes/BETKE 2021/bathaus/figs/figure S8.png", width=4,height=6.5,units="in",res=300)
-cit_zres + vit_zres + gr_zres + ml_zres + at_zres + milon_zres + fa_zres + mp_zres + bl_zres + up_zres + plot_layout(nrow = 5, ncol = 2, byrow = TRUE)
+vit_zres + cit_zres + gr_zres + ml_zres +  mp_zres + at_zres + mi_zres + up_zres + milon_zres + mt_zres + plot_layout(nrow = 5, ncol = 2, byrow = TRUE)
 dev.off()
 
 # clean
-rm(cit_zres, vit_zres, gr_zres, ml_zres, at_zres, milon_zres, fa_zres, mp_zres, bl_zres, up_zres)
+rm(vit_zres, cit_zres, gr_zres, ml_zres, mp_zres, at_zres, mi_zres, up_zres, milon_zres, mt_zres)
 
 ############## model predictions
 library(ggpubr)
@@ -1130,23 +901,23 @@ zoop_without$type <- "without"
 
 # rbind
 all_zoop <- bind_rows(zoop_with, zoop_without)
-
-# faceted fig
-zoop_facet <- ggplot(all_zoop, aes(cback)) + 
-  geom_density(aes(fill = Synurbic, color = Synurbic)) +
-  facet_wrap(~type,ncol=1,strip.position='top',scales="free_y") +
-  theme_bw() +
-  theme(legend.position = "top", 
-        legend.text = element_text(size = 9), 
-        legend.title = element_text(size = 9),
-        legend.key.size = unit(0.4, "cm"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank()) +
-  labs(x = "predicted zoonotic proportion", fill = "Anthropogenic Roosting", color = "Anthropogenic Roosting") +
-  scale_color_manual(labels = c("no","yes","unknown"), 
-                     values = c("#8470ff","#9DD866","#A0B1BA")) +
-  scale_fill_manual(labels = c("no","yes","unknown"), 
-                    values = c("#8470ff","#9DD866","#A0B1BA"))
+ 
+# # faceted fig
+# zoop_facet <- ggplot(all_zoop, aes(cback)) + 
+#   geom_density(aes(fill = Synurbic, color = Synurbic)) +
+#   facet_wrap(~type,ncol=1,strip.position='top',scales="free_y") +
+#   theme_bw() +
+#   theme(legend.position = "top", 
+#         legend.text = element_text(size = 9), 
+#         legend.title = element_text(size = 9),
+#         legend.key.size = unit(0.4, "cm"),
+#         panel.grid.major = element_blank(),
+#         panel.grid.minor = element_blank()) +
+#   labs(x = "predicted zoonotic proportion", fill = "Anthropogenic Roosting", color = "Anthropogenic Roosting") +
+#   scale_color_manual(labels = c("no","yes","unknown"), 
+#                      values = c("#8470ff","#9DD866","#A0B1BA")) +
+#   scale_fill_manual(labels = c("no","yes","unknown"), 
+#                     values = c("#8470ff","#9DD866","#A0B1BA"))
 
 # scatter plot of values with and without
 # pivot wider
@@ -1228,32 +999,31 @@ vres_without <- merge(no_vres_apreds, data[c("species","Synurbic")], by = "speci
 # type
 vres_without$type <- "without"
 
-# either merge for scatterplots or rbind for facets? Both?
+# bind for facets
 all_vres <- bind_rows(vres_with, vres_without)
 
 # facet by known and unknown
-all_vres$known <- ifelse(all_vres$dum_virus == 1, "unknown", "known")
+all_vres$known <- ifelse(all_vres$dum_virus == 1, "known", "unknown")
 
-# plot for with only
-all_vres %>% 
-  filter(type == "with") %>%
-ggplot(aes(cpred)) + 
-  geom_density(aes(fill=Synurbic,color=Synurbic), alpha = 0.5) +
-  facet_wrap(~known,ncol=1,strip.position='top',scales="free_y") +
-  theme_bw() +
-  theme(legend.position = "top", 
-        legend.text = element_text(size = 9), 
-        legend.title = element_text(size = 9),
-        legend.key.size = unit(0.4, "cm"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank()) +
-  labs(x = expression(paste("predicted probability of hosting (",italic(P),")")), fill = "Anthropogenic Roosting", color = "Anthropogenic Roosting") +
-  scale_color_manual(labels = c("no","yes","unknown"), 
-                     values = c("#8470ff","#9DD866","#A0B1BA")) +
-  scale_fill_manual(labels = c("no","yes","unknown"), 
-                    values = c("#8470ff","#9DD866","#A0B1BA")) -> vres_gg
+# # plot for with only
+# all_vres %>% 
+#   filter(type == "with") %>%
+# ggplot(aes(cpred)) + 
+#   geom_density(aes(fill=Synurbic,color=Synurbic), alpha = 0.5) +
+#   facet_wrap(~known,ncol=1,strip.position='top',scales="free_y") +
+#   theme_bw() +
+#   theme(legend.position = "top", 
+#         legend.text = element_text(size = 9), 
+#         legend.title = element_text(size = 9),
+#         legend.key.size = unit(0.4, "cm"),
+#         panel.grid.major = element_blank(),
+#         panel.grid.minor = element_blank()) +
+#   labs(x = expression(paste("predicted probability of hosting (",italic(P),")")), fill = "Anthropogenic Roosting", color = "Anthropogenic Roosting") +
+#   scale_color_manual(labels = c("no","yes","unknown"), 
+#                      values = c("#8470ff","#9DD866","#A0B1BA")) +
+#   scale_fill_manual(labels = c("no","yes","unknown"), 
+#                     values = c("#8470ff","#9DD866","#A0B1BA")) -> vres_gg
 
-# scatter plot of values with and without
 # pivot wider
 vres_preds <- all_vres %>% 
   select(species, cpred, type, Synurbic, dum_virus) %>%
@@ -1261,33 +1031,14 @@ vres_preds <- all_vres %>%
 
 # save
 write.csv(vres_preds, "/Volumes/BETKE 2021/bathaus/flat files/virus host predictions.csv")
-
-# scatter plot
-vres_scatter <- ggplot(vres_preds, aes(with, without)) + 
-  geom_point(color = "#66C2A5") +
-  theme_bw() +
-  labs(x = expression(paste("(",italic(P),") with anthropogenic roosting")), 
-       y = expression(paste("(",italic(P),") without anthropogenic roosting"))) +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank())
   
-# save figs 
-png("/Volumes/BETKE 2021/bathaus/figs/figure 4.png", width=7,height=3.5,units="in",res=300)
-ggarrange(vres_scatter, vres_gg, labels = c("A","B"))
-dev.off()
+# # save figs 
+# png("/Volumes/BETKE 2021/bathaus/figs/figure 4.png", width=7,height=3.5,units="in",res=300)
+# ggarrange(vres_scatter, vres_gg, labels = c("A","B"))
+# dev.off()
 
 # cor test for virus hosts
 cor.test(vres_preds$with, vres_preds$without, method = "pearson")
-# Pearson's product-moment correlation
-# 
-# data:  vres_preds$with and vres_preds$without
-# t = 752.2, df = 1277, p-value < 2.2e-16
-# alternative hypothesis: true correlation is not equal to 0
-# 95 percent confidence interval:
-#  0.9987429 0.9989905
-# sample estimates:
-#       cor 
-# 0.9988734  
 
 #### average predictions: Zoonotic
 zres_apreds <- lapply(zbinary_brts,function(x) x$predict)
@@ -1333,17 +1084,31 @@ zres_preds <- all_zres %>%
 # save
 write.csv(zres_preds, "/Volumes/BETKE 2021/bathaus/flat files/zoonotic virus host predictions.csv")
 
-# plots
-# scatter plot
 # facet by known and unknown
-all_zres$known <- ifelse(all_zres$dum_zvirus == 1, "unknown", "known")
+all_zres$known <- ifelse(all_zres$dum_zvirus == 1, "known", "unknown")
 
-# plot for with only
-all_zres %>% 
-  filter(type == "with") %>%
-  ggplot(aes(cpred)) + 
+# cor test
+cor.test(zres_preds$with, zres_preds$without, method = "pearson")
+
+# alternative figure of facets 
+# we need the data we use for the density plots
+all_vres$outcome <- "Overall Virus Hosting"
+all_zres$outcome <- "Zoonotic Virus Hosting"
+
+# filter to with only 
+all_vres %>% filter(type == "with") %>% select(-dum_virus) -> w_vres
+all_zres %>% filter(type == "with") %>% select(-dum_zvirus) -> w_zres
+
+# bind
+allres <- rbind(w_vres,w_zres)
+
+# ggplot
+png("/Volumes/BETKE 2021/bathaus/figs/figure 4.png", width=6,height=4.5,units="in",res=300)
+ggplot(allres, aes(cpred)) + 
   geom_density(aes(fill=Synurbic,color=Synurbic), alpha = 0.5) +
-  facet_wrap(~known,ncol=1,strip.position='top',scales="free_y") +
+  facet_grid(known~outcome) +
+  scale_x_sqrt(limits = c(0,1), breaks = c( 0, 0.2, 0.4, 0.6, 0.8)) +
+  scale_y_sqrt(breaks = c(0, 2, 4, 6, 8, 10, 12)) +
   theme_bw() +
   theme(legend.position = "top", 
         legend.text = element_text(size = 9), 
@@ -1351,12 +1116,25 @@ all_zres %>%
         legend.key.size = unit(0.4, "cm"),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
-  xlim(0,1) +
-  labs(x = expression(paste("predicted probability of hosting zoonotic virus (",italic(P),")")), fill = "Anthropogenic Roosting", color = "Anthropogenic Roosting") +
-  scale_color_manual(labels = c("no","yes","unknown"), 
+  #xlim(0,1) +
+  labs(x = expression(paste("predicted probability of hosting (",italic(P),")")), fill = "Anthropogenic Roosting", color = "Anthropogenic Roosting") +
+  scale_color_manual(labels = c("no","yes","missing"), 
                      values = c("#8470ff","#9DD866","#A0B1BA")) +
-  scale_fill_manual(labels = c("no","yes","unknown"), 
-                    values = c("#8470ff","#9DD866","#A0B1BA")) -> zres_gg
+  scale_fill_manual(labels = c("no","yes","missing"), 
+                    values = c("#8470ff","#9DD866","#A0B1BA"))
+dev.off()
+
+# scatters together for supplemental figure
+vres_scatter <- ggplot(vres_preds, aes(with, without)) + 
+  geom_point(color = "#66C2A5") +
+  # geom_smooth(method="lm", color = "grey") +
+  theme_bw() +
+  labs(x = expression(paste("(",italic(P),") with anthropogenic roosting")), 
+       y = expression(paste("(",italic(P),") without anthropogenic roosting"))) +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  xlim(0.13,1) +
+  ylim(0.13,1) 
 
 zres_scatter <- ggplot(zres_preds, aes(with, without)) + 
   geom_point(color = "#8DA0CB") +
@@ -1368,20 +1146,11 @@ zres_scatter <- ggplot(zres_preds, aes(with, without)) +
   xlim(0.13,1) +
   ylim(0.13,1)
 
-# save
-png("/Volumes/BETKE 2021/bathaus/figs/figure 5.png", width=7.25,height=3.5,units="in",res=300)
-ggarrange(zres_scatter, zres_gg, labels = c("A","B"))
-dev.off()
+# add stats
+vres_scatter <- vres_scatter + stat_cor(method="pearson") 
+zres_scatter <- zres_scatter + stat_cor(method="pearson") 
 
-# cor test
-cor.test(zres_preds$with, zres_preds$without, method = "pearson")
-# Pearson's product-moment correlation
-# 
-# data:  zres_preds$with and zres_preds$without
-# t = 4810.7, df = 1277, p-value < 2.2e-16
-# alternative hypothesis: true correlation is not equal to 0
-# 95 percent confidence interval:
-#  0.9999692 0.9999753
-# sample estimates:
-#       cor 
-# 0.9999724 
+# save
+png("/Volumes/BETKE 2021/bathaus/figs/figure S9.png", width=7,height=3.5,units="in",res=300)
+ggarrange(vres_scatter, zres_scatter, labels = c("A","B"))
+dev.off()
