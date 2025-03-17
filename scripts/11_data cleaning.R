@@ -171,7 +171,7 @@ coverage_table <- mval %>%
 rownames(coverage_table) <- NULL
 
 # save as csv
-write.csv(coverage_table, "/Volumes/BETKE 2021/bathaus/flat files/coverage_table.csv", row.names = FALSE)
+write.csv(coverage_table, "/Volumes/BETKE 2021/bathaus/flat files/Table S1 Variable Coverage.csv", row.names = FALSE)
 
 ## drop if not well represented
 data=data[keeps]

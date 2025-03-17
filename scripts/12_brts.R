@@ -306,7 +306,7 @@ if(gsrun == "yes"){# run grid search
   
 }
 
-### plots of parameters - figure S1
+### plots of parameters - figure S2
 library(patchwork)
 
 #r <- overall_search %>% filter(shrinkage < 0.1)
@@ -650,7 +650,7 @@ brts <- function(seed, response, nt, shr, int.d, syn, cv = NULL){
       pred_data$ni <- 100
       pred_data$back <- metafor::transf.ipft(pred_data$pred, pred_data$ni)
       
-      # backtransform cpred? not sure but I should probably ask dan
+      # back transform cpred
       pred_data$cback <- metafor::transf.ipft(pred_data$cpred, 100)
       
       # sort
@@ -676,7 +676,7 @@ brts <- function(seed, response, nt, shr, int.d, syn, cv = NULL){
   
 }
 
-#####apply across specified number of splits smax
+##### apply across specified number of splits smax
 smax=50
 #### transformed versions
 logvrichness_brts <- lapply(1:smax,function(x) brts(seed = x,response = "virus", nt = 15000, shr = 0.001, int.d = 4, syn = "yes", cv = NULL))

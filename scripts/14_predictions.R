@@ -213,15 +213,17 @@ table(zpred$with[zpred$dum_zvirus==0] > t.zmod$with)
 table(zpred$without[zpred$dum_zvirus==0] > t.nzmod$without)
 
 # Looking at overlap
-pred %>% filter(dum_virus == 0 & with >= t.vmod$with) %>% pull(species) -> vnovel
-pred %>% filter(dum_virus == 0 & without >= t.nvmod$without) %>% pull(species) -> n_vnovel
-setdiff(vnovel, n_vnovel) # 1 species different
-intersect(vnovel, n_vnovel) # 110 in common
+pred %>% filter(dum_virus == 0 & with > t.vmod$with) %>% pull(species) -> vnovel
+pred %>% filter(dum_virus == 0 & without > t.nvmod$without) %>% pull(species) -> n_vnovel
+setdiff(vnovel, n_vnovel) # 1 additional species
+setdiff(n_vnovel, vnovel) 
+intersect(vnovel, n_vnovel) -> vsame # 110 in common
 
 zpred %>% filter(dum_zvirus == 0 & with >= t.zmod$with) %>% pull(species) -> znovel
 zpred %>% filter(dum_zvirus == 0 & without >= t.nzmod$without) %>% pull(species) -> n_znovel
 setdiff(znovel, n_znovel) # 27 species different
-intersect(znovel, n_znovel) # 162 in common
+setdiff(n_znovel, znovel) # no species in without that arent in with
+intersect(znovel, n_znovel) -> zsame # 162 in common
 
 # Bin knowns and novel. Spell out roosting status for figs
 pred %>% 
@@ -231,6 +233,26 @@ pred %>%
 zpred %>% 
   mutate(status = ifelse(dum_zvirus == 1, "known", ifelse(dum_zvirus == 0 & bin_with == 1,"novel", "cut")),
          roost = ifelse(Synurbic == 1, "anthropogenic roosting", "natural roosting")) -> zpred
+
+## format for supplemental tables
+# Virus models
+pred %>% filter(status == "novel") %>% 
+  mutate(mod = ifelse(species %in% vsame, "common", "additional")) %>%
+  select(species, roost, mods) -> t1 
+
+t1$roost[is.na(t1$roost)] <- "missing"
+
+#save
+write.csv(t1, "/Volumes/BETKE 2021/bathaus/flat files/Table S3 predictions.csv", row.names = FALSE)
+
+# Zoonotic
+zpred %>% filter(status == "novel") %>% 
+  mutate(mods = ifelse(species %in% zsame, "common", "additional")) %>%
+  select(species, roost, mods) -> t2 
+
+t2$roost[is.na(t2$roost)] <- "missing"
+
+write.csv(t2, "/Volumes/BETKE 2021/bathaus/flat files/Table S4 predictions.csv", row.names = FALSE)
 
 # how many are anthropogenic? 
 # overall virus
@@ -246,31 +268,24 @@ filter(zpred, bin_without == 1 & status == "novel" & roost == "anthropogenic roo
 traits <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/synurbic and traits only.rds")
 
 # novel zoonotic
-zpred %>% filter(status == "novel") -> novel
-
-# props by roosting
-prop.table(table(novel$roost, useNA = "ifany"))
+pred %>% filter(status == "novel") -> vnov
+zpred %>% filter(status == "novel") -> znov
 
 # include citations to see if predicted species are also poorly sampled.
-merge(traits[c("species", "fam", "biogeographical_realm", "category", "population_trend", "cites", "vcites")], novel, by = "species") -> novel
+merge(traits[c("species", "fam", "biogeographical_realm", "category", "population_trend", "cites", "vcites")], vnov, by = "species") -> vnov
+merge(traits[c("species", "fam", "biogeographical_realm", "category", "population_trend", "cites", "vcites")], znov, by = "species") -> znov
 
 # family breakdown
-table(novel$fam)
+table(vnov$fam)
+table(znov$fam)
 
 # Distribution of citations (all heavily right skewed)
-hist(log(novel$cites+1))
-hist(novel$vcites)
+hist(log(vnov$cites+1))
+hist(log(vnov$vcites+1))
 
 # biogeographical realms
-novel %>% separate_rows(biogeographical_realm, sep = ", ") %>% count(biogeographical_realm)
-
-# Conservation
-table(novel$category)
-table(novel$population_trend)
-
-# conservation status v roosting ecology
-table(novel$category, novel$roost, useNA = "ifany")
-table(novel$population_trend, novel$roost, useNA = "ifany")
+vnov %>% separate_rows(biogeographical_realm, sep = ", ") %>% count(biogeographical_realm)
+znov %>% separate_rows(biogeographical_realm, sep = ", ") %>% count(biogeographical_realm)
 
 ## look at traits of the 27 extra predicted by anth
 names <- setdiff(znovel, n_znovel)
