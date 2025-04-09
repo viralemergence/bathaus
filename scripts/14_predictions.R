@@ -1,6 +1,7 @@
 # 14_predictions
 # Host model predictions and maps
-# babetke@utexas.edu
+# briana.a.betke-1@ou.edu
+# updated 04/02/25
 
 # clear environment
 rm(list=ls()) 
@@ -18,9 +19,7 @@ vres_apreds <- read.csv("/Volumes/BETKE 2021/bathaus/flat files/virus host predi
 set.seed(12345) # seed
 
 #### threshold predictions
-testrun = "no"
 # run threshold test and MSS. if yes, if not, skip to MSS method
-if(testrun == "yes"){
 ### testing thresholds
 ### comparing MSS (3) to 85%, 90%, and 95% sensitivity (10)
 
@@ -167,34 +166,6 @@ t.nzmod <- optimal.thresholds(data.frame(zres_apreds[,c('species','dum_zvirus','
                              opt.methods = 3,
                              req.sens = 0.95,
                              na.rm = TRUE)
-} else {
-  ### threshold - Just MSS pull
-  # virus host with 
-  t.vmod <- optimal.thresholds(data.frame(vres_apreds[,c('species','dum_virus','with')]),
-                               threshold = 10001,
-                               opt.methods = 3,
-                               req.sens = 0.95,
-                               na.rm = TRUE)
-  
-  # virus host without
-  t.nvmod <- optimal.thresholds(data.frame(vres_apreds[,c('species','dum_virus','without')]),
-                                threshold = 10001,
-                                opt.methods = 3,
-                                req.sens = 0.95,
-                                na.rm = TRUE)
-  # zoonotic with 
-  t.zmod <- optimal.thresholds(data.frame(zres_apreds[,c('species','dum_zvirus','with')]),
-                               threshold = 10001,
-                               opt.methods = 3,
-                               req.sens = 0.95,
-                               na.rm = TRUE)
-  # zoonotic without
-  t.nzmod <- optimal.thresholds(data.frame(zres_apreds[,c('species','dum_zvirus','without')]),
-                                threshold = 10001,
-                                opt.methods = 3,
-                                req.sens = 0.95,
-                                na.rm = TRUE)
-}
 
 # binary results
 vres_apreds %>% mutate(bin_with = with > t.vmod$with,
@@ -234,26 +205,6 @@ zpred %>%
   mutate(status = ifelse(dum_zvirus == 1, "known", ifelse(dum_zvirus == 0 & bin_with == 1,"novel", "cut")),
          roost = ifelse(Synurbic == 1, "anthropogenic roosting", "natural roosting")) -> zpred
 
-## format for supplemental tables
-# Virus models
-pred %>% filter(status == "novel") %>% 
-  mutate(mod = ifelse(species %in% vsame, "common", "additional")) %>%
-  select(species, roost, mods) -> t1 
-
-t1$roost[is.na(t1$roost)] <- "missing"
-
-#save
-write.csv(t1, "/Volumes/BETKE 2021/bathaus/flat files/Table S3 predictions.csv", row.names = FALSE)
-
-# Zoonotic
-zpred %>% filter(status == "novel") %>% 
-  mutate(mods = ifelse(species %in% zsame, "common", "additional")) %>%
-  select(species, roost, mods) -> t2 
-
-t2$roost[is.na(t2$roost)] <- "missing"
-
-write.csv(t2, "/Volumes/BETKE 2021/bathaus/flat files/Table S4 predictions.csv", row.names = FALSE)
-
 # how many are anthropogenic? 
 # overall virus
 filter(pred, bin_with == 1 & status == "novel" & roost == "anthropogenic roosting") %>% pull(species) #65
@@ -276,16 +227,44 @@ merge(traits[c("species", "fam", "biogeographical_realm", "category", "populatio
 merge(traits[c("species", "fam", "biogeographical_realm", "category", "population_trend", "cites", "vcites")], znov, by = "species") -> znov
 
 # family breakdown
-table(vnov$fam)
-table(znov$fam)
-
-# Distribution of citations (all heavily right skewed)
-hist(log(vnov$cites+1))
-hist(log(vnov$vcites+1))
+vnov %>% count(fam) %>% arrange(-n)
+znov %>% count(fam) %>% arrange(-n)
 
 # biogeographical realms
-vnov %>% separate_rows(biogeographical_realm, sep = ", ") %>% count(biogeographical_realm)
-znov %>% separate_rows(biogeographical_realm, sep = ", ") %>% count(biogeographical_realm)
+# breakdown
+vnov %>% separate_rows(biogeographical_realm, sep = ", ") %>% count(biogeographical_realm) %>% arrange(-n)
+znov %>% separate_rows(biogeographical_realm, sep = ", ") %>% count(biogeographical_realm) %>% arrange(-n)
+
+# ciations and biogeographical ranges
+vnov %>% separate_rows(biogeographical_realm, sep = ", ") %>% mutate(citations = ifelse(cites == 0, "none", ifelse(cites == 1, "one", "more"))) -> v_cites
+znov %>% separate_rows(biogeographical_realm, sep = ", ") %>% mutate(citations = ifelse(cites == 0, "none", ifelse(cites == 1, "one", "more"))) -> z_cites
+
+prop.table(table(v_cites$citations, v_cites$biogeographical_realm),2)
+prop.table(table(z_cites$citations, z_cites$biogeographical_realm),2)
+
+## format for supplemental tables
+# Virus models
+vnov %>% 
+  mutate(commonality = ifelse(species %in% vsame, "common", "additional")) %>%
+  select(species, fam, roost, biogeographical_realm, commonality, cites) -> t1 
+
+t1$roost[is.na(t1$roost)] <- "missing"
+t1$biogeographical_realm <- as.character(t1$biogeographical_realm)
+t1$biogeographical_realm[is.na(t1$biogeographical_realm)] <- "no data"
+
+#save
+write.csv(t1, "/Volumes/BETKE 2021/bathaus/flat files/Table S3 predictions.csv", row.names = FALSE)
+
+# Zoonotic
+znov %>% 
+  mutate(commonality = ifelse(species %in% zsame, "common", "additional")) %>%
+  select(species, fam, roost, biogeographical_realm, commonality, cites) -> t2 
+
+t2$roost[is.na(t2$roost)] <- "missing"
+t2$biogeographical_realm <- as.character(t2$biogeographical_realm)
+t2$biogeographical_realm[is.na(t2$biogeographical_realm)] <- "no data"
+
+write.csv(t2, "/Volumes/BETKE 2021/bathaus/flat files/Table S4 predictions.csv", row.names = FALSE)
 
 ## look at traits of the 27 extra predicted by anth
 names <- setdiff(znovel, n_znovel)

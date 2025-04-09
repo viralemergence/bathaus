@@ -1,112 +1,112 @@
-"species","roost","mods"
-"Barbastella leucomelas","anthropogenic roosting","common"
-"Centurio senex","natural roosting","common"
-"Chaerephon ansorgei","anthropogenic roosting","common"
-"Chaerephon bemmeleni","natural roosting","common"
-"Chaerephon bivittatus","anthropogenic roosting","common"
-"Chaerephon major","anthropogenic roosting","common"
-"Chaerephon nigeriae","anthropogenic roosting","common"
-"Chiroderma salvini","anthropogenic roosting","common"
-"Chiroderma villosum","anthropogenic roosting","common"
-"Coelops frithii","anthropogenic roosting","common"
-"Cynomops paranus","missing","common"
-"Cynopterus minutus","missing","common"
-"Enchisthenes hartii","natural roosting","common"
-"Epomophorus crypturus","natural roosting","common"
-"Epomophorus minimus","missing","common"
-"Eptesicus bottae","anthropogenic roosting","common"
-"Eptesicus gobiensis","anthropogenic roosting","common"
-"Eumops dabbenei","anthropogenic roosting","common"
-"Eumops underwoodi","natural roosting","common"
-"Furipterus horrens","natural roosting","common"
-"Glischropus tylopus","natural roosting","common"
-"Harpiocephalus harpia","natural roosting","common"
-"Harpiocephalus mordax","natural roosting","common"
-"Hipposideros ater","anthropogenic roosting","common"
-"Hipposideros lankadiva","anthropogenic roosting","common"
-"Histiotus magellanicus","natural roosting","common"
-"Hypsugo anchietae","natural roosting","common"
-"Idionycteris phyllotis","anthropogenic roosting","common"
-"Kerivoula lanosa","natural roosting","common"
-"Laephotis wintoni","natural roosting","common"
-"Lavia frons","anthropogenic roosting","common"
-"Lonchophylla thomasi","natural roosting","common"
-"Lophostoma silvicolum","natural roosting","common"
-"Macrophyllum macrophyllum","anthropogenic roosting","common"
-"Mimetillus moloneyi","anthropogenic roosting","common"
-"Mimon crenulatum","natural roosting","common"
-"Miniopterus fraterculus","anthropogenic roosting","common"
-"Miniopterus majori","natural roosting","common"
-"Miniopterus manavi","natural roosting","common"
-"Miniopterus medius","natural roosting","common"
-"Miniopterus paululus","natural roosting","common"
-"Miniopterus petersoni","natural roosting","common"
-"Miniopterus shortridgei","missing","common"
-"Molossops temminckii","anthropogenic roosting","common"
-"Molossus barnesi","anthropogenic roosting","common"
-"Mops brachypterus","anthropogenic roosting","common"
-"Mops nanulus","anthropogenic roosting","common"
-"Mops niveiventer","anthropogenic roosting","common"
-"Mops thersites","anthropogenic roosting","common"
-"Mormoops megalophylla","anthropogenic roosting","common"
-"Murina hilgendorfi","anthropogenic roosting","common"
-"Murina huttoni","natural roosting","common"
-"Murina tubinaris","natural roosting","common"
-"Myotis aelleni","anthropogenic roosting","common"
-"Myotis bocagii","natural roosting","common"
-"Myotis bombinus","anthropogenic roosting","common"
-"Myotis flavus","anthropogenic roosting","common"
-"Myotis formosus","anthropogenic roosting","common"
-"Myotis melanorhinus","anthropogenic roosting","common"
-"Myotis montivagus","missing","common"
-"Myotis schaubi","anthropogenic roosting","common"
-"Myotis sicarius","missing","common"
-"Myotis sodalis","anthropogenic roosting","common"
-"Myotis tricolor","anthropogenic roosting","common"
-"Natalus saturatus","missing","common"
-"Neoromicia rendalli","anthropogenic roosting","common"
-"Neoromicia somalica","anthropogenic roosting","additional"
-"Noctilio leporinus","anthropogenic roosting","common"
-"Nyctalus aviator","anthropogenic roosting","common"
-"Nyctalus furvus","anthropogenic roosting","common"
-"Nyctalus montanus","anthropogenic roosting","common"
-"Nycteris arge","anthropogenic roosting","common"
-"Nycticeinops schlieffeni","anthropogenic roosting","common"
-"Nyctinomops aurispinosus","anthropogenic roosting","common"
-"Peropteryx kappleri","anthropogenic roosting","common"
-"Phylloderma stenops","missing","common"
-"Phyllostomus elongatus","anthropogenic roosting","common"
-"Pipistrellus cadornae","anthropogenic roosting","common"
-"Pipistrellus deserti","anthropogenic roosting","common"
-"Pipistrellus rueppellii","anthropogenic roosting","common"
-"Pipistrellus rusticus","anthropogenic roosting","common"
-"Pipistrellus tenuis","anthropogenic roosting","common"
-"Platyrrhinus helleri","anthropogenic roosting","common"
-"Promops centralis","natural roosting","common"
-"Promops nasutus","anthropogenic roosting","common"
-"Pteronotus gymnonotus","natural roosting","common"
-"Pygoderma bilabiatum","anthropogenic roosting","common"
-"Rhinolophus borneensis","natural roosting","common"
-"Rhinolophus chaseni","natural roosting","common"
-"Rhinolophus marshalli","natural roosting","common"
-"Rhinolophus osgoodi","natural roosting","common"
-"Rhinolophus sedulus","anthropogenic roosting","common"
-"Rhinolophus subbadius","natural roosting","common"
-"Rhinolophus swinnyi","anthropogenic roosting","common"
-"Rhinolophus yunanensis","anthropogenic roosting","common"
-"Rousettus lanosus","anthropogenic roosting","common"
-"Saccolaimus peli","natural roosting","common"
-"Scotoecus hirundo","anthropogenic roosting","common"
-"Scotomanes ornatus","natural roosting","common"
-"Scotophilus robustus","anthropogenic roosting","common"
-"Scotophilus viridis","natural roosting","common"
-"Tadarida aegyptiaca","anthropogenic roosting","common"
-"Tadarida fulminans","natural roosting","common"
-"Tadarida insignis","anthropogenic roosting","common"
-"Tadarida latouchei","natural roosting","common"
-"Tadarida ventralis","anthropogenic roosting","common"
-"Taphozous nudiventris","anthropogenic roosting","common"
-"Thyroptera tricolor","natural roosting","common"
-"Triaenops rufus","anthropogenic roosting","common"
-"Uroderma magnirostrum","natural roosting","common"
-"Vespadelus vulturnus","anthropogenic roosting","common"
+"species","fam","roost","biogeographical_realm","commonality","cites"
+"Barbastella leucomelas","VESPERTILIONIDAE","anthropogenic roosting","Indomalayan, Palearctic","common",1
+"Centurio senex","PHYLLOSTOMIDAE","natural roosting","Neotropical","common",1
+"Chaerephon ansorgei","MOLOSSIDAE","anthropogenic roosting","Afrotropical","common",0
+"Chaerephon bemmeleni","MOLOSSIDAE","natural roosting","Afrotropical","common",0
+"Chaerephon bivittatus","MOLOSSIDAE","anthropogenic roosting","Afrotropical","common",1
+"Chaerephon major","MOLOSSIDAE","anthropogenic roosting","Afrotropical","common",0
+"Chaerephon nigeriae","MOLOSSIDAE","anthropogenic roosting","Afrotropical","common",1
+"Chiroderma salvini","PHYLLOSTOMIDAE","anthropogenic roosting","Neotropical","common",0
+"Chiroderma villosum","PHYLLOSTOMIDAE","anthropogenic roosting","Neotropical","common",5
+"Coelops frithii","HIPPOSIDERIDAE","anthropogenic roosting","Indomalayan","common",1
+"Cynomops paranus","MOLOSSIDAE","missing","Neotropical","common",0
+"Cynopterus minutus","PTEROPODIDAE","missing","Australasian, Indomalayan","common",0
+"Enchisthenes hartii","PHYLLOSTOMIDAE","natural roosting","Nearctic, Neotropical","common",2
+"Epomophorus crypturus","PTEROPODIDAE","natural roosting","Afrotropical","common",1
+"Epomophorus minimus","PTEROPODIDAE","missing","Afrotropical","common",0
+"Eptesicus bottae","VESPERTILIONIDAE","anthropogenic roosting","no data","common",2
+"Eptesicus gobiensis","VESPERTILIONIDAE","anthropogenic roosting","Palearctic","common",0
+"Eumops dabbenei","MOLOSSIDAE","anthropogenic roosting","Neotropical","common",0
+"Eumops underwoodi","MOLOSSIDAE","natural roosting","Nearctic, Neotropical","common",0
+"Furipterus horrens","FURIPTERIDAE","natural roosting","Neotropical","common",2
+"Glischropus tylopus","VESPERTILIONIDAE","natural roosting","no data","common",1
+"Harpiocephalus harpia","VESPERTILIONIDAE","natural roosting","no data","common",2
+"Harpiocephalus mordax","VESPERTILIONIDAE","natural roosting","no data","common",0
+"Hipposideros ater","HIPPOSIDERIDAE","anthropogenic roosting","no data","common",1
+"Hipposideros lankadiva","HIPPOSIDERIDAE","anthropogenic roosting","Indomalayan","common",3
+"Histiotus magellanicus","VESPERTILIONIDAE","natural roosting","Neotropical","common",0
+"Hypsugo anchietae","VESPERTILIONIDAE","natural roosting","Afrotropical","common",0
+"Idionycteris phyllotis","VESPERTILIONIDAE","anthropogenic roosting","Nearctic","common",0
+"Kerivoula lanosa","VESPERTILIONIDAE","natural roosting","Afrotropical","common",0
+"Laephotis wintoni","VESPERTILIONIDAE","natural roosting","Afrotropical","common",1
+"Lavia frons","MEGADERMATIDAE","anthropogenic roosting","Afrotropical","common",2
+"Lonchophylla thomasi","PHYLLOSTOMIDAE","natural roosting","Neotropical","common",0
+"Lophostoma silvicolum","PHYLLOSTOMIDAE","natural roosting","Neotropical","common",5
+"Macrophyllum macrophyllum","PHYLLOSTOMIDAE","anthropogenic roosting","Neotropical","common",4
+"Mimetillus moloneyi","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical","common",0
+"Mimon crenulatum","PHYLLOSTOMIDAE","natural roosting","Neotropical","common",4
+"Miniopterus fraterculus","MINIOPTERIDAE","anthropogenic roosting","Afrotropical","common",0
+"Miniopterus majori","MINIOPTERIDAE","natural roosting","Afrotropical","common",0
+"Miniopterus manavi","MINIOPTERIDAE","natural roosting","Afrotropical","common",1
+"Miniopterus medius","MINIOPTERIDAE","natural roosting","Australasian, Indomalayan","common",0
+"Miniopterus paululus","MINIOPTERIDAE","natural roosting","Australasian, Indomalayan","common",0
+"Miniopterus petersoni","MINIOPTERIDAE","natural roosting","no data","common",0
+"Miniopterus shortridgei","MINIOPTERIDAE","missing","Australasian, Indomalayan","common",0
+"Molossops temminckii","MOLOSSIDAE","anthropogenic roosting","Neotropical","common",4
+"Molossus barnesi","MOLOSSIDAE","anthropogenic roosting","Neotropical","common",0
+"Mops brachypterus","MOLOSSIDAE","anthropogenic roosting","Afrotropical","common",0
+"Mops nanulus","MOLOSSIDAE","anthropogenic roosting","Afrotropical","common",0
+"Mops niveiventer","MOLOSSIDAE","anthropogenic roosting","Afrotropical","common",0
+"Mops thersites","MOLOSSIDAE","anthropogenic roosting","Afrotropical","common",0
+"Mormoops megalophylla","MORMOOPIDAE","anthropogenic roosting","Nearctic, Neotropical","common",11
+"Murina hilgendorfi","VESPERTILIONIDAE","anthropogenic roosting","Palearctic","common",4
+"Murina huttoni","VESPERTILIONIDAE","natural roosting","Indomalayan","common",1
+"Murina tubinaris","VESPERTILIONIDAE","natural roosting","no data","common",0
+"Myotis aelleni","VESPERTILIONIDAE","anthropogenic roosting","Neotropical","common",1
+"Myotis bocagii","VESPERTILIONIDAE","natural roosting","Afrotropical","common",0
+"Myotis bombinus","VESPERTILIONIDAE","anthropogenic roosting","Palearctic","common",4
+"Myotis flavus","VESPERTILIONIDAE","anthropogenic roosting","no data","common",0
+"Myotis formosus","VESPERTILIONIDAE","anthropogenic roosting","no data","common",2
+"Myotis melanorhinus","VESPERTILIONIDAE","anthropogenic roosting","Nearctic, Neotropical","common",0
+"Myotis montivagus","VESPERTILIONIDAE","missing","no data","common",1
+"Myotis schaubi","VESPERTILIONIDAE","anthropogenic roosting","Palearctic","common",0
+"Myotis sicarius","VESPERTILIONIDAE","missing","Indomalayan","common",0
+"Myotis sodalis","VESPERTILIONIDAE","anthropogenic roosting","Nearctic","common",18
+"Myotis tricolor","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical","common",3
+"Natalus saturatus","NATALIDAE","missing","Neotropical","common",0
+"Neoromicia rendalli","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical","common",1
+"Neoromicia somalica","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical","additional",0
+"Noctilio leporinus","NOCTILIONIDAE","anthropogenic roosting","Neotropical","common",20
+"Nyctalus aviator","VESPERTILIONIDAE","anthropogenic roosting","Palearctic","common",2
+"Nyctalus furvus","VESPERTILIONIDAE","anthropogenic roosting","Palearctic","common",0
+"Nyctalus montanus","VESPERTILIONIDAE","anthropogenic roosting","Indomalayan","common",0
+"Nycteris arge","NYCTERIDAE","anthropogenic roosting","Afrotropical","common",0
+"Nycticeinops schlieffeni","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical, Palearctic","common",0
+"Nyctinomops aurispinosus","MOLOSSIDAE","anthropogenic roosting","Neotropical","common",0
+"Peropteryx kappleri","EMBALLONURIDAE","anthropogenic roosting","Neotropical","common",4
+"Phylloderma stenops","PHYLLOSTOMIDAE","missing","Neotropical","common",1
+"Phyllostomus elongatus","PHYLLOSTOMIDAE","anthropogenic roosting","Neotropical","common",1
+"Pipistrellus cadornae","VESPERTILIONIDAE","anthropogenic roosting","Indomalayan","common",0
+"Pipistrellus deserti","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical, Palearctic","common",0
+"Pipistrellus rueppellii","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical, Palearctic","common",1
+"Pipistrellus rusticus","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical","common",1
+"Pipistrellus tenuis","VESPERTILIONIDAE","anthropogenic roosting","Indomalayan","common",1
+"Platyrrhinus helleri","PHYLLOSTOMIDAE","anthropogenic roosting","Nearctic, Neotropical","common",3
+"Promops centralis","MOLOSSIDAE","natural roosting","Neotropical","common",0
+"Promops nasutus","MOLOSSIDAE","anthropogenic roosting","Neotropical","common",1
+"Pteronotus gymnonotus","MORMOOPIDAE","natural roosting","Neotropical","common",2
+"Pygoderma bilabiatum","PHYLLOSTOMIDAE","anthropogenic roosting","Neotropical","common",1
+"Rhinolophus borneensis","RHINOLOPHIDAE","natural roosting","Indomalayan","common",0
+"Rhinolophus chaseni","RHINOLOPHIDAE","natural roosting","Indomalayan","common",0
+"Rhinolophus marshalli","RHINOLOPHIDAE","natural roosting","Indomalayan","common",0
+"Rhinolophus osgoodi","RHINOLOPHIDAE","natural roosting","Palearctic","common",0
+"Rhinolophus sedulus","RHINOLOPHIDAE","anthropogenic roosting","Indomalayan","common",1
+"Rhinolophus subbadius","RHINOLOPHIDAE","natural roosting","Indomalayan","common",0
+"Rhinolophus swinnyi","RHINOLOPHIDAE","anthropogenic roosting","Afrotropical","common",2
+"Rhinolophus yunanensis","RHINOLOPHIDAE","anthropogenic roosting","Indomalayan","common",0
+"Rousettus lanosus","PTEROPODIDAE","anthropogenic roosting","Afrotropical","common",2
+"Saccolaimus peli","EMBALLONURIDAE","natural roosting","Afrotropical","common",0
+"Scotoecus hirundo","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical","common",1
+"Scotomanes ornatus","VESPERTILIONIDAE","natural roosting","Indomalayan","common",0
+"Scotophilus robustus","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical","common",1
+"Scotophilus viridis","VESPERTILIONIDAE","natural roosting","Afrotropical","common",0
+"Tadarida aegyptiaca","MOLOSSIDAE","anthropogenic roosting","Afrotropical, Indomalayan, Palearctic","common",2
+"Tadarida fulminans","MOLOSSIDAE","natural roosting","Afrotropical","common",0
+"Tadarida insignis","MOLOSSIDAE","anthropogenic roosting","Indomalayan, Palearctic","common",0
+"Tadarida latouchei","MOLOSSIDAE","natural roosting","Indomalayan, Palearctic","common",1
+"Tadarida ventralis","MOLOSSIDAE","anthropogenic roosting","Afrotropical","common",0
+"Taphozous nudiventris","EMBALLONURIDAE","anthropogenic roosting","Afrotropical, Palearctic","common",7
+"Thyroptera tricolor","THYROPTERIDAE","natural roosting","Neotropical","common",12
+"Triaenops rufus","HIPPOSIDERIDAE","anthropogenic roosting","Afrotropical, Indomalayan","common",0
+"Uroderma magnirostrum","PHYLLOSTOMIDAE","natural roosting","Neotropical","common",3
+"Vespadelus vulturnus","VESPERTILIONIDAE","anthropogenic roosting","Australasian","common",4
