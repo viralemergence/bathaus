@@ -11,7 +11,8 @@ library(rredlist)
 
 # Update synurbic data
 ## load in previous trait data
-data <- read_csv("/Volumes/BETKE 2021/bathaus/flat files/master data and PanTHERIA.csv")
+setwd("/Users/brianabetke/Desktop/bathaus")
+data <- read_csv("flat files/master data and PanTHERIA.csv")
 
 # view table updates
 table(data$Synurbic)
@@ -62,7 +63,7 @@ if(pull == "yes"){
 
 }else{ #read in the saved r data instead
 # read in data instead if only need to merge
-rdata <- read_csv("/Volumes/BETKE 2021/bathaus/IUCN data/IUCN flat file.csv")
+rdata <- read_csv("IUCN data/IUCN flat file.csv")
 }
 
 # names 
@@ -167,4 +168,4 @@ icname_merge <- merge(data, rdata[c("icnames","category","population_trend")], b
 table(is.na(icname_merge$category), icname_merge$Synurbic)
 
 # write as csv for merge file
-write.csv(icname_merge, "/Volumes/BETKE 2021/bathaus/flat files/IUCN data merge to zoonotic.csv")
+write.csv(icname_merge, "flat files/IUCN data merge to zoonotic.csv")

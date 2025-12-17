@@ -13,8 +13,9 @@ library(PresenceAbsence)
 
 ###### Model predictions
 # read in model prediction csv files
-zres_apreds <- read.csv("/Volumes/BETKE 2021/bathaus/flat files/zoonotic virus host predictions.csv")
-vres_apreds <- read.csv("/Volumes/BETKE 2021/bathaus/flat files/virus host predictions.csv")
+setwd("/Users/brianabetke/Desktop/bathaus")
+zbin_apreds <- read.csv("flat files/zoonotic virus host predictions.csv")
+vbin_apreds <- read.csv("flat files/virus host predictions.csv")
 
 set.seed(12345) # seed
 
@@ -24,27 +25,27 @@ set.seed(12345) # seed
 ### comparing MSS (3) to 85%, 90%, and 95% sensitivity (10)
 
 ## virus models with roosting
-ts.p95 <- optimal.thresholds(data.frame(vres_apreds[,c('species','dum_virus','with')]),
+ts.p95 <- optimal.thresholds(data.frame(vbin_apreds[,c('species','dum_virus','with')]),
                            threshold = 10001,
                            opt.methods = c(3,4,7,8,10),
                            req.sens = 0.95,
                            na.rm = TRUE)
 
-ts.p90 <- optimal.thresholds(data.frame(vres_apreds[,c('species','dum_virus','with')]),
+ts.p90 <- optimal.thresholds(data.frame(vbin_apreds[,c('species','dum_virus','with')]),
                              threshold = 10001,
                              opt.methods = c(3,4,7,8,10),
                              req.sens = 0.90,
                              na.rm = TRUE)
 
-ts.p85 <- optimal.thresholds(data.frame(vres_apreds[,c('species','dum_virus','with')]),
+ts.p85 <- optimal.thresholds(data.frame(vbin_apreds[,c('species','dum_virus','with')]),
                              threshold = 10001,
                              opt.methods = c(3,4,7,8,10),
                              req.sens = 0.85,
                              na.rm = TRUE)
 # function to sum 
-cut.p95 <- function(x) {sum(vres_apreds$with[vres_apreds$dum_virus==0] > x)}
-cut.p90 <- function(x) {sum(vres_apreds$with[vres_apreds$dum_virus==0] > x)}
-cut.p85 <- function(x) {sum(vres_apreds$with[vres_apreds$dum_virus==0] > x)}
+cut.p95 <- function(x) {sum(vbin_apreds$with[vbin_apreds$dum_virus==0] > x)}
+cut.p90 <- function(x) {sum(vbin_apreds$with[vbin_apreds$dum_virus==0] > x)}
+cut.p85 <- function(x) {sum(vbin_apreds$with[vbin_apreds$dum_virus==0] > x)}
 
 sapply(unlist(ts.p95[2]), cut.p95)
 sapply(unlist(ts.p90[2]), cut.p90)
@@ -52,27 +53,27 @@ sapply(unlist(ts.p85[2]), cut.p85)
 # sensitivity of 85% brings the number of species to the same as MSS
 
 ## Virus models without
-nts.p95 <- optimal.thresholds(data.frame(vres_apreds[,c('species','dum_virus','without')]),
+nts.p95 <- optimal.thresholds(data.frame(vbin_apreds[,c('species','dum_virus','without')]),
                              threshold = 10001,
                              opt.methods = c(3,4,7,8,10),
                              req.sens = 0.95,
                              na.rm = TRUE)
 
-nts.p90 <- optimal.thresholds(data.frame(vres_apreds[,c('species','dum_virus','without')]),
+nts.p90 <- optimal.thresholds(data.frame(vbin_apreds[,c('species','dum_virus','without')]),
                               threshold = 10001,
                               opt.methods = c(3,4,7,8,10),
                               req.sens = 0.90,
                               na.rm = TRUE)
 
-nts.p85 <- optimal.thresholds(data.frame(vres_apreds[,c('species','dum_virus','without')]),
+nts.p85 <- optimal.thresholds(data.frame(vbin_apreds[,c('species','dum_virus','without')]),
                               threshold = 10001,
                               opt.methods = c(3,4,7,8,10),
                               req.sens = 0.85,
                               na.rm = TRUE)
 
-ncut.p95 <- function(x) {sum(vres_apreds$without[vres_apreds$dum_virus==0] > x)}
-ncut.p90 <- function(x) {sum(vres_apreds$without[vres_apreds$dum_virus==0] > x)}
-ncut.p85 <- function(x) {sum(vres_apreds$without[vres_apreds$dum_virus==0] > x)}
+ncut.p95 <- function(x) {sum(vbin_apreds$without[vbin_apreds$dum_virus==0] > x)}
+ncut.p90 <- function(x) {sum(vbin_apreds$without[vbin_apreds$dum_virus==0] > x)}
+ncut.p85 <- function(x) {sum(vbin_apreds$without[vbin_apreds$dum_virus==0] > x)}
 
 sapply(unlist(nts.p95[2]), ncut.p95)
 sapply(unlist(nts.p90[2]), ncut.p90)
@@ -81,28 +82,28 @@ sapply(unlist(nts.p85[2]), ncut.p85)
 
 ### Zoonotic hosts
 ## virus models with roosting
-zts.p95 <- optimal.thresholds(data.frame(zres_apreds[,c('species','dum_zvirus','with')]),
+zts.p95 <- optimal.thresholds(data.frame(zbin_apreds[,c('species','dum_zvirus','with')]),
                              threshold = 10001,
                              opt.methods = c(3,4,7,8,10),
                              req.sens = 0.95,
                              na.rm = TRUE)
 
-zts.p90 <- optimal.thresholds(data.frame(zres_apreds[,c('species','dum_zvirus','with')]),
+zts.p90 <- optimal.thresholds(data.frame(zbin_apreds[,c('species','dum_zvirus','with')]),
                               threshold = 10001,
                               opt.methods = c(3,4,7,8,10),
                               req.sens = 0.90,
                               na.rm = TRUE)
 
-zts.p85 <- optimal.thresholds(data.frame(zres_apreds[,c('species','dum_zvirus','with')]),
+zts.p85 <- optimal.thresholds(data.frame(zbin_apreds[,c('species','dum_zvirus','with')]),
                               threshold = 10001,
                               opt.methods = c(3,4,7,8,10),
                               req.sens = 0.85,
                               na.rm = TRUE)
 
 
-zcut.p95 <- function(x) {sum(zres_apreds$with[zres_apreds$dum_zvirus==0] > x)}
-zcut.p90 <- function(x) {sum(zres_apreds$with[zres_apreds$dum_zvirus==0] > x)}
-zcut.p85 <- function(x) {sum(zres_apreds$with[zres_apreds$dum_zvirus==0] > x)}
+zcut.p95 <- function(x) {sum(zbin_apreds$with[zbin_apreds$dum_zvirus==0] > x)}
+zcut.p90 <- function(x) {sum(zbin_apreds$with[zbin_apreds$dum_zvirus==0] > x)}
+zcut.p85 <- function(x) {sum(zbin_apreds$with[zbin_apreds$dum_zvirus==0] > x)}
 
 sapply(unlist(zts.p95[2]), zcut.p95)
 sapply(unlist(zts.p90[2]), zcut.p90)
@@ -111,67 +112,67 @@ sapply(unlist(zts.p85[2]), zcut.p85)
 
 ## without
 # 95%
-nzts.p95 <- optimal.thresholds(data.frame(zres_apreds[,c('species','dum_zvirus','without')]),
+nzts.p95 <- optimal.thresholds(data.frame(zbin_apreds[,c('species','dum_zvirus','without')]),
                               threshold = 10001,
                               opt.methods = c(3,4,7,8,10),
                               req.sens = 0.95,
                               na.rm = TRUE)
 
-nzts.p90 <- optimal.thresholds(data.frame(zres_apreds[,c('species','dum_zvirus','without')]),
+nzts.p90 <- optimal.thresholds(data.frame(zbin_apreds[,c('species','dum_zvirus','without')]),
                                threshold = 10001,
                                opt.methods = c(3,4,7,8,10),
                                req.sens = 0.90,
                                na.rm = TRUE)
 
-nzts.p85 <- optimal.thresholds(data.frame(zres_apreds[,c('species','dum_zvirus','without')]),
+nzts.p85 <- optimal.thresholds(data.frame(zbin_apreds[,c('species','dum_zvirus','without')]),
                                threshold = 10001,
                                opt.methods = c(3,4,7,8,10),
                                req.sens = 0.85,
                                na.rm = TRUE)
 
-nzcut.p95 <- function(x) {sum(zres_apreds$without[zres_apreds$dum_zvirus==0] > x)}
-nzcut.p90 <- function(x) {sum(zres_apreds$without[zres_apreds$dum_zvirus==0] > x)}
-nzcut.p85 <- function(x) {sum(zres_apreds$without[zres_apreds$dum_zvirus==0] > x)}
+nzcut.p95 <- function(x) {sum(zbin_apreds$without[zbin_apreds$dum_zvirus==0] > x)}
+nzcut.p90 <- function(x) {sum(zbin_apreds$without[zbin_apreds$dum_zvirus==0] > x)}
+nzcut.p85 <- function(x) {sum(zbin_apreds$without[zbin_apreds$dum_zvirus==0] > x)}
 
 sapply(unlist(nzts.p95[2]), nzcut.p95) 
 sapply(unlist(nzts.p90[2]), nzcut.p90)
 sapply(unlist(nzts.p85[2]), nzcut.p85)
 
 # clean
-rm(list = ls()[!ls() %in% c("vres_apreds","zres_apreds")])
+rm(list = ls()[!ls() %in% c("vbin_apreds","zbin_apreds")])
 
 ### threshold - Moving forward with MSS
 # virus host with 
-t.vmod <- optimal.thresholds(data.frame(vres_apreds[,c('species','dum_virus','with')]),
+t.vmod <- optimal.thresholds(data.frame(vbin_apreds[,c('species','dum_virus','with')]),
                              threshold = 10001,
                              opt.methods = 3,
                              req.sens = 0.95,
                              na.rm = TRUE)
 
 # virus host without
-t.nvmod <- optimal.thresholds(data.frame(vres_apreds[,c('species','dum_virus','without')]),
+t.nvmod <- optimal.thresholds(data.frame(vbin_apreds[,c('species','dum_virus','without')]),
                               threshold = 10001,
                               opt.methods = 3,
                               req.sens = 0.95,
                               na.rm = TRUE)
 # zoonotic with 
-t.zmod <- optimal.thresholds(data.frame(zres_apreds[,c('species','dum_zvirus','with')]),
+t.zmod <- optimal.thresholds(data.frame(zbin_apreds[,c('species','dum_zvirus','with')]),
                              threshold = 10001,
                              opt.methods = 3,
                              req.sens = 0.95,
                              na.rm = TRUE)
 # zoonotic without
-t.nzmod <- optimal.thresholds(data.frame(zres_apreds[,c('species','dum_zvirus','without')]),
+t.nzmod <- optimal.thresholds(data.frame(zbin_apreds[,c('species','dum_zvirus','without')]),
                              threshold = 10001,
                              opt.methods = 3,
                              req.sens = 0.95,
                              na.rm = TRUE)
 
 # binary results
-vres_apreds %>% mutate(bin_with = with > t.vmod$with,
+vbin_apreds %>% mutate(bin_with = with > t.vmod$with,
                        bin_without = without > t.nvmod$without) -> pred
 
-zres_apreds %>% mutate(bin_with = with > t.zmod$with,
+zbin_apreds %>% mutate(bin_with = with > t.zmod$with,
                        bin_without = without > t.nzmod$without) -> zpred
 
 # novel hosts
@@ -186,15 +187,15 @@ table(zpred$without[zpred$dum_zvirus==0] > t.nzmod$without)
 # Looking at overlap
 pred %>% filter(dum_virus == 0 & with > t.vmod$with) %>% pull(species) -> vnovel
 pred %>% filter(dum_virus == 0 & without > t.nvmod$without) %>% pull(species) -> n_vnovel
-setdiff(vnovel, n_vnovel) # 1 additional species
-setdiff(n_vnovel, vnovel) 
-intersect(vnovel, n_vnovel) -> vsame # 110 in common
+setdiff(vnovel, n_vnovel) # 6 additional species
+setdiff(n_vnovel, vnovel) # 1 not shared 
+intersect(vnovel, n_vnovel) -> vsame # 127 in common
 
 zpred %>% filter(dum_zvirus == 0 & with >= t.zmod$with) %>% pull(species) -> znovel
 zpred %>% filter(dum_zvirus == 0 & without >= t.nzmod$without) %>% pull(species) -> n_znovel
-setdiff(znovel, n_znovel) # 27 species different
-setdiff(n_znovel, znovel) # no species in without that arent in with
-intersect(znovel, n_znovel) -> zsame # 162 in common
+setdiff(znovel, n_znovel) # 2 species different
+setdiff(n_znovel, znovel) # 4 species that aren't in with
+intersect(znovel, n_znovel) -> zsame # 150 in common
 
 # Bin knowns and novel. Spell out roosting status for figs
 pred %>% 
@@ -207,16 +208,16 @@ zpred %>%
 
 # how many are anthropogenic? 
 # overall virus
-filter(pred, bin_with == 1 & status == "novel" & roost == "anthropogenic roosting") %>% pull(species) #65
-filter(pred, bin_without == 1 & status == "novel" & roost == "anthropogenic roosting") %>% pull(species) #64
+filter(pred, bin_with == 1 & status == "novel" & roost == "anthropogenic roosting") %>% pull(species) #83
+filter(pred, bin_without == 1 & status == "novel" & roost == "anthropogenic roosting") %>% pull(species) #76
 
 # zoonotic
-filter(zpred, bin_with == 1 & status == "novel" & roost == "anthropogenic roosting") %>% pull(species) # 120
-filter(zpred, bin_without == 1 & status == "novel" & roost == "anthropogenic roosting") %>% pull(species) #106
+filter(zpred, bin_with == 1 & status == "novel" & roost == "anthropogenic roosting") %>% pull(species) # 95
+filter(zpred, bin_without == 1 & status == "novel" & roost == "anthropogenic roosting") %>% pull(species) #93
 
 # Family and biogeographical realm break downs
 # need to read in trait data before family dummys
-traits <- readRDS("/Volumes/BETKE 2021/bathaus/flat files/synurbic and traits only.rds")
+traits <- readRDS("flat files/synurbic and traits only.rds")
 
 # novel zoonotic
 pred %>% filter(status == "novel") -> vnov

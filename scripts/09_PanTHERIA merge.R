@@ -10,7 +10,7 @@ graphics.off()
 library(tidyverse)
 
 # Read in the merged dataset
-setwd("/Volumes/BETKE 2021/bathaus")
+setwd("/Users/brianabetke/Desktop/bathaus")
 data <- read_csv("flat files/master data and COMBINE.csv") #%>% 
   #select(-cnames)
 
@@ -21,7 +21,7 @@ PanTHERIA <- read.delim("traits/PanTHERIA_1-0_WR05_Aug2008.txt")
 GR <- PanTHERIA %>%
   filter(MSW05_Order == "Chiroptera") %>%
   select(MSW05_Binomial, X26.1_GR_Area_km2:X30.2_PET_Mean_mm) %>%
-  na_if(-999) # change -999 to NA
+  mutate(across(where(is.numeric),~na_if(.,-999)))
 
 # look at differences with setdiff()
 # Everything in virus, not in PanTHERIA

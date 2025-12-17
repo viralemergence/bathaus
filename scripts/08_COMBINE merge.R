@@ -9,10 +9,11 @@ graphics.off()
 library(tidyverse)
 
 # Read in the merged data
-merge_data <- read_csv("/Volumes/BETKE 2021/bathaus/flat files/Synurb and filter data Merge.csv")
+setwd("/Users/brianabetke/Desktop/bathaus")
+merge_data <- read_csv("flat files/Synurb and filter data Merge.csv")
 
 # reading chiroptera combine
-trait_data <- read_csv("/Volumes/BETKE 2021/bathaus/COMBINE Datasets/COMBINE_archives/trait_data_reported.csv") %>%
+trait_data <- read_csv("COMBINE Datasets/COMBINE_archives/trait_data_reported.csv") %>%
   filter(order == "Chiroptera") # returns 1342 observations
 
 # write dataset of just Chiroptera
@@ -123,4 +124,4 @@ trait_merge <- merge(merge_data, trait_data, by = "ccnames", all.x = TRUE) %>%
   rename(species = species.x)
 
 # write after matching
-write.csv(trait_merge,"/Volumes/BETKE 2021/bathaus/flat files/master data and COMBINE.csv", row.names = FALSE)
+write.csv(trait_merge,"flat files/master data and COMBINE.csv", row.names = FALSE)

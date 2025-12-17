@@ -10,19 +10,21 @@ library(tidyverse)
 library(fastDummies) # dummy coding family
 
 ### Read in data
-zoonotic <- read_csv("/Volumes/BETKE 2021/bathaus/flat files/IUCN data merge to zoonotic.csv")
+setwd("/Users/brianabetke/Desktop/bathaus")
+zoonotic <- read_csv("flat files/IUCN data merge to zoonotic.csv")
 
 ## check for complete - finished data should be only Yes
 table(zoonotic$Complete)
 
 ## checking that PanTHERIA data is updated from -999 to NA
 table(is.na(zoonotic$X26.1_GR_Area_km2))
+table(zoonotic$X26.1_GR_Area_km2 == -999)
 
 ## names of bats that are left to revisit - should return nothing when revisits are done
 zoonotic[zoonotic$Complete == "revisit",]$species
 
 ## remove the extinct bats - read in taxonomy
-tax <- read_csv("/Volumes/BETKE 2021/bathaus/phylos/taxonomy_mamPhy_5911species.csv")
+tax <- read_csv("phylos/taxonomy_mamPhy_5911species.csv")
 
 # How many bats are extinct?
 names <- tax[tax$ord == "CHIROPTERA" & tax$extinct. == 1, ]$Species_Name
@@ -62,7 +64,7 @@ dums <- dums[!duplicated(dums$fam),]
 dums <- dums %>% 
   mutate(across(where(is.numeric), factor))
 
-## merge - variables dont stay as factors when you merge
+## merge
 data <- merge(data,dums,by="fam",all.x=T)
 rm(dums)
 
@@ -88,10 +90,10 @@ data <- data %>% # Synurbic and variables that are factors according to COMBINE
                 factor)) %>% 
   select(-c("MSW3_sciName_matched"))
 
-length(colnames(data)) # 109 columns
+length(colnames(data)) # 113 columns
 
 # save before trimming
-saveRDS(data, "/Volumes/BETKE 2021/bathaus/flat files/synurbic and traits only.rds")
+saveRDS(data, "flat files/synurbic and traits only.rds")
 
 #### Clean out variables with low variance and coverage
 # Variation
@@ -118,7 +120,7 @@ vars <- vars[order(vars$keep),]
 
 table(vars$keep)
 # cut keep 
-# 18   87
+# 18   91 NOTE these are including virus response calculations
 
 ## trim
 keeps <- vars[-which(vars$keep=="cut"),]$column
@@ -136,9 +138,10 @@ names(mval)=c("comp","column")
 mval$comp=round(mval$comp,2)
 
 # ggplot of coverage
-png("/Volumes/BETKE 2021/bathaus/figs/figure S1.png", width=9.5,height=5.5,units="in",res=600)
+png("figs/figure S1.png", width=9.5,height=5.5,units="in",res=600)
 mval %>% 
-  filter(!column %in% c("clade", "gen", "tip", "species", "fam", "virus", "zvirus", "Complete")) %>%
+  filter(!column %in% c("clade", "gen", "tip", "species", "fam", "Virus", "dum_virus", "dum_zvirus",
+                        "zoo_sp", "vfam", "zfam", "Complete")) %>%
   ggplot(aes(comp)) +
   geom_histogram(bins = 50) +
   geom_vline(xintercept=0.30,linetype=2,linewidth=0.5) +
@@ -152,7 +155,7 @@ dev.off()
 mval$keep=ifelse(mval$comp>=0.30,"keep","cut")
 table(mval$keep)
 # cut keep 
-# 18   73 
+# 18   77 
 
 ## order
 mval=mval[order(mval$comp),]
@@ -163,15 +166,15 @@ coverage_table <- mval %>%
   filter(keep == "keep") %>%
   rename(Variable = column,
          Coverage = comp) %>%
-  filter(!Variable %in% c("clade", "gen", "tip", "species", "fam", "virus", 
-                          "zvirus", "Complete", "iucn2020_binomial","biogeographical_realm")) %>%
+  filter(!Variable %in% c("clade", "gen", "tip", "species", "fam", "Virus", "dum_virus", "dum_zvirus",
+                          "zoo_sp", "vfam", "zfam", "Complete", "iucn2020_binomial","biogeographical_realm")) %>%
   select(-keep) %>%
   relocate(Coverage, .after = Variable)
 
 rownames(coverage_table) <- NULL
 
 # save as csv
-write.csv(coverage_table, "/Volumes/BETKE 2021/bathaus/flat files/Table S1 Variable Coverage.csv", row.names = FALSE)
+write.csv(coverage_table, "flat files/Table S1 Variable Coverage.csv", row.names = FALSE)
 
 ## drop if not well represented
 data=data[keeps]
@@ -184,10 +187,11 @@ data <- data %>%
 colnames(data) # resulting in 66 variables total, 64 covariates
 
 # reordering so species and response variables are in front
-data %>% select(species, Synurbic, virus, zvirus, cites, everything()) -> data
+data %>% select(species, Synurbic,Virus, dum_virus, dum_zvirus,
+                zoo_sp, vfam, zfam, cites, vcites, everything()) -> data
 
 # Save as RDS
-saveRDS(data, "/Volumes/BETKE 2021/bathaus/flat files/cleaned dataset 30 cutoff.rds")
+saveRDS(data, "flat files/cleaned dataset 30 cutoff.rds")
 
 ## version with transformed vars
 # look into distribution of continuous variables
@@ -224,4 +228,4 @@ log_data <- log_data %>%
             adult_body_length_mm, adult_forearm_length_mm, adult_mass_g))
 
 # Save as RDS
-saveRDS(log_data, "/Volumes/BETKE 2021/bathaus/flat files/log cleaned dataset 30 cutoff.rds")
+saveRDS(log_data, "flat files/log cleaned dataset 30 cutoff.rds")
