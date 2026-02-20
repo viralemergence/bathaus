@@ -1,80 +1,72 @@
 "species","fam","roost","biogeographical_realm","commonality","cites"
+"Anoura canishina","PHYLLOSTOMIDAE","natural roosting","no data","common",0
 "Anoura geoffroyi","PHYLLOSTOMIDAE","natural roosting","Neotropical","common",15
-"Asellia tridens","HIPPOSIDERIDAE","anthropogenic roosting","Afrotropical, Indomalayan, Palearctic","common",5
+"Balantiopteryx plicata","EMBALLONURIDAE","anthropogenic roosting","Neotropical","without roosting only",6
 "Barbastella leucomelas","VESPERTILIONIDAE","anthropogenic roosting","Indomalayan, Palearctic","common",1
 "Carollia sowelli","PHYLLOSTOMIDAE","anthropogenic roosting","Neotropical","common",8
 "Centurio senex","PHYLLOSTOMIDAE","natural roosting","Neotropical","common",1
-"Chaerephon bemmeleni","MOLOSSIDAE","natural roosting","Afrotropical","additional",0
-"Chaerephon nigeriae","MOLOSSIDAE","anthropogenic roosting","Afrotropical","additional",1
-"Chalinolobus morio","VESPERTILIONIDAE","anthropogenic roosting","Australasian","common",2
+"Chaerephon ansorgei","MOLOSSIDAE","anthropogenic roosting","Afrotropical","without roosting only",0
 "Chiroderma salvini","PHYLLOSTOMIDAE","anthropogenic roosting","Neotropical","common",0
-"Chiroderma trinitatum","PHYLLOSTOMIDAE","natural roosting","Neotropical","common",1
 "Chiroderma villosum","PHYLLOSTOMIDAE","anthropogenic roosting","Neotropical","common",5
 "Choeronycteris mexicana","PHYLLOSTOMIDAE","anthropogenic roosting","Nearctic, Neotropical","common",10
 "Coelops frithii","HIPPOSIDERIDAE","anthropogenic roosting","Indomalayan","common",1
 "Corynorhinus rafinesquii","VESPERTILIONIDAE","anthropogenic roosting","Nearctic","common",8
-"Cynomops paranus","MOLOSSIDAE","missing","Neotropical","common",0
 "Cynomops planirostris","MOLOSSIDAE","anthropogenic roosting","Neotropical","common",3
-"Dermanura glaucus","PHYLLOSTOMIDAE","natural roosting","Neotropical","common",0
+"Dermanura aztecus","PHYLLOSTOMIDAE","anthropogenic roosting","Neotropical","common",0
 "Dermanura toltecus","PHYLLOSTOMIDAE","anthropogenic roosting","Neotropical","common",0
 "Enchisthenes hartii","PHYLLOSTOMIDAE","natural roosting","Nearctic, Neotropical","common",2
+"Epomophorus crypturus","PTEROPODIDAE","natural roosting","Afrotropical","common",1
 "Epomophorus gambianus","PTEROPODIDAE","natural roosting","Afrotropical","common",14
-"Epomophorus wahlbergi","PTEROPODIDAE","anthropogenic roosting","Afrotropical","common",14
-"Eptesicus andinus","VESPERTILIONIDAE","missing","Neotropical","common",0
 "Eptesicus bottae","VESPERTILIONIDAE","anthropogenic roosting","no data","common",2
 "Eptesicus gobiensis","VESPERTILIONIDAE","anthropogenic roosting","Palearctic","common",0
 "Eptesicus nilssonii","VESPERTILIONIDAE","anthropogenic roosting","Palearctic","common",19
 "Eumops dabbenei","MOLOSSIDAE","anthropogenic roosting","Neotropical","common",0
-"Eumops trumbulli","MOLOSSIDAE","anthropogenic roosting","Neotropical","common",0
+"Eumops floridanus","MOLOSSIDAE","anthropogenic roosting","Nearctic","with roosting only",0
 "Eumops underwoodi","MOLOSSIDAE","natural roosting","Nearctic, Neotropical","common",0
-"Furipterus horrens","FURIPTERIDAE","natural roosting","Neotropical","common",2
 "Glauconycteris variegata","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical","common",0
-"Glossophaga commissarisi","PHYLLOSTOMIDAE","anthropogenic roosting","Neotropical","common",7
-"Glyphonycteris sylvestris","PHYLLOSTOMIDAE","natural roosting","Neotropical","additional",1
+"Glischropus tylopus","VESPERTILIONIDAE","natural roosting","no data","common",1
 "Harpiocephalus harpia","VESPERTILIONIDAE","natural roosting","no data","common",2
 "Harpiocephalus mordax","VESPERTILIONIDAE","natural roosting","no data","common",0
 "Hipposideros ater","HIPPOSIDERIDAE","anthropogenic roosting","no data","common",1
-"Hipposideros cineraceus","HIPPOSIDERIDAE","natural roosting","Indomalayan","common",1
-"Hipposideros lankadiva","HIPPOSIDERIDAE","anthropogenic roosting","Indomalayan","additional",3
+"Hipposideros cineraceus","HIPPOSIDERIDAE","natural roosting","Indomalayan","without roosting only",1
+"Hipposideros gigas","HIPPOSIDERIDAE","natural roosting","Afrotropical","common",3
 "Histiotus magellanicus","VESPERTILIONIDAE","natural roosting","Neotropical","common",0
-"Hsunycteris thomasi","PHYLLOSTOMIDAE","natural roosting","Neotropical","common",0
 "Idionycteris phyllotis","VESPERTILIONIDAE","anthropogenic roosting","Nearctic","common",0
-"Kerivoula hardwickii","VESPERTILIONIDAE","anthropogenic roosting","Indomalayan","common",7
-"Kerivoula lanosa","VESPERTILIONIDAE","natural roosting","Afrotropical","common",0
-"Kerivoula picta","VESPERTILIONIDAE","anthropogenic roosting","Indomalayan","additional",0
-"Laephotis wintoni","VESPERTILIONIDAE","natural roosting","Afrotropical","common",1
+"Kerivoula lanosa","VESPERTILIONIDAE","natural roosting","Afrotropical","without roosting only",0
 "Lavia frons","MEGADERMATIDAE","anthropogenic roosting","Afrotropical","common",2
 "Leptonycteris yerbabuenae","PHYLLOSTOMIDAE","natural roosting","Nearctic, Neotropical","common",26
-"Lichonycteris obscura","PHYLLOSTOMIDAE","natural roosting","Neotropical","common",0
-"Lonchophylla mordax","PHYLLOSTOMIDAE","natural roosting","Neotropical","common",2
-"Lonchophylla thomasi","PHYLLOSTOMIDAE","natural roosting","Neotropical","common",0
 "Lonchorhina aurita","PHYLLOSTOMIDAE","anthropogenic roosting","Neotropical","common",5
-"Lophostoma brasiliense","PHYLLOSTOMIDAE","natural roosting","Neotropical","additional",0
 "Lophostoma silvicolum","PHYLLOSTOMIDAE","natural roosting","Neotropical","common",5
 "Macrophyllum macrophyllum","PHYLLOSTOMIDAE","anthropogenic roosting","Neotropical","common",4
-"Macrotus waterhousii","PHYLLOSTOMIDAE","anthropogenic roosting","Neotropical","common",16
-"Megaderma spasma","MEGADERMATIDAE","anthropogenic roosting","Indomalayan","additional",7
+"Megaderma spasma","MEGADERMATIDAE","anthropogenic roosting","Indomalayan","common",7
 "Megaerops ecaudatus","PTEROPODIDAE","missing","Indomalayan","common",2
-"Micronycteris megalotis","PHYLLOSTOMIDAE","anthropogenic roosting","Neotropical","common",1
-"Micronycteris microtis","PHYLLOSTOMIDAE","anthropogenic roosting","Neotropical","common",10
-"Micronycteris minuta","PHYLLOSTOMIDAE","anthropogenic roosting","Neotropical","common",1
-"Mimetillus moloneyi","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical","common",0
+"Mimon bennettii","PHYLLOSTOMIDAE","anthropogenic roosting","Neotropical","common",2
 "Mimon cozumelae","PHYLLOSTOMIDAE","anthropogenic roosting","Neotropical","common",2
-"Mimon crenulatum","PHYLLOSTOMIDAE","natural roosting","Neotropical","common",4
+"Miniopterus aelleni","MINIOPTERIDAE","natural roosting","Afrotropical","common",1
+"Miniopterus ambohitrensis","MINIOPTERIDAE","natural roosting","Afrotropical","common",1
 "Miniopterus australis","MINIOPTERIDAE","anthropogenic roosting","Australasian, Indomalayan","common",3
-"Miniopterus fraterculus","MINIOPTERIDAE","anthropogenic roosting","Afrotropical","additional",0
-"Molossops mattogrossensis","MOLOSSIDAE","natural roosting","Neotropical","additional",0
+"Miniopterus brachytragos","MINIOPTERIDAE","natural roosting","Afrotropical","common",0
+"Miniopterus egeri","MINIOPTERIDAE","natural roosting","Afrotropical","common",0
+"Miniopterus fraterculus","MINIOPTERIDAE","anthropogenic roosting","Afrotropical","common",0
+"Miniopterus griffithsi","MINIOPTERIDAE","natural roosting","Afrotropical","common",0
+"Miniopterus maghrebensis","MINIOPTERIDAE","natural roosting","Palearctic","common",1
+"Miniopterus majori","MINIOPTERIDAE","natural roosting","Afrotropical","common",0
+"Miniopterus newtoni","MINIOPTERIDAE","natural roosting","Afrotropical","common",0
+"Miniopterus oceanensis","MINIOPTERIDAE","missing","no data","common",0
+"Miniopterus paululus","MINIOPTERIDAE","natural roosting","Australasian, Indomalayan","common",0
+"Miniopterus petersoni","MINIOPTERIDAE","natural roosting","no data","common",0
+"Miniopterus shortridgei","MINIOPTERIDAE","missing","Australasian, Indomalayan","common",0
+"Miniopterus tristis","MINIOPTERIDAE","natural roosting","Australasian, Indomalayan","common",0
 "Molossops temminckii","MOLOSSIDAE","anthropogenic roosting","Neotropical","common",4
-"Mops midas","MOLOSSIDAE","anthropogenic roosting","Afrotropical","additional",0
+"Mops midas","MOLOSSIDAE","anthropogenic roosting","Afrotropical","common",0
 "Mormoops megalophylla","MORMOOPIDAE","anthropogenic roosting","Nearctic, Neotropical","common",11
+"Mormopterus jugularis","MOLOSSIDAE","anthropogenic roosting","Afrotropical","common",2
 "Murina cyclotis","VESPERTILIONIDAE","natural roosting","Indomalayan","common",1
 "Murina hilgendorfi","VESPERTILIONIDAE","anthropogenic roosting","Palearctic","common",4
 "Murina huttoni","VESPERTILIONIDAE","natural roosting","Indomalayan","common",1
-"Murina leucogaster","VESPERTILIONIDAE","anthropogenic roosting","Indomalayan","common",13
 "Murina tubinaris","VESPERTILIONIDAE","natural roosting","no data","common",0
 "Myotis aelleni","VESPERTILIONIDAE","anthropogenic roosting","Neotropical","common",1
 "Myotis altarium","VESPERTILIONIDAE","natural roosting","Indomalayan, Palearctic","common",4
-"Myotis auriculus","VESPERTILIONIDAE","anthropogenic roosting","Nearctic, Neotropical","common",1
 "Myotis bechsteinii","VESPERTILIONIDAE","anthropogenic roosting","Palearctic","common",33
 "Myotis blythii","VESPERTILIONIDAE","anthropogenic roosting","Palearctic","common",16
 "Myotis bocagii","VESPERTILIONIDAE","natural roosting","Afrotropical","common",0
@@ -82,109 +74,84 @@
 "Myotis brandtii","VESPERTILIONIDAE","anthropogenic roosting","no data","common",24
 "Myotis capaccinii","VESPERTILIONIDAE","natural roosting","Palearctic","common",13
 "Myotis elegans","VESPERTILIONIDAE","missing","Neotropical","common",0
+"Myotis fimbriatus","VESPERTILIONIDAE","natural roosting","no data","common",4
 "Myotis flavus","VESPERTILIONIDAE","anthropogenic roosting","no data","common",0
 "Myotis formosus","VESPERTILIONIDAE","anthropogenic roosting","no data","common",2
+"Myotis goudoti","VESPERTILIONIDAE","natural roosting","Afrotropical","common",5
 "Myotis ikonnikovi","VESPERTILIONIDAE","anthropogenic roosting","Palearctic","common",4
 "Myotis keaysi","VESPERTILIONIDAE","anthropogenic roosting","Neotropical","common",2
+"Myotis macrodactylus","VESPERTILIONIDAE","anthropogenic roosting","Palearctic","common",12
 "Myotis melanorhinus","VESPERTILIONIDAE","anthropogenic roosting","Nearctic, Neotropical","common",0
-"Myotis midastactus","VESPERTILIONIDAE","anthropogenic roosting","Neotropical","additional",1
 "Myotis montivagus","VESPERTILIONIDAE","missing","no data","common",1
 "Myotis muricola","VESPERTILIONIDAE","natural roosting","no data","common",1
+"Myotis occultus","VESPERTILIONIDAE","anthropogenic roosting","Nearctic, Neotropical","with roosting only",1
 "Myotis oxyotus","VESPERTILIONIDAE","natural roosting","Neotropical","common",2
-"Myotis ruber","VESPERTILIONIDAE","anthropogenic roosting","Neotropical","common",2
-"Myotis schaubi","VESPERTILIONIDAE","anthropogenic roosting","Palearctic","additional",0
-"Myotis simus","VESPERTILIONIDAE","anthropogenic roosting","Neotropical","additional",2
+"Myotis pequinius","VESPERTILIONIDAE","anthropogenic roosting","Palearctic","common",4
+"Myotis pruinosus","VESPERTILIONIDAE","natural roosting","Palearctic","common",2
 "Myotis sodalis","VESPERTILIONIDAE","anthropogenic roosting","Nearctic","common",18
-"Myotis tricolor","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical","common",3
-"Myotis vivesi","VESPERTILIONIDAE","anthropogenic roosting","Nearctic","common",9
-"Myotis welwitschii","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical","common",0
 "Natalus lanatus","NATALIDAE","anthropogenic roosting","Neotropical","common",0
 "Natalus mexicanus","NATALIDAE","anthropogenic roosting","Neotropical","common",1
 "Natalus saturatus","NATALIDAE","missing","Neotropical","common",0
-"Neoromicia rendalli","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical","common",1
-"Neoromicia somalica","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical","common",0
+"Neoromicia matroka","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical","common",1
+"Neoromicia nana","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical","common",5
 "Neoromicia tenuipinnis","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical","common",0
 "Noctilio albiventris","NOCTILIONIDAE","anthropogenic roosting","Neotropical","common",22
 "Noctilio leporinus","NOCTILIONIDAE","anthropogenic roosting","Neotropical","common",20
 "Nyctalus aviator","VESPERTILIONIDAE","anthropogenic roosting","Palearctic","common",2
 "Nyctalus lasiopterus","VESPERTILIONIDAE","anthropogenic roosting","Palearctic","common",10
 "Nyctalus leisleri","VESPERTILIONIDAE","anthropogenic roosting","Palearctic","common",13
-"Nyctalus plancyi","VESPERTILIONIDAE","anthropogenic roosting","Indomalayan, Palearctic","common",9
-"Nycteris grandis","NYCTERIDAE","anthropogenic roosting","Afrotropical","additional",1
 "Nycteris macrotis","NYCTERIDAE","anthropogenic roosting","Afrotropical","common",1
 "Nycticeinops schlieffeni","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical, Palearctic","common",0
 "Nyctinomops aurispinosus","MOLOSSIDAE","anthropogenic roosting","Neotropical","common",0
 "Nyctinomops femorosaccus","MOLOSSIDAE","anthropogenic roosting","Nearctic, Neotropical","common",1
-"Nyctophilus corbeni","VESPERTILIONIDAE","natural roosting","no data","additional",0
-"Nyctophilus geoffroyi","VESPERTILIONIDAE","anthropogenic roosting","Australasian","common",11
-"Nyctophilus timoriensis","VESPERTILIONIDAE","natural roosting","no data","additional",0
 "Otonycteris hemprichii","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical, Indomalayan, Palearctic","common",7
-"Peropteryx kappleri","EMBALLONURIDAE","anthropogenic roosting","Neotropical","common",4
-"Peropteryx macrotis","EMBALLONURIDAE","anthropogenic roosting","Neotropical","common",6
 "Phylloderma stenops","PHYLLOSTOMIDAE","missing","Neotropical","common",1
 "Phyllostomus elongatus","PHYLLOSTOMIDAE","anthropogenic roosting","Neotropical","common",1
 "Pipistrellus cadornae","VESPERTILIONIDAE","anthropogenic roosting","Indomalayan","common",0
-"Pipistrellus coromandra","VESPERTILIONIDAE","anthropogenic roosting","Indomalayan","common",3
 "Pipistrellus deserti","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical, Palearctic","common",0
+"Pipistrellus hesperidus","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical","common",3
 "Pipistrellus javanicus","VESPERTILIONIDAE","anthropogenic roosting","Indomalayan","common",4
 "Pipistrellus paterculus","VESPERTILIONIDAE","anthropogenic roosting","Indomalayan","common",0
+"Pipistrellus pulveratus","VESPERTILIONIDAE","anthropogenic roosting","Indomalayan, Palearctic","common",0
 "Pipistrellus rueppellii","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical, Palearctic","common",1
-"Pipistrellus rusticus","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical","additional",1
-"Pipistrellus tenuis","VESPERTILIONIDAE","anthropogenic roosting","Indomalayan","common",1
-"Platyrrhinus brachycephalus","PHYLLOSTOMIDAE","natural roosting","Neotropical","additional",0
 "Platyrrhinus helleri","PHYLLOSTOMIDAE","anthropogenic roosting","Nearctic, Neotropical","common",3
-"Platyrrhinus recifinus","PHYLLOSTOMIDAE","natural roosting","Neotropical","common",0
 "Platyrrhinus vittatus","PHYLLOSTOMIDAE","natural roosting","Neotropical","common",0
 "Promops centralis","MOLOSSIDAE","natural roosting","Neotropical","common",0
 "Promops nasutus","MOLOSSIDAE","anthropogenic roosting","Neotropical","common",1
-"Pteronotus gymnonotus","MORMOOPIDAE","natural roosting","Neotropical","additional",2
 "Pteronotus personatus","MORMOOPIDAE","anthropogenic roosting","Neotropical","common",10
 "Pygoderma bilabiatum","PHYLLOSTOMIDAE","anthropogenic roosting","Neotropical","common",1
-"Rhinolophus alcyone","RHINOLOPHIDAE","anthropogenic roosting","Afrotropical","common",1
+"Rhinolophus borneensis","RHINOLOPHIDAE","natural roosting","Indomalayan","common",0
+"Rhinolophus chaseni","RHINOLOPHIDAE","natural roosting","Indomalayan","common",0
 "Rhinolophus darlingi","RHINOLOPHIDAE","anthropogenic roosting","Afrotropical","common",1
-"Rhinolophus denti","RHINOLOPHIDAE","anthropogenic roosting","Afrotropical","additional",0
 "Rhinolophus fumigatus","RHINOLOPHIDAE","anthropogenic roosting","Afrotropical","common",0
 "Rhinolophus hildebrandtii","RHINOLOPHIDAE","anthropogenic roosting","Afrotropical","common",3
-"Rhinolophus landeri","RHINOLOPHIDAE","anthropogenic roosting","Afrotropical","common",2
-"Rhinolophus malayanus","RHINOLOPHIDAE","natural roosting","Indomalayan","common",2
-"Rhinolophus marshalli","RHINOLOPHIDAE","natural roosting","Indomalayan","common",0
+"Rhinolophus luctus","RHINOLOPHIDAE","anthropogenic roosting","Indomalayan","common",2
+"Rhinolophus megaphyllus","RHINOLOPHIDAE","anthropogenic roosting","Australasian","common",1
 "Rhinolophus osgoodi","RHINOLOPHIDAE","natural roosting","Palearctic","common",0
-"Rhinolophus paradoxolophus","RHINOLOPHIDAE","natural roosting","Indomalayan","common",0
-"Rhinolophus stheno","RHINOLOPHIDAE","natural roosting","no data","common",0
+"Rhinolophus simulator","RHINOLOPHIDAE","anthropogenic roosting","Afrotropical","common",2
 "Rhinolophus subbadius","RHINOLOPHIDAE","natural roosting","Indomalayan","common",0
 "Rhinolophus swinnyi","RHINOLOPHIDAE","anthropogenic roosting","Afrotropical","common",2
 "Rhinolophus trifoliatus","RHINOLOPHIDAE","natural roosting","Indomalayan","common",0
 "Rhinolophus yunanensis","RHINOLOPHIDAE","anthropogenic roosting","Indomalayan","common",0
-"Rhinopoma microphyllum","RHINOPOMATIDAE","anthropogenic roosting","Afrotropical, Palearctic","common",7
-"Rhogeessa io","VESPERTILIONIDAE","missing","Neotropical","common",1
+"Rhinopoma hardwickii","RHINOPOMATIDAE","anthropogenic roosting","Afrotropical, Palearctic","common",5
 "Rhynchonycteris naso","EMBALLONURIDAE","anthropogenic roosting","Neotropical","common",5
 "Rousettus lanosus","PTEROPODIDAE","anthropogenic roosting","Afrotropical","common",2
 "Saccolaimus peli","EMBALLONURIDAE","natural roosting","Afrotropical","common",0
 "Saccopteryx bilineata","EMBALLONURIDAE","anthropogenic roosting","Neotropical","common",20
-"Saccopteryx leptura","EMBALLONURIDAE","natural roosting","Neotropical","additional",2
-"Scotoecus albofuscus","VESPERTILIONIDAE","natural roosting","Afrotropical","common",0
-"Scotoecus hirundo","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical","additional",1
 "Scotomanes ornatus","VESPERTILIONIDAE","natural roosting","Indomalayan","common",0
 "Scotophilus dinganii","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical","common",1
-"Scotophilus heathii","VESPERTILIONIDAE","anthropogenic roosting","Indomalayan","common",5
 "Scotophilus leucogaster","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical","common",3
-"Scotophilus nucella","VESPERTILIONIDAE","missing","Afrotropical","additional",0
+"Scotophilus robustus","VESPERTILIONIDAE","anthropogenic roosting","Afrotropical","common",1
 "Scotophilus viridis","VESPERTILIONIDAE","natural roosting","Afrotropical","common",0
-"Sturnira erythromos","PHYLLOSTOMIDAE","natural roosting","Neotropical","additional",1
 "Sturnira ludovici","PHYLLOSTOMIDAE","anthropogenic roosting","Neotropical","common",2
 "Sturnira tildae","PHYLLOSTOMIDAE","natural roosting","Neotropical","common",0
-"Syconycteris australis","PTEROPODIDAE","natural roosting","Australasian","additional",5
 "Tadarida aegyptiaca","MOLOSSIDAE","anthropogenic roosting","Afrotropical, Indomalayan, Palearctic","common",2
-"Tadarida insignis","MOLOSSIDAE","anthropogenic roosting","Indomalayan, Palearctic","common",0
-"Tadarida latouchei","MOLOSSIDAE","natural roosting","Indomalayan, Palearctic","additional",1
+"Tadarida fulminans","MOLOSSIDAE","natural roosting","Afrotropical","common",0
+"Tadarida latouchei","MOLOSSIDAE","natural roosting","Indomalayan, Palearctic","common",1
 "Taphozous longimanus","EMBALLONURIDAE","anthropogenic roosting","Indomalayan","common",11
 "Taphozous mauritianus","EMBALLONURIDAE","anthropogenic roosting","Afrotropical","common",3
 "Taphozous nudiventris","EMBALLONURIDAE","anthropogenic roosting","Afrotropical, Palearctic","common",7
-"Thyroptera tricolor","THYROPTERIDAE","natural roosting","Neotropical","common",12
 "Tonatia bidens","PHYLLOSTOMIDAE","anthropogenic roosting","Neotropical","common",1
 "Triaenops rufus","HIPPOSIDERIDAE","anthropogenic roosting","Afrotropical, Indomalayan","common",0
-"Tylonycteris robustula","VESPERTILIONIDAE","natural roosting","Indomalayan","common",5
-"Uroderma magnirostrum","PHYLLOSTOMIDAE","natural roosting","Neotropical","common",3
 "Vampyrodes caraccioli","PHYLLOSTOMIDAE","natural roosting","Neotropical","common",1
-"Vespadelus regulus","VESPERTILIONIDAE","anthropogenic roosting","Australasian","common",1
-"Vespadelus vulturnus","VESPERTILIONIDAE","anthropogenic roosting","Australasian","additional",4
+"Vampyrum spectrum","PHYLLOSTOMIDAE","anthropogenic roosting","Neotropical","common",3
