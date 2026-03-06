@@ -245,8 +245,14 @@ znov %>% filter(status_w == "novel") %>% separate_rows(biogeographical_realm, se
 vnov %>% filter(status_w == "novel") %>% separate_rows(biogeographical_realm, sep = ", ") %>% mutate(citations = ifelse(cites == 0, "none", ifelse(cites == 1, "one", "more"))) -> v_cites
 znov %>% filter(status_w == "novel") %>% separate_rows(biogeographical_realm, sep = ", ") %>% mutate(citations = ifelse(cites == 0, "none", ifelse(cites == 1, "one", "more"))) -> z_cites
 
-prop.table(table(v_cites$citations, v_cites$biogeographical_realm),2)
-prop.table(table(z_cites$citations, z_cites$biogeographical_realm),2)
+prop.table(table(v_cites$citations, v_cites$biogeographical_realm, useNA = "ifany"),2)
+prop.table(table(z_cites$citations, z_cites$biogeographical_realm, useNA = "ifany"),2)
+
+# conservation status and population trends
+vnov %>% filter(status_w == "novel") %>% count(category) %>% arrange(-n)
+znov %>% filter(status_w == "novel") %>% count(category) %>% arrange(-n)
+table(vnov$category, vnov$Synurbic, useNA = "ifany")
+table(vnov$population_trend, vnov$Synurbic, useNA = "ifany")
 
 ## format for supplemental tables
 vnov %>% 
