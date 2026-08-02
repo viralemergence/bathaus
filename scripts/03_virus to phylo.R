@@ -1,6 +1,6 @@
 ## 03_merge VIRION and Upham phylogeny
 ## danbeck@ou.edu
-## Updated by Briana Betke on 10/29/25
+## Updated by Briana Betke on 08/02/26
 
 ## clean environment & plots
 rm(list=ls()) 
@@ -43,17 +43,17 @@ setdiff(virus$species,taxa$species)
 
 ## match manually
 virus$species=plyr::revalue(virus$species,
-                            c("Artibeus cinereus" = "Dermanura cinereus",
+                            c(#"Artibeus cinereus" = "Dermanura cinereus",
                               "Artibeus glaucus"="Dermanura glaucus",
                               "Artibeus toltecus"="Dermanura toltecus",
                               "Doryrhina cyclops"="Hipposideros cyclops",
                               "Epomophorus dobsonii" = "Epomops dobsonii",
                               "Epomophorus pusillus" = "Micropteropus pusillus",
-                              "Glossophaga mutica" = "Glossophaga soricia",
-                              "Hypsugo alaschanicus"="Pipistrellus alaschanicus",
-                              "Hypsugo pulveratus"="Pipistrellus pulveratus",
+                              #"Glossophaga mutica" = "Glossophaga soricia",
+                              #"Hypsugo alaschanicus"="Pipistrellus alaschanicus",
+                              #"Hypsugo pulveratus"="Pipistrellus pulveratus",
                               "Hypsugo savii"="Pipistrellus savii",
-                              #"Kerivoula furva" = "Kerivoula titania",
+                              "Kerivoula furva" = "Kerivoula hardwickii",
                               "Laephotis capensis"="Neoromicia capensis",
                               "Lyroderma lyra"="Megaderma lyra",
                               "Macronycteris commersonii"="Hipposideros commersoni",
@@ -65,12 +65,12 @@ virus$species=plyr::revalue(virus$species,
                               "Mops pumilus" = "Chaerephon pumilus",
                               "Murina feae"="Murina aurata",
                               #"Myotis oxygnathus"="Myotis blythii",
-                              "Nycticeinops crassulus"="Pipistrellus crassulus",
-                              #Otomops harrisoni
+                              #"Nycticeinops crassulus"="Pipistrellus crassulus",
                               "Rhinolophus hildebrandti" = "Rhinolophus hildebrandtii",
                               "Perimyotis subflavus"="Pipistrellus subflavus",
-                              "Plecotus gaisleri"="Plecotus teneriffae",
-                              "Pseudoromicia brunnea"="Neoromicia brunnea",
+                              "Pteropus medius" = "Pteropus giganteus",
+                              #"Plecotus gaisleri"="Plecotus teneriffae",
+                              #"Pseudoromicia brunnea"="Neoromicia brunnea",
                               "Pseudoromicia tenuipinnis"="Neoromicia tenuipinnis"
                             ))
 
@@ -90,7 +90,7 @@ taxa=taxa[c("species","gen","fam","clade","MSW3_sciName_matched","tip")]
 data=merge(taxa,virus,by="species",all.x=T)
 
 ## Pseudo absences 
-data <- replace_na(data, list(vfam = 0, Virus = 0, dum_virus = 0))
+data <- replace_na(data, list(Virus = 0, dum_virus = 0))
 
 ## Zoonotic data
 # read in zvirus data
@@ -110,35 +110,36 @@ setdiff(zvirus$species,taxa$species)
 
 ## match manually
 zvirus$species=plyr::revalue(zvirus$species,
-                             c("Artibeus cinereus" = "Dermanura cinereus",
-                               "Artibeus glaucus"="Dermanura glaucus",
-                               "Artibeus toltecus"="Dermanura toltecus",
-                               "Doryrhina cyclops"="Hipposideros cyclops",
+                             c(#"Artibeus cinereus" = "Dermanura cinereus",
+                               # "Artibeus glaucus"="Dermanura glaucus",
+                               # "Artibeus toltecus"="Dermanura toltecus",
+                               # "Doryrhina cyclops"="Hipposideros cyclops",
                                "Epomophorus dobsonii" = "Epomops dobsonii",
                                "Epomophorus pusillus" = "Micropteropus pusillus",
-                               "Glossophaga mutica" = "Glossophaga soricia",
-                               "Hypsugo alaschanicus"="Pipistrellus alaschanicus",
-                               "Hypsugo pulveratus"="Pipistrellus pulveratus",
+                               # "Glossophaga mutica" = "Glossophaga soricia",
+                               # "Hypsugo alaschanicus"="Pipistrellus alaschanicus",
+                               # "Hypsugo pulveratus"="Pipistrellus pulveratus",
                                "Hypsugo savii"="Pipistrellus savii",
-                               #"Kerivoula furva" = "Kerivoula titania",
-                               "Laephotis capensis"="Neoromicia capensis",
-                               "Lyroderma lyra"="Megaderma lyra",
-                               "Macronycteris commersonii"="Hipposideros commersoni",
-                               "Macronycteris gigas"="Hipposideros gigas",
-                               "Macronycteris vittatus"="Hipposideros vittatus",
+                               "Kerivoula furva" = "Kerivoula hardwickii",
+                               # "Laephotis capensis"="Neoromicia capensis",
+                               # "Lyroderma lyra"="Megaderma lyra",
+                               # "Macronycteris commersonii"="Hipposideros commersoni",
+                               # "Macronycteris gigas"="Hipposideros gigas",
+                               # "Macronycteris vittatus"="Hipposideros vittatus",
                                #"Miniopterus africanus"="Miniopterus inflatus",
                                #"Molossus nigricans"="Molossus rufus",
                                "Mops plicatus"="Chaerephon plicatus",
                                "Mops pumilus" = "Chaerephon pumilus",
                                "Murina feae"="Murina aurata",
                                #"Myotis oxygnathus"="Myotis blythii",
-                               "Nycticeinops crassulus"="Pipistrellus crassulus",
+                               #"Nycticeinops crassulus"="Pipistrellus crassulus",
                                #Otomops harrisoni
-                               "Rhinolophus hildebrandti" = "Rhinolophus hildebrandtii",
+                               #"Rhinolophus hildebrandti" = "Rhinolophus hildebrandtii",
                                "Perimyotis subflavus"="Pipistrellus subflavus",
-                               "Plecotus gaisleri"="Plecotus teneriffae",
-                               "Pseudoromicia brunnea"="Neoromicia brunnea",
-                               "Pseudoromicia tenuipinnis"="Neoromicia tenuipinnis"
+                               "Pteropus medius" = "Pteropus giganteus"
+                               #"Plecotus gaisleri"="Plecotus teneriffae",
+                               #"Pseudoromicia brunnea"="Neoromicia brunnea",
+                               #"Pseudoromicia tenuipinnis"="Neoromicia tenuipinnis"
                              ))
 
 ## recheck missing
@@ -154,11 +155,11 @@ zvirus[duplicated(zvirus$species),]
 data=merge(data,zvirus,by="species",all.x=T)
 
 ## if na zoonotic viruses, 0 zoonotic viruses
-data <- replace_na(data, list(zoo_sp = 0, zfam = 0, dum_zvirus = 0))
+data <- replace_na(data, list(zVirus = 0, dum_zvirus = 0))
 
 ## check that there are no instances where zoonotic richness is greater than overall
-table(data$zoo_sp > data$Virus)
-table(data$zfam > data$vfam)
+table(data$zVirus > data$Virus)
+table(data$dum_zvirus > data$dum_virus)
 
 ## write flat file
 # setwd("/Volumes/BETKE 2021/bathaus/flat files")
