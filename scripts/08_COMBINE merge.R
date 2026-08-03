@@ -83,8 +83,9 @@ trait_data$iucn2020_binomial <- trait_data$iucn2020_binomial %>%
          "Austronomus kuboriensis" = "Tadarida kuboriensis",          
          "Vampyriscus bidens" = "Vampyressa bidens",
          "Vampyriscus brocki" = "Vampyressa brocki",
-         "Vampyriscus nymphaea" = "Vampyressa nymphaea"       
+         "Vampyriscus nymphaea" = "Vampyressa nymphaea"
                       ) 
+
 setdiff(merge_data$species, trait_data$iucn2020_binomial)
 # went from 89 to 35. 54 bats recoded
 setdiff(trait_data$iucn2020_binomial, merge_data$species)
