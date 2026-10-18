@@ -69,8 +69,6 @@ gsrun = "no"
 if(gsrun == "yes"){# run grid search 
   
   # Set up BRT tuning via search grid
-  # function to make grids?
-  ## hyperparameter grid, maybe allow the number of seeds to change?
   makegrid <- function(seed,trees) {
     
     # create grid
@@ -107,7 +105,7 @@ if(gsrun == "yes"){# run grid search
   # data_df <- dataframe without species
   # hgrid <- change grid based on response
   # response <- indicate which response, determines the error distribution used
-  # cv <- null to avoid warnings when running poisson or gaussian dist. Set to TRUE for class stratify.
+  # cv <- null to avoid warnings when running poisson or gaussian dist. Set to TRUE for class stratified cv.
   grid_search <- function(row, data_df, hgrid, response, cv = NULL){
     
     # new data
@@ -116,7 +114,7 @@ if(gsrun == "yes"){# run grid search
     # correct the response and remove raw response variables
     ndata <- ndata %>% 
       mutate(response = !!sym(response)) %>%
-      select(-c("Virus", "dum_virus", "dum_zvirus", "zoo_sp", "vfam", "zfam"))
+      select(-c("Virus", "dum_virus", "zVirus", "dum_zvirus"))
     
     # assign name of hgrid
     hgrid <- hgrid
@@ -134,8 +132,8 @@ if(gsrun == "yes"){# run grid search
     yTest <- dataTest$response
     
     # ifelse
-    dist <- ifelse(response == "vfam", "poisson", 
-                   ifelse(response == "zfam", "poisson", 
+    dist <- ifelse(response == "Virus", "poisson", 
+                   ifelse(response == "zVirus", "poisson", 
                           ifelse(response == "dum_virus", "bernoulli", 
                                  ifelse(response == "dum_zvirus", "bernoulli", "error"))))
     
@@ -227,8 +225,8 @@ if(gsrun == "yes"){# run grid search
   
   ### run for all types of responses
   # Virus Richness and transformed zoonotic proportion
-  vpars <- lapply(1:nrow(pgrid),function(x) grid_search(x, data_df = data, hgrid = pgrid, response="vfam"))
-  zpars <- lapply(1:nrow(pgrid),function(x) grid_search(x, data_df = data, hgrid = pgrid, response="zfam"))
+  vpars <- lapply(1:nrow(pgrid),function(x) grid_search(x, data_df = data, hgrid = pgrid, response="Virus"))
+  zpars <- lapply(1:nrow(pgrid),function(x) grid_search(x, data_df = data, hgrid = pgrid, response="zVirus"))
   
   # trim just for testing
   # bgrid <- bgrid[84, ]
@@ -284,10 +282,19 @@ if(gsrun == "yes"){# run grid search
   
   # write as csv
   setwd("/Users/brianabetke/Desktop/bathaus")
-  write_csv(vcomplete, "flat files/virus family grid search.csv")
-  write_csv(zcomplete, "flat files/zoonotic family grid search.csv")
+  write_csv(vcomplete, "flat files/virus species grid search.csv")
+  write_csv(zcomplete, "flat files/zoonotic species grid search.csv")
   write_csv(vbcomplete, "flat files/virus binary grid search.csv")
-  write.csv(zbcomplete, "flat files/zoonotic virus binary grid search.csv")
+  write_csv(zbcomplete, "flat files/zoonotic virus binary grid search.csv")
+  
+  # rename for consistency with rest of code
+  overall_search <- vcomplete
+  zoo_search <- zcomplete
+  vbin_search <- vbcomplete
+  zbin_search <- zbcomplete
+  
+  # remove dfs with old names
+  rm(vcomplete, zcomplete, vbcomplete, zbcomplete)
   
 } else {# read in grid search results
   
@@ -297,8 +304,8 @@ if(gsrun == "yes"){# run grid search
   # zres_search <- read_csv("~/Desktop/Bats and Viruses/bathaus/flat files/zoonotic virus reservoir grid search.csv")
  
   # lab comp paths
-  overall_search <- read_csv("flat files/virus family grid search.csv")
-  zoo_search <- read_csv("flat files/zoonotic family grid search.csv")
+  overall_search <- read_csv("flat files/virus species grid search.csv")
+  zoo_search <- read_csv("flat files/zoonotic species grid search.csv")
   vbin_search <- read_csv("flat files/virus binary grid search.csv")
   zbin_search <- read_csv("flat files/zoonotic virus binary grid search.csv")
 }
@@ -306,13 +313,11 @@ if(gsrun == "yes"){# run grid search
 ### plots of parameters - figure S2
 library(patchwork)
 
-#r <- overall_search %>% filter(shrinkage < 0.1)
-
 # plots for family richness models
 virus_gg <- ggplot(overall_search, aes(x = factor(shrinkage), y = testRMSE)) +
   geom_boxplot(aes(fill = factor(interaction.depth)), color = "black", alpha = 0.5) +
   theme_bw() +
-  labs(x = "Learning Rate", y = "Test RMSE", fill = "Interaction Depth", title = "Virus Family Richness") +
+  labs(x = "Learning Rate", y = "Test RMSE", fill = "Interaction Depth", title = "Virus Species Richness") +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), 
         plot.title = element_text(hjust = 0.5, size = 10),
@@ -324,7 +329,7 @@ virus_gg <- ggplot(overall_search, aes(x = factor(shrinkage), y = testRMSE)) +
 zvirus_gg <- ggplot(zoo_search, aes(x = factor(shrinkage), y = testRMSE)) +
   geom_boxplot(aes(fill = factor(interaction.depth)), color = "black", alpha = 0.5) +
   theme_bw() +
-  labs(x = "Learning Rate", y = NULL, fill = "Interaction Depth", title = "Zoonotic Family Richness") +
+  labs(x = "Learning Rate", y = NULL, fill = "Interaction Depth", title = "Zoonotic Species Richness") +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), 
         plot.title = element_text(hjust = 0.5, size = 10),
@@ -441,9 +446,9 @@ zbin_search %>%
 # look at best iteration of trees
 # filter by best perf
 overall_search %>% filter(id == "5000 4 0.01") # doesn't exceed 2000
-zoo_search %>% filter(id == "5000 4 0.01") # doesn't exceed 1000
+zoo_search %>% filter(id == "5000 3 0.01") # doesn't exceed 1000
 vbin_search %>% filter(id == "5000 2 0.01") # doesn't exceed 1500
-zbin_search %>% filter(id == "5000 3 0.01") # close to maxing out at 1000 
+zbin_search %>% filter(id == "5000 4 0.01") # close to maxing out at 1000 
 
 # clean
 rm(overall_search, vbin_search, zbin_search, zoo_search)
@@ -455,41 +460,32 @@ rm(overall_search, vbin_search, zbin_search, zoo_search)
 # shr - optimal shrinkage value based on search grid
 # int.d - interaction depth value based on search grid
 # syn - to indicate if it is a model without synurbic as a predictor. If == "yes" then keep it, remove if anything else
-# cv - change class stratify to NULL or TRUE depending on response variable (NULL for poisson and gaussian, TRUE for bernoulli)
-# this model has been expanded to run BRTs for all response types.
-brts <- function(seed, response, nt, shr, int.d, syn, cv = NULL){
+# cv_strat - change class stratify to NULL or TRUE depending on response variable (NULL for poisson and gaussian, TRUE for bernoulli)
+# hvar - the type of data being used ("full" for all variables, "no syn" for no roosting variable, "no hd" for no human density variables,
+# and "no all" for no roosting or human density variables.)
+brts <- function(seed, df, response, nt, shr, int.d, cv_strat = NULL, hvar){
   
   # new data
-  ndata <- data
+  ndata <- df
   
-  if(syn == "yes"){
-    # correct the response and remove raw response variables
-    ndata <- ndata %>% 
-      mutate(response = !!sym(response)) %>%
-      select(-c("Virus", "dum_virus", "dum_zvirus", "zoo_sp", "vfam", "zfam"))
-    
-  }else{ # remove synurbic from data
-    # correct the response and remove raw response variables
-    ndata <- ndata %>% 
-      mutate(response = !!sym(response)) %>%
-      select(-c("Virus", "dum_virus", "dum_zvirus", "zoo_sp", "vfam", "zfam", "Synurbic"))
-    
-    #fdata$Synurbic <- NULL # make null in fdata for prediction? Not sure if this is necessary if the formula dictates variables
-  }
+  # correct the response and remove raw response variables
+  ndata <- ndata %>% 
+    mutate(response = !!sym(response)) %>%
+    select(-c("Virus", "zVirus", "dum_virus", "dum_zvirus"))
   
   # ifelse to determine distribution. If not any of the below options, throw error
-  dist <- ifelse((response == "vfam" | response == "zfam" | response == "log_cites" | response == "log_vcites"), "poisson", 
-                 ifelse((response == "dum_zvirus" | response == "dum_virus"),"bernoulli", 
-                        ifelse(response == "zoo_pft","gaussian","Error")))
+  dist <- ifelse((response == "Virus" | response == "zVirus" | response == "log_cites" | response == "log_vcites"), "poisson", 
+                 ifelse((response == "dum_zvirus" | response == "dum_virus"),"bernoulli", "Error"))
   
   # remove citations if predicting citations
   if(response == "log_cites" | response == "log_vcites") {
     ndata$response = as.integer(exp(ndata$response)-1) # backtransform to count
     ndata$log_cites = NULL
     ndata$log_vcites = NULL
-    # } else if(response == "vcites"){
-    #   ndata$vcites = NULL
+    
   } else {
+    
+    # if not citation model, keep data the same
     ndata = ndata
   }
   
@@ -514,7 +510,7 @@ brts <- function(seed, response, nt, shr, int.d, syn, cv = NULL){
                 interaction.depth=int.d,
                 n.minobsinnode=4,
                 cv.folds=10,
-                class.stratify.cv=cv,
+                class.stratify.cv=cv_strat,
                 bag.fraction=0.5,
                 train.fraction=1,
                 n.cores=1,
@@ -545,7 +541,6 @@ brts <- function(seed, response, nt, shr, int.d, syn, cv = NULL){
     auc_test <- gbm.roc.area(yTest,predict(gbmOut,test,n.trees=best.iter,type="response"))
     
     ## inner loop if yTest is all 0
-    ## I removed the portion for cites but this portion seems important for when variance of ytest is zero?
     if(var(yTest)==0){
       
       perf=NA
@@ -569,7 +564,7 @@ brts <- function(seed, response, nt, shr, int.d, syn, cv = NULL){
     
     ## predict with cites
     preds <- predict(gbmOut,fdata,n.trees=best.iter,type="response")
-    pred_data <- fdata[c("species","dum_virus","dum_zvirus","vfam", "zfam", "Synurbic")]
+    pred_data <- fdata[c("species","dum_virus","dum_zvirus","Virus", "zVirus", "Synurbic")]
     pred_data$pred <- preds
     pred_data$type <- response
     
@@ -580,7 +575,7 @@ brts <- function(seed, response, nt, shr, int.d, syn, cv = NULL){
     pred_data$cpred <- predict(gbmOut, pdata, n.trees=best.iter, type="response")
     
     ## print
-    print(paste("BRT ", seed," done; test AUC = ", auc_test, " for ", response, sep=""))
+    print(paste("BRT ", seed," done; test AUC = ", auc_test, " for ", response, " ", hvar, sep=""))
     
     ## save outputs
     return(list(mod = gbmOut,
@@ -621,7 +616,7 @@ brts <- function(seed, response, nt, shr, int.d, syn, cv = NULL){
     
     ## predict with cites
     preds <- predict(gbmOut,fdata,n.trees=best.iter,type="response")
-    pred_data <- fdata[c("species","dum_virus","dum_zvirus","vfam","zfam","Synurbic")]
+    pred_data <- fdata[c("species","dum_virus","dum_zvirus","Virus","zVirus","Synurbic")]
     pred_data$pred <- preds
     pred_data$type <- response
     
@@ -631,31 +626,34 @@ brts <- function(seed, response, nt, shr, int.d, syn, cv = NULL){
     pdata$log_vcites <- mean(pdata$log_vcites)
     pred_data$cpred <- predict(gbmOut, pdata, n.trees=best.iter, type="response")
     
-    if(dist == "poisson"){
-      
-      # back transforming predictions - don't if count models
-      pred_data$ni <- NULL
-      pred_data$back <- NULL
-      
-      # sort
-      pred_data <- pred_data[order(pred_data$pred,decreasing=T),]
-      
-    } else { # back transformations for predictions to proportion
-      
-      # back transforming predictions
-      pred_data$ni <- 100
-      pred_data$back <- metafor::transf.ipft(pred_data$pred, pred_data$ni)
-      
-      # back transform cpred
-      pred_data$cback <- metafor::transf.ipft(pred_data$cpred, 100)
-      
-      # sort
-      pred_data <- pred_data[order(pred_data$back,decreasing=T),]
-      
-    }
+    # sort
+    pred_data <- pred_data[order(pred_data$pred,decreasing=T),]
+    
+    # if(dist == "poisson"){
+    #   
+    #   # back transforming predictions - don't if count models
+    #   pred_data$ni <- NULL
+    #   pred_data$back <- NULL
+    #   
+    #   # sort
+    #   pred_data <- pred_data[order(pred_data$pred,decreasing=T),]
+    #   
+    # } else { # back transformations for predictions to proportion
+    #   
+    #   # back transforming predictions
+    #   pred_data$ni <- 100
+    #   pred_data$back <- metafor::transf.ipft(pred_data$pred, pred_data$ni)
+    #   
+    #   # back transform cpred
+    #   pred_data$cback <- metafor::transf.ipft(pred_data$cpred, 100)
+    #   
+    #   # sort
+    #   pred_data <- pred_data[order(pred_data$back,decreasing=T),]
+    #   
+    # }
     
     ## print
-    print(paste("BRT ",seed," done; test R2 = ", r2test, " for ", response, sep=""))
+    print(paste("BRT ",seed," done; test R2 = ", r2test, " for ", response, " ", hvar, sep=""))
     
     ## save outputs
     return(list(mod = gbmOut,
@@ -675,47 +673,78 @@ brts <- function(seed, response, nt, shr, int.d, syn, cv = NULL){
 
 ##### apply across specified number of splits smax
 smax=50
-#### transformed versions
-vfams_brts <- lapply(1:smax,function(x) brts(seed = x,response = "vfam", nt = 2500, shr = 0.01, int.d = 4, syn = "yes", cv = NULL))
-no_vfams_brts <- lapply(1:smax,function(x) brts( seed = x,response = "vfam", nt = 2500, shr = 0.01, int.d = 4, syn = "no", cv = NULL))
 
-# save then remove
-saveRDS(vfams_brts,"flat files/virus family richness with brts.rds")
-saveRDS(no_vfams_brts,"flat files/virus family richness without brts.rds")
+# full models
+vsp_brts <- lapply(1:smax,function(x) brts(seed = x, df = data, response = "Virus", nt = 2500, shr = 0.01, int.d = 4, cv_strat = NULL, hvar = "full"))
+zsp_brts <- lapply(1:smax,function(x) brts(seed = x, df = data, response = "zVirus", nt = 2500, shr = 0.01, int.d = 3, cv_strat = NULL, hvar = "full"))
+vbin_brts <- lapply(1:smax,function(x) brts(seed = x, df = data, response = "dum_virus", nt = 2500, shr = 0.01, int.d = 2, cv_strat = TRUE, hvar = "full"))
+zbin_brts <- lapply(1:smax,function(x) brts(seed = x, df = data, response = "dum_zvirus",  nt = 2500, shr = 0.01, int.d = 4, cv_strat = TRUE, hvar = "full"))
 
-rm(vfams_brts, no_vfams_brts)
+# save
+saveRDS(vsp_brts,"flat files/virus species richness full brts.rds")
+saveRDS(zsp_brts, "flat files/zoonotic species richness full brts.rds")
+saveRDS(vbin_brts, "flat files/binary virus full brts.rds")
+saveRDS(zbin_brts, "flat files/zoonotic binary full brts.rds")
 
-# Proportion with and without
-zfams_brts <- lapply(1:smax,function(x) brts(seed = x,response = "zfam", nt = 2500, shr = 0.01, int.d = 4, syn = "yes", cv = NULL))
-no_zfams_brts <- lapply(1:smax,function(x) brts(seed = x,response = "zfam", nt = 2500, shr = 0.01, int.d = 4, syn = "no", cv = NULL))
+# remove
+rm(vsp_brts, zsp_brts, vbin_brts, zbin_brts)
 
-saveRDS(zfams_brts, "flat files/zoonotic family richness with brts.rds")
-saveRDS(no_zfams_brts, "flat files/zoonotic family richness without brts.rds")
+# models without anthro
+data %>% select(!Synurbic) -> data_no_syn
 
-rm(zfams_brts,no_zfams_brts)
+vsp_no_syn_brts <- lapply(1:smax,function(x) brts(seed = x, df = data_no_syn, response = "Virus", nt = 2500, shr = 0.01, int.d = 4, cv_strat = NULL, hvar = "no_syn"))
+zsp_no_syn_brts <- lapply(1:smax,function(x) brts(seed = x, df = data_no_syn, response = "zVirus", nt = 2500, shr = 0.01, int.d = 3, cv_strat = NULL, hvar = "no_syn"))
+vbin_no_syn_brts <- lapply(1:smax,function(x) brts(seed = x, df = data_no_syn, response = "dum_virus", nt = 2500, shr = 0.01, int.d = 2, cv_strat = TRUE, hvar = "no_syn"))
+zbin_no_syn_brts <- lapply(1:smax,function(x) brts(seed = x, df = data_no_syn, response = "dum_zvirus",  nt = 2500, shr = 0.01, int.d = 4, cv_strat = TRUE, hvar = "no_syn"))
 
-# Overall virus reservoir status
-vbin_brts <- lapply(1:smax,function(x) brts(seed = x,response = "dum_virus", nt = 2500, shr = 0.01, int.d = 2, syn = "yes", cv = TRUE))
-no_vbin_brts <- lapply(1:smax,function(x) brts(seed = x,response ="dum_virus", nt = 2500, shr = 0.01, int.d = 2, syn = "no", cv = TRUE))
+# save
+saveRDS(vsp_no_syn_brts,"flat files/virus species richness sans syn brts.rds")
+saveRDS(zsp_no_syn_brts, "flat files/zoonotic species richness sans syn brts.rds")
+saveRDS(vbin_no_syn_brts, "flat files/binary virus sans syn brts.rds")
+saveRDS(zbin_no_syn_brts, "flat files/zoonotic binary sans syn brts.rds")
 
-saveRDS(vbin_brts, "flat files/binary virus with brts.rds")
-saveRDS(no_vbin_brts, "flat files/binary virus without brts.rds")
+# remove
+rm(vsp_no_syn_brts, zsp_no_syn_brts, vbin_no_syn_brts, zbin_no_syn_brts, data_no_syn)
 
-rm(vbin_brts,no_vbin_brts)
+# models without human density variables
+data %>% select(!c("log_X27.1_HuPopDen_Min_n.km2", "log_X27.2_HuPopDen_Mean_n.km2", "log_X27.3_HuPopDen_5p_n.km2","X27.4_HuPopDen_Change")) -> data_no_hd
 
-# Zoonotic virus reservoir
-zbin_brts <- lapply(1:smax,function(x) brts(seed = x,response = "dum_zvirus",  nt = 2500, shr = 0.01, int.d = 3, syn = "yes", cv = TRUE))
-no_zbin_brts <- lapply(1:smax,function(x) brts(seed = x,response ="dum_zvirus",  nt = 2500, shr = 0.01, int.d = 3, syn = "no", cv = TRUE))
+vsp_no_hd_brts <- lapply(1:smax,function(x) brts(seed = x, df = data_no_hd, response = "Virus", nt = 2500, shr = 0.01, int.d = 4, cv_strat = NULL, hvar = "no_hd"))
+zsp_no_hd_brts <- lapply(1:smax,function(x) brts(seed = x, df = data_no_hd, response = "zVirus", nt = 2500, shr = 0.01, int.d = 3, cv_strat = NULL, hvar = "no_hd"))
+vbin_no_hd_brts <- lapply(1:smax,function(x) brts(seed = x, df = data_no_hd, response = "dum_virus", nt = 2500, shr = 0.01, int.d = 2, cv_strat = TRUE, hvar = "no_hd"))
+zbin_no_hd_brts <- lapply(1:smax,function(x) brts(seed = x, df = data_no_hd, response = "dum_zvirus",  nt = 2500, shr = 0.01, int.d = 4, cv_strat = TRUE, hvar = "no_hd"))
 
-saveRDS(zbin_brts, "flat files/zoonotic binary with brts.rds")
-saveRDS(no_zbin_brts, "flat files/zoonotic binary without brts.rds")
+# save
+saveRDS(vsp_no_hd_brts,"flat files/virus species richness sans hd brts.rds")
+saveRDS(zsp_no_hd_brts, "flat files/zoonotic species richness sans hd brts.rds")
+saveRDS(vbin_no_hd_brts, "flat files/binary virus sans hd brts.rds")
+saveRDS(zbin_no_hd_brts, "flat files/zoonotic binary sans hd brts.rds")
 
-rm(zbin_brts,no_zbin_brts)
+# remove
+rm(vsp_no_hd_brts, zsp_no_hd_brts, vbin_no_hd_brts, zbin_no_hd_brts, data_no_hd)
+
+# models without human density variables and synurbic
+data %>% select(!c("Synurbic", "log_X27.1_HuPopDen_Min_n.km2", "log_X27.2_HuPopDen_Mean_n.km2", "log_X27.3_HuPopDen_5p_n.km2","X27.4_HuPopDen_Change")) -> data_no_all
+
+vsp_no_all_brts <- lapply(1:smax,function(x) brts(seed = x, df = data_no_all, response = "Virus", nt = 2500, shr = 0.01, int.d = 4, cv_strat = NULL, hvar = "no all"))
+zsp_no_all_brts <- lapply(1:smax,function(x) brts(seed = x, df = data_no_all, response = "zVirus", nt = 2500, shr = 0.01, int.d = 3, cv_strat = NULL, hvar = "no all"))
+vbin_no_all_brts <- lapply(1:smax,function(x) brts(seed = x, df = data_no_all, response = "dum_virus", nt = 2500, shr = 0.01, int.d = 2, cv_strat = TRUE, hvar = "no all"))
+zbin_no_all_brts <- lapply(1:smax,function(x) brts(seed = x, df = data_no_all, response = "dum_zvirus",  nt = 2500, shr = 0.01, int.d = 4, cv_strat = TRUE, hvar = "no all"))
+
+# save
+saveRDS(vsp_no_all_brts,"flat files/virus species richness sans all brts.rds")
+saveRDS(zsp_no_all_brts, "flat files/zoonotic species richness sans all brts.rds")
+saveRDS(vbin_no_all_brts, "flat files/binary virus sans all brts.rds")
+saveRDS(zbin_no_all_brts, "flat files/zoonotic binary sans all brts.rds")
+
+rm(vsp_no_all_brts, zsp_no_all_brts, vbin_no_all_brts, zbin_no_all_brts, data_no_all)
 
 # citation models
 smax=20 # no. seeds for citation models
-cite_brts <- lapply(1:smax,function(x) brts(seed = x,response = "log_cites", nt = 25000, shr = 0.001, int.d = 3, syn = "yes", cv = NULL))
-vcite_brts <- lapply(1:smax,function(x) brts(seed = x,response = "log_vcites", nt = 25000, shr = 0.001, int.d = 3, syn = "yes", cv = NULL))
+cite_brts <- lapply(1:smax,function(x) brts(seed = x, df = data, response = "log_cites", nt = 2500, shr = 0.01, int.d = 4, cv_strat = NULL, hvar = "full"))
+vcite_brts <- lapply(1:smax,function(x) brts(seed = x, df = data, response = "log_vcites", nt = 2500, shr = 0.01, int.d = 4, cv_strat = NULL, hvar = "full"))
 
 saveRDS(cite_brts, "flat files/citation brts.rds")
 saveRDS(vcite_brts, "flat files/virus citation brts.rds")
+
+rm(cite_brts, vcite_brts)

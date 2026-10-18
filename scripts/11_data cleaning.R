@@ -120,7 +120,7 @@ vars <- vars[order(vars$keep),]
 
 table(vars$keep)
 # cut keep 
-# 18   91 NOTE these are including virus response calculations
+# 18   89 NOTE these are including virus response variables
 
 ## trim
 keeps <- vars[-which(vars$keep=="cut"),]$column
@@ -140,8 +140,8 @@ mval$comp=round(mval$comp,2)
 # ggplot of coverage
 png("figs/figure S1.png", width=9.5,height=5.5,units="in",res=600)
 mval %>% 
-  filter(!column %in% c("clade", "gen", "tip", "species", "fam", "Virus", "dum_virus", "dum_zvirus",
-                        "zoo_sp", "vfam", "zfam", "Complete")) %>%
+  filter(!column %in% c("clade", "gen", "tip", "species", "fam", "Virus", "zVirus", "dum_virus", "dum_zvirus", "iucn2020_binomial",
+                        "biogeographical_realm")) %>%
   ggplot(aes(comp)) +
   geom_histogram(bins = 50) +
   geom_vline(xintercept=0.30,linetype=2,linewidth=0.5) +
@@ -155,7 +155,7 @@ dev.off()
 mval$keep=ifelse(mval$comp>=0.30,"keep","cut")
 table(mval$keep)
 # cut keep 
-# 18   77 
+# 18   75 
 
 ## order
 mval=mval[order(mval$comp),]
@@ -166,8 +166,8 @@ coverage_table <- mval %>%
   filter(keep == "keep") %>%
   rename(Variable = column,
          Coverage = comp) %>%
-  filter(!Variable %in% c("clade", "gen", "tip", "species", "fam", "Virus", "dum_virus", "dum_zvirus",
-                          "zoo_sp", "vfam", "zfam", "Complete", "iucn2020_binomial","biogeographical_realm")) %>%
+  filter(!Variable %in% c("clade", "gen", "tip", "species", "fam", "Virus", "zVirus", "dum_virus", "dum_zvirus",
+                          "iucn2020_binomial","biogeographical_realm")) %>%
   select(-keep) %>%
   relocate(Coverage, .after = Variable)
 
@@ -187,8 +187,8 @@ data <- data %>%
 colnames(data) # resulting in 66 variables total, 64 covariates
 
 # reordering so species and response variables are in front
-data %>% select(species, Synurbic,Virus, dum_virus, dum_zvirus,
-                zoo_sp, vfam, zfam, cites, vcites, everything()) -> data
+data %>% select(species, Virus, dum_virus, zVirus, dum_zvirus, Synurbic,
+                cites, vcites, everything()) -> data
 
 # Save as RDS
 saveRDS(data, "flat files/cleaned dataset 30 cutoff.rds")

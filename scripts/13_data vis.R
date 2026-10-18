@@ -21,17 +21,21 @@ data <- readRDS("flat files/log cleaned dataset 30 cutoff.rds")
 ###################### BRT Results
 # Read in rds files for model outputs from drive
 # richness models
-vfams_brts <- readRDS("flat files/virus family richness with brts.rds")
-no_vfams_brts <- readRDS("flat files/virus family richness without brts.rds")
+vrich_brts <- readRDS("flat files/virus species richness full brts.rds")
+no_vrich_brts <- readRDS("flat files/virus species richness sans syn brts.rds")
+
 # zoonotic proportion models
-zfams_brts <- readRDS("flat files/zoonotic family richness with brts.rds")
-no_zfams_brts <- readRDS("flat files/zoonotic family richness without brts.rds")
+zrich_brts <- readRDS("flat files/zoonotic species richness full brts.rds")
+no_zrich_brts <- readRDS("flat files/zoonotic species richness sans syn brts.rds")
+
 # virus reservoir
-vbinary_brts <- readRDS("flat files/binary virus with brts.rds")
-no_vbinary_brts <- readRDS("flat files/binary virus without brts.rds")
+vbinary_brts <- readRDS("flat files/binary virus full brts.rds")
+no_vbinary_brts <- readRDS("flat files/binary virus sans syn brts.rds")
+
 # zoonotic virus reservoir
-zbinary_brts <- readRDS("flat files/zoonotic binary with brts.rds")
-no_zbinary_brts <- readRDS("flat files/zoonotic binary without brts.rds")
+zbinary_brts <- readRDS("flat files/zoonotic binary full brts.rds")
+no_zbinary_brts <- readRDS("flat files/zoonotic binary sans syn brts.rds")
+
 # citation models
 cites_brts <- readRDS("flat files/citation brts.rds")
 vcites_brts <- readRDS("flat files/virus citation brts.rds")
@@ -72,12 +76,12 @@ pull_stats <- function(mod){
 }
 
 ## Richness models - pseudo R2
-pull_stats(vfams_brts)
-pull_stats(no_vfams_brts)
+pull_stats(vrich_brts)
+pull_stats(no_vrich_brts)
 
 ## Zoonotic proportion - pseudo R2
-pull_stats(zfams_brts)
-pull_stats(no_zfams_brts)
+pull_stats(zrich_brts)
+pull_stats(no_zrich_brts)
 
 ## Virus host - AUC
 pull_stats(vbinary_brts)
@@ -91,21 +95,15 @@ pull_stats(no_zbinary_brts)
 pull_stats(cites_brts)
 pull_stats(vcites_brts)
 
-### ttests
-## function for extracting data, perform unpaired t test, Cohen's d
-# should probably take the with/without labels and model types
-# adding data argument to allow for different responses
-# Need to allow for addressing negative pseudo R2 values
-
-# break up into 2 functions one where you pull the performance metrics and another 
-# that now takes the csv file and makes the figures 
+### Performance comparison with and without roosing variable
+# agg function - formats data for regression models
 perf_agg=function(mod_with, mod_without, measure){
   
   ## format data
   n=length(sapply(mod_with,function(x) x$measure))
   adata=data.frame(y=c(sapply(mod_with,function(x) x[measure][[1]]),
                        sapply(mod_without,function(x) x[measure][[1]])),
-                   response=c(rep('mod_with',n),rep('mod_without',n)),
+                   mod=c(rep('mod_with',n),rep('mod_without',n)),
                    seed=c(sapply(mod_with,function(x) x$seed),
                           sapply(mod_without,function(x) x$seed)))
   rm(n)
@@ -122,148 +120,67 @@ perf_agg=function(mod_with, mod_without, measure){
     
   }
   
-  }
+  # Factor 
+  adata$mod <- factor(adata$mod, levels = c("mod_with","mod_without"))
+  adata$seed <- factor(adata$seed)
+  
+  # output
+  adata
+}
 
-# virus models
-virus_perf <- perf_agg(vfams_brts, no_vfams_brts, "testr2")
-virus_perf_rmse <- perf_agg(vfams_brts, no_vfams_brts, "testRMSE")
+# pull for all 
+# virus richness models
+virus_perf <- perf_agg(vrich_brts, no_vrich_brts, "testr2")
+zrich_perf <- perf_agg(zrich_brts , no_zrich_brts, "testr2")
 
-# zoonotic models
-zfam_perf <- perf_agg(zfams_brts , no_zfams_brts, "testr2")
-zfam_perf_rmse <- perf_agg(zfams_brts, no_zfams_brts, "testRMSE")
-
-# virus host models
+# virus host
 vbin_perf <- perf_agg(vbinary_brts, no_vbinary_brts, "testAUC")
 vbin_SEN <- perf_agg(vbinary_brts, no_vbinary_brts, "sen")
-vbin_Spec <- perf_agg(vbinary_brts, no_vbinary_brts, "spec")
+vbin_Spec <- perf_agg(vbinary_brts, no_vbinary_brts, "spec") 
 
-# zoonotic host models
+# zoonotic virus host
 zbin_perf <- perf_agg(zbinary_brts, no_zbinary_brts, "testAUC")
 zbin_SEN <- perf_agg(zbinary_brts, no_zbinary_brts, "sen")
 zbin_Spec <- perf_agg(zbinary_brts, no_zbinary_brts, "spec")
 
-# create t test function
-tfun=function(perf_df, fcol){
-  
-  adata <- perf_df
-  
-  ## factor
-  adata$response=factor(adata$response,levels=c('mod_with','mod_without'))
-  
-  ## make jitter position
-  adata$x=as.numeric(factor(adata$response))
-  set.seed(1)
-  adata$xj=jitter(adata$x,0.5)
-  
-  ## fix response (add ifelse statements for synurbic pdps)
-  adata$response2=recode(adata$response,
-                         "mod_with"="with",
-                         "mod_without"="without")
-  
-  ## t-test
-  tsum=t.test(y~response,data=adata,
-              alternative='two.sided',
-              var.equal=FALSE)  
-  
-  ## effect size
-  csum=cohens_d(y~response,data=adata,paired=F,var.equal=F)
+# Comparisons of performance with gams
+library(mgcv)
 
-  ## Plot function
-  set.seed(3)
-  plot <- ggplot(adata)+
-    geom_boxplot(aes(x=x,y=y,group=x),width=0.25,outlier.alpha = 0,fill=fcol) +
-    geom_point(aes(x=xj,y=y),size=1.5,alpha=0.5) +
-    scale_x_continuous(breaks=c(1,2),
-                       labels=levels(adata$response2),
-                       limits=c(0.5,2.5)) +
-    theme_bw() +
-    theme(axis.text=element_text(size=10),
-          axis.text.x=element_text(size=12),
-          axis.title=element_text(size=12)) +
-    theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank()) +
-    theme(axis.title.x=element_text(margin=margin(t=10,r=0,b=0,l=0))) +
-    theme(axis.title.y=element_text(margin=margin(t=0,r=10,b=0,l=0))) +
-    theme(legend.position = "none")
-    # guides(colour="none")
-  
-  ## return
-  return(list(adata=adata,tsum=tsum,csum=csum,plot=plot))
-}
+# richness models
+vrich_gam <- gam(y ~ mod + s(seed, bs = "re"), 
+                 data=virus_perf,method="REML",family=betar)
+zrich_gam <- gam(y ~ mod + s(seed, bs = "re"), 
+                 data=zrich_perf,method="REML",family=betar)
 
-# virus richness models
-vrichdata <- tfun(virus_perf, "#E78AC3")
+# binary models
+vbin_gam_auc <- gam(y ~ mod + s(seed, bs = "re"),
+                    data=vbin_perf, method="REML", family=betar)
+vbin_gam_sen <- gam(y ~ mod + s(seed, bs = "re"), 
+                    data=vbin_SEN, method="REML", family=betar)
+vbin_gam_spec <- gam(y ~ mod + s(seed, bs = "re"), 
+                     data=vbin_Spec, method="REML", family=betar)
 
-# view stats
-vrichdata$tsum
-vrichdata$csum
+zbin_gam_auc <- gam(y ~ mod + s(seed, bs = "re"), 
+                    data=zbin_perf, method="REML", family=betar)
+zbin_gam_sen <- gam(y ~ mod + s(seed, bs = "re"), 
+                    data=zbin_SEN, method="REML", family=betar)
+zbin_gam_spec <- gam(y ~ mod + s(seed, bs = "re"), 
+                     data=zbin_Spec, method="REML", family=betar)
 
-# RMSE
-vrichdataRMSE <- tfun(virus_perf_rmse, "#E78AC3")
-vrichdataRMSE$tsum
-vrichdataRMSE$csum
-
-## Zoo richness
-zfamdata <- tfun(zfam_perf, "#FC8D62")
-
-# view stats
-zfamdata$tsum
-zfamdata$csum
-
-# RMSE
-zfamdataRMSE <- tfun(zfam_perf_rmse, "#FC8D62")
-zfamdataRMSE$tsum
-zfamdataRMSE$csum
-
-## virus reservoir status
-# t stats for all metrics
-vbinAUC <- tfun(vbin_perf, "#66C2A5")
-vbinSEN <- tfun(vbin_SEN, "#66C2A5")
-vbinSpec <- tfun(vbin_Spec, "#66C2A5")
-
-# view stats - AUC
-vbinAUC$tsum
-vbinAUC$csum
-
-# view stats - Sensitivity
-vbinSEN$tsum
-vbinSEN$csum
-
-# view stats - Specificity
-vbinSpec$tsum
-vbinSpec$csum
-
-## zoonotic reservoir status
-# t stats for all metrics
-zbinAUC <- tfun(zbin_perf, "#8DA0CB")
-zbinSEN <- tfun(zbin_SEN, "#8DA0CB")
-zbinSpec <- tfun(zbin_Spec, "#8DA0CB")
-
-# view stats - AUC
-zbinAUC$tsum
-zbinAUC$csum
-
-# view stats - Sensitivity
-zbinSEN$tsum
-zbinSEN$csum
-
-# view stats - Specificity
-zbinSpec$tsum
-zbinSpec$csum
-
-# all perf. adjustment
-ps=c(vrichdata$tsum$p.value,
-     zfamdata$tsum$p.value,
-     vbinAUC$tsum$p.value,
-     vbinSEN$tsum$p.value,
-     vbinSpec$tsum$p.value,
-     zbinAUC$tsum$p.value,
-     zbinSEN$tsum$p.value,
-     zbinSpec$tsum$p.value
+# pvalue adjustments
+ps=c(anova(vrich_gam)[["p.pv"]][["modmod_without"]],
+     anova(zrich_gam)[["p.pv"]][["modmod_without"]],
+     anova(vbin_gam_auc)[["p.pv"]][["modmod_without"]],
+     anova(vbin_gam_sen)[["p.pv"]][["modmod_without"]],
+     anova(vbin_gam_spec)[["p.pv"]][["modmod_without"]],
+     anova(zbin_gam_auc)[["p.pv"]][["modmod_without"]],
+     anova(zbin_gam_sen)[["p.pv"]][["modmod_without"]],
+     anova(zbin_gam_spec)[["p.pv"]][["modmod_without"]]
 )
 round(p.adjust(ps,method="BH"),4)
 
 # clean out everything but brts and data
-rm(list = ls()[!ls() %in% c("data","vfams_brts","no_vfams_brts","zfams_brts","no_zfams_brts","vbinary_brts",
+rm(list = ls()[!ls() %in% c("data","vrich_brts","no_vrich_brts","zrich_brts","no_zrich_brts","vbinary_brts",
                             "no_vbinary_brts","zbinary_brts", "no_zbinary_brts")])
 
 ################### Variable Importance Plots and rankings
@@ -388,8 +305,8 @@ library(RColorBrewer)
 brewer.pal(n = 8, name = "Set2")
 
 # run for all models with anthropogenic roosting
-vrich_fig <- vinfPlot(vfams_brts, "#E78AC3")
-zrich_fig <- vinfPlot(zfams_brts, "#FC8D62")
+vrich_fig <- vinfPlot(vrich_brts, "#E78AC3")
+zrich_fig <- vinfPlot(zrich_brts, "#FC8D62")
 vbinary_fig <- vinfPlot(vbinary_brts, "#66C2A5")
 zbinary_fig <- vinfPlot(zbinary_brts, "#8DA0CB")
 
@@ -538,10 +455,10 @@ tabs <- emmeans::emmeans(mod, pairwise~type, adjust = "BH")
 tabs <- summary(tabs$contrasts)
 
 # save test results for supplement 
-saveRDS(tabs, "flat files/rank lm.rds")
+write.csv(tabs, "flat files/rank lm.csv")
 
 # clean out everything but brts and data
-rm(list = ls()[!ls() %in% c("data","vfams_brts","no_vfams_brts","zfams_brts","no_zfams_brts","vbinary_brts",
+rm(list = ls()[!ls() %in% c("data","vrich_brts","no_vrich_brts","zrich_brts","no_zrich_brts","vbinary_brts",
                             "no_vbinary_brts","zbinary_brts", "no_zbinary_brts")])
 
 #################### Partial Dependence plots
@@ -653,11 +570,12 @@ make_pdp_fact <- function(model, feature, var_name, pcolor) {
   # pull counts for color
   df_cat <- as.data.frame(table(temp$predictor))
   
-  # fix y axis point
-  df_cat$ymin <- yrange[1]-0.01
+  # # fix y axis point
+  # df_cat$ymin <- yrange[1]-0.01
   
   ## fix temp to yrange
   #temp$yhat=ifelse(temp$predictor==1,max(yrange),min(yrange))
+  if(feature == "Synurbic"){
   
   ## ggplot with rug
   set.seed(1)
@@ -689,15 +607,50 @@ make_pdp_fact <- function(model, feature, var_name, pcolor) {
     theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank()) +
     labs(x=var_name,y="marginal effect") +
     scale_y_continuous(limits=c(yrange[1]-0.01,yrange[2]+0.01),
-                       labels=scales::number_format(accuracy=0.01)) +
-    scale_fill_continuous(high = "#525252", low = "#D9D9D9", guide="none")
+                       labels=scales::number_format(accuracy=0.01))
+  
+  }else{
+    
+    set.seed(1)
+    ggplot(agg,aes(predictor,yhat,group=seed)) +
+      
+      # ## add rug
+      # geom_rug(data=y,inherit.aes=F,
+      #          aes(predictor, yhat),
+      #          sides="b",position="jitter",
+      #          colour="grey",alpha=0.25,
+      #          na.rm=TRUE)+
+      
+      geom_rect(data=df_cat,inherit.aes=F,
+                aes(xmin=Var1,xmax=Var1,
+                    ymin=-Inf,ymax = plotrix::rescale(Freq,yrange)),
+                size = 10, colour="#D9D9D9")+
+      
+      ## add individual BRTs
+      geom_jitter(size=1,alpha=0.25,colour=pcolor, width=0.1) +
+      
+      ## add mean
+      geom_point(data=pmean,size=2,inherit.aes=F,shape=15,
+                 aes(predictor,yhat)) +
+      
+      ## theme
+      theme_bw() +
+      theme(axis.text=element_text(size=6),
+            axis.title=element_text(size=7)) +
+      theme(axis.title.x=element_text(margin=margin(t=5,r=0,b=0,l=0))) +
+      theme(axis.title.y=element_text(margin=margin(t=0,r=5,b=0,l=0))) +
+      theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank()) +
+      labs(x=var_name,y="marginal effect") +
+      scale_y_continuous(limits=c(yrange[1]-0.01,yrange[2]+0.01),
+                         labels=scales::number_format(accuracy=0.01)) 
+  }
   
 }
 
-# Synurbic pdps (no points - comment out in pdp function)
+# Synurbic pdps
 # MAKE SURE THAT DATA IS READ IN
-vsyn <- make_pdp_fact(vfams_brts, "Synurbic", "Anthropogenic Roost", "#E78AC3") 
-zsyn <- make_pdp_fact(zfams_brts, "Synurbic", "Anthropogenic Roost", "#FC8D62")
+vsyn <- make_pdp_fact(vrich_brts, "Synurbic", "Anthropogenic Roost", "#E78AC3") 
+zsyn <- make_pdp_fact(zrich_brts, "Synurbic", "Anthropogenic Roost", "#FC8D62")
 vbsyn <- make_pdp_fact(vbinary_brts, "Synurbic", "Anthropogenic Roost", "#66C2A5")
 zbsyn <- make_pdp_fact(zbinary_brts, "Synurbic", "Anthropogenic Roost", "#8DA0CB")
 
@@ -735,87 +688,87 @@ rm(vsyn, zsyn, vbsyn, zbsyn)
 
 # Remaining pdps
 # starting with richness
-vit_vrich <- make_pdp_cont(vfams_brts, "log_vcites","Log Virus Citation Count", "#E78AC3")
-cit_vrich <- make_pdp_cont(vfams_brts, "log_cites","Log Citation Count", "#E78AC3")
-hp_vrich <- make_pdp_cont(vfams_brts, "log_X27.2_HuPopDen_Mean_n.km2", "Log Mean Human Density", "#E78AC3")
-aet_vrich <- make_pdp_cont(vfams_brts, "X30.1_AET_Mean_mm", "Mean Monthly AET", "#E78AC3")
-mxlon_vrich <- make_pdp_cont(vfams_brts, "X26.5_GR_MaxLong_dd","Maximum Longitude", "#E78AC3")
-pet_vrich <- make_pdp_cont(vfams_brts, "X30.2_PET_Mean_mm", "Mean Monthly PET", "#E78AC3")
-temp_vrich <- make_pdp_cont(vfams_brts, "X28.2_Temp_Mean_01degC", "Mean Monthly Temperature", "#E78AC3")
-hpp_vrich <- make_pdp_cont(vfams_brts, "log_X27.3_HuPopDen_5p_n.km2", "Log Human Density 5th %ile", "#E78AC3")
-mxlat_vrich <- make_pdp_cont(vfams_brts, "X26.2_GR_MaxLat_dd", "Maximum Latitude", "#E78AC3")
-gr_vrich <- make_pdp_cont(vfams_brts, "log_X26.1_GR_Area_km2", "Log Geographic Area (km2)", "#E78AC3")
+vrich1 <- make_pdp_cont(vrich_brts, "log_vcites","Log Virus Citation Count", "#E78AC3")
+vrich2 <- make_pdp_cont(vrich_brts, "log_cites","Log Citation Count", "#E78AC3")
+vrich3 <- make_pdp_cont(vrich_brts, "upper_elevation_m", "Upper Elevation Limit", "#E78AC3")
+vrich4 <- make_pdp_cont(vrich_brts, "X26.5_GR_MaxLong_dd", "Maximum Longitude", "#E78AC3")
+vrich5 <- make_pdp_cont(vrich_brts, "log_X26.1_GR_Area_km2","Log Geographic Area (km2)", "#E78AC3")
+vrich6 <- make_pdp_cont(vrich_brts, "log_X27.2_HuPopDen_Mean_n.km2", "Log Mean Human Density", "#E78AC3")
+vrich7 <- make_pdp_fact(vrich_brts, "Palearctic", "Palearctic", "#E78AC3")
+vrich8 <- make_pdp_cont(vrich_brts, "X26.6_GR_MinLong_dd", "Minimum Longitude", "#E78AC3")
+vrich9 <- make_pdp_cont(vrich_brts, "habitat_breadth_n", "Habitat Breadth", "#E78AC3")
+vrich10 <- make_pdp_cont(vrich_brts, "X26.2_GR_MaxLat_dd", "Maximum Latitude", "#E78AC3")
 
 png("figs/figure S5.png", width=4,height=6.5,units="in",res=300)
-vit_vrich + cit_vrich + hp_vrich + aet_vrich + mxlon_vrich + pet_vrich + temp_vrich + hpp_vrich + mxlat_vrich + gr_vrich + plot_layout(nrow = 5, ncol = 2, byrow = TRUE)
+vrich1 + vrich2 + vrich3 + vrich4 + vrich5 + vrich6 + vrich7 + vrich8 + vrich9 + vrich10 + plot_layout(nrow = 5, ncol = 2, byrow = TRUE)
 dev.off()
 
 # clean
-rm(vit_vrich, cit_vrich, hp_vrich, aet_vrich, mxlon_vrich, pet_vrich, temp_vrich, hpp_vrich, mxlat_vrich, gr_vrich)
+rm(vrich1, vrich2, vrich3, vrich4, vrich5, vrich6, vrich7, vrich8, vrich9, vrich10)
 
 # zoonotic family richness
-vit_zrich <- make_pdp_cont(zfams_brts, "log_vcites","Log Virus Citation Count", "#FC8D62")
-cit_zrich <- make_pdp_cont(zfams_brts, "log_cites","Log Citation Count", "#FC8D62")
-hp_zrich <- make_pdp_cont(zfams_brts, "log_X27.2_HuPopDen_Mean_n.km2", "Log Mean Human Density", "#FC8D62")
-up_zrich <- make_pdp_cont(zfams_brts, "upper_elevation_m", "Upper Elevation Limit", "#FC8D62")
-mnlon_zrich <- make_pdp_cont(zfams_brts, "X26.6_GR_MinLong_dd", "Minimum Longitude", "#FC8D62")
-gr_zrich <- make_pdp_cont(zfams_brts, "log_X26.1_GR_Area_km2", "Log Geographic Area (km2)", "#FC8D62")
-mxlat_zrich <- make_pdp_cont(zfams_brts, "X26.2_GR_MaxLat_dd", "Maximum Latitude", "#FC8D62")
-ls_zrich <- make_pdp_cont(zfams_brts, "litter_size_n", "Litter Size", "#FC8D62")
-bl_zrich <- make_pdp_cont(zfams_brts, "log_adult_body_length_mm", "Log Adult Body Length", "#FC8D62")
-aet_zrich <- make_pdp_cont(zfams_brts, "X30.1_AET_Mean_mm", "Mean Monthly AET", "#FC8D62")
+zrich1 <- make_pdp_cont(zrich_brts, "log_vcites","Log Virus Citation Count", "#FC8D62")
+zrich2 <- make_pdp_cont(zrich_brts, "log_cites","Log Citation Count", "#FC8D62")
+zrich3 <- make_pdp_fact(zrich_brts, "Palearctic", "Palearctic", "#FC8D62")
+zrich4 <- make_pdp_cont(vrich_brts, "habitat_breadth_n", "Habitat Breadth", "#FC8D62")
+zrich5 <- make_pdp_cont(zrich_brts, "log_X26.1_GR_Area_km2", "Log Geographic Area (km2)", "#FC8D62")
+zrich6 <- make_pdp_cont(zrich_brts, "X26.2_GR_MaxLat_dd", "Maximum Latitude", "#FC8D62")
+zrich7 <- make_pdp_cont(zrich_brts, "upper_elevation_m", "Upper Elevation Limit", "#FC8D62")
+zrich8 <- make_pdp_cont(zrich_brts, "X26.5_GR_MaxLong_dd", "Maximum Longitude", "#FC8D62")
+zrich9 <- make_pdp_cont(zrich_brts, "log_X27.2_HuPopDen_Mean_n.km2", "Log Mean Human Density", "#FC8D62")
+zrich10 <- make_pdp_cont(zrich_brts, "log_adult_body_length_mm", "Log Adult Body Length", "#FC8D62")
 
 # save
 png("figs/figure S6.png", width=4,height=6.5,units="in",res=300)
-vit_zrich + cit_zrich + hp_zrich + up_zrich + mnlon_zrich + gr_zrich + mxlat_zrich + ls_zrich + bl_zrich + aet_zrich + plot_layout(nrow = 5, ncol = 2, byrow = TRUE)
+zrich1 + zrich2 + zrich3 + zrich4 + zrich5 + zrich6 + zrich7 + zrich8 + zrich9 + zrich10 + plot_layout(nrow = 5, ncol = 2, byrow = TRUE)
 dev.off()
 
 # clean
-rm(vit_zrich, cit_zrich, hp_zrich, up_zrich, mnlon_zrich, gr_zrich, mxlat_zrich, ls_zrich, bl_zrich, aet_zrich)
+rm(zrich1, zrich2, zrich3, zrich4, zrich5, zrich6, zrich7, zrich8, zrich9, zrich10)
 
 # virus host status
-vit_vbin <- make_pdp_cont(vbinary_brts, "log_vcites","Log Virus Citation Count", "#66C2A5")
-cit_vbin <- make_pdp_cont(vbinary_brts, "log_cites","Log Citation Count", "#66C2A5")
-gr_vbin <- make_pdp_cont(vbinary_brts, "log_X26.1_GR_Area_km2", "Log Geographic Area (km2)", "#66C2A5")
-at_vbin <- make_pdp_cont(vbinary_brts, "X30.1_AET_Mean_mm", "Mean Monthly AET", "#66C2A5")
-ml_vbin <- make_pdp_cont(vbinary_brts, "X26.2_GR_MaxLat_dd","Maximum Latitude", "#66C2A5")
-mp_vbin <- make_pdp_cont(vbinary_brts, "X30.2_PET_Mean_mm", "Mean Monthly PET", "#66C2A5")
-hp_vbin <- make_pdp_cont(vbinary_brts, "log_X27.2_HuPopDen_Mean_n.km2", "Log Mean Human Density", "#66C2A5")
-mt_vbin <- make_pdp_cont(vbinary_brts, "X28.2_Temp_Mean_01degC","Mean Monthly Temperature", "#66C2A5")
-mi_vbin <- make_pdp_cont(vbinary_brts, "X26.3_GR_MinLat_dd", "Minimum Latitude", "#66C2A5")
-fa_vbin <- make_pdp_cont(vbinary_brts, "log_adult_forearm_length_mm", "Log Adult Forearm Length", "#66C2A5")
+vbin1 <- make_pdp_cont(vbinary_brts, "log_vcites","Log Virus Citation Count", "#66C2A5")
+vbin2 <- make_pdp_cont(vbinary_brts, "log_cites","Log Citation Count", "#66C2A5")
+vbin3 <- make_pdp_cont(vbinary_brts, "log_X26.1_GR_Area_km2", "Log Geographic Area (km2)", "#66C2A5")
+vbin4 <- make_pdp_cont(vbinary_brts, "X26.3_GR_MinLat_dd", "Minimum Latitude", "#66C2A5")
+vbin5 <- make_pdp_cont(vbinary_brts, "X30.1_AET_Mean_mm", "Mean Monthly AET", "#66C2A5")
+vbin6 <- make_pdp_cont(vbinary_brts, "X30.2_PET_Mean_mm", "Mean Monthly PET", "#66C2A5")
+vbin7 <- make_pdp_cont(vbinary_brts, "upper_elevation_m", "Upper Elevation Limit", "#66C2A5")
+vbin8 <- make_pdp_cont(vbinary_brts, "X26.6_GR_MinLong_dd", "Minimum Longitude", "#66C2A5")
+vbin9 <- make_pdp_cont(vbinary_brts, "X28.2_Temp_Mean_01degC","Mean Monthly Temperature", "#66C2A5")
+vbin10 <- make_pdp_cont(vbinary_brts, "altitude_breadth_m", "Altitude breadth", "#66C2A5")
 
 # save
 png("figs/figure S7.png", width=4,height=6.5,units="in",res=300)
-vit_vbin + cit_vbin + gr_vbin + at_vbin + ml_vbin + mp_vbin + hp_vbin + mt_vbin + mi_vbin + fa_vbin + plot_layout(nrow = 5, ncol = 2, byrow = TRUE)
+vbin1 + vbin2 + vbin3 + vbin4 + vbin5 + vbin6 + vbin7 + vbin8 + vbin9 + vbin10 + plot_layout(nrow = 5, ncol = 2, byrow = TRUE)
 dev.off()
 
-rm(vit_vbin, cit_vbin, gr_vbin, at_vbin, ml_vbin, mp_vbin, hp_vbin, mt_vbin, mi_vbin, fa_vbin)
+rm(vbin1, vbin2, vbin3, vbin4, vbin5, vbin6, vbin7, vbin8, vbin9, vbin10)
 
 # zoonotic host models
-vit_zbin <- make_pdp_cont(zbinary_brts, "log_vcites","Log Virus Citation Count", "#8DA0CB")
-cit_zbin <- make_pdp_cont(zbinary_brts, "log_cites","Log Citation Count", "#8DA0CB")
-gr_zbin <- make_pdp_cont(zbinary_brts, "log_X26.1_GR_Area_km2", "Log Geographic Area (km2)", "#8DA0CB")
-at_zbin <- make_pdp_cont(zbinary_brts, "X30.1_AET_Mean_mm", "Mean Monthly AET", "#8DA0CB")
-ml_zbin <- make_pdp_cont(zbinary_brts, "X26.2_GR_MaxLat_dd","Maximum Latitude", "#8DA0CB")
-mp_zbin <- make_pdp_cont(zbinary_brts,  "X30.2_PET_Mean_mm", "Mean Monthly PET", "#8DA0CB")
-mi_zbin <- make_pdp_cont(zbinary_brts, "X26.3_GR_MinLat_dd", "Minimum Latitude", "#8DA0CB")
-mt_zbin <- make_pdp_cont(zbinary_brts, "X28.2_Temp_Mean_01degC","Mean Monthly Temperature", "#8DA0CB")
-bl_zbin <- make_pdp_cont(zbinary_brts, "log_adult_body_length_mm", "Log Adult Body Length", "#8DA0CB")
-mr_zbin <- make_pdp_cont(zbinary_brts, "X26.4_GR_MidRangeLat_dd", "Median Latitudinal Range", "#8DA0CB")
+zbin1 <- make_pdp_cont(zbinary_brts, "log_vcites","Log Virus Citation Count", "#8DA0CB")
+zbin2 <- make_pdp_cont(zbinary_brts, "log_cites","Log Citation Count", "#8DA0CB")
+zbin3 <- make_pdp_cont(zbinary_brts, "log_X26.1_GR_Area_km2", "Log Geographic Area (km2)", "#8DA0CB")
+zbin4 <- make_pdp_cont(zbinary_brts, "X26.2_GR_MaxLat_dd","Maximum Latitude", "#8DA0CB")
+zbin5 <- make_pdp_cont(zbinary_brts,  "X30.2_PET_Mean_mm", "Mean Monthly PET", "#8DA0CB")
+zbin6 <- make_pdp_cont(zbinary_brts, "X26.6_GR_MinLong_dd", "Minimum Longitude", "#8DA0CB")
+zbin7 <- make_pdp_cont(zbinary_brts, "X26.3_GR_MinLat_dd", "Minimum Latitude", "#8DA0CB")
+zbin8 <- make_pdp_cont(zbinary_brts, "X30.1_AET_Mean_mm", "Mean Monthly AET", "#8DA0CB")
+zbin9 <- make_pdp_cont(zbinary_brts, "upper_elevation_m", "Upper Elevation Limit", "#8DA0CB")
+zbin10 <- make_pdp_cont(zbinary_brts,"log_adult_forearm_length_mm", "Log Adult Forearm Length", "#8DA0CB")
 
 # save
 png("figs/figure S8.png", width=4,height=6.5,units="in",res=300)
-vit_zbin + cit_zbin + gr_zbin + at_zbin + ml_zbin + mp_zbin + mi_zbin + mt_zbin + bl_zbin + mr_zbin + plot_layout(nrow = 5, ncol = 2, byrow = TRUE)
+zbin1 + zbin2 + zbin3 + zbin4 + zbin5 + zbin6 + zbin7 + zbin8 + zbin9 + zbin10 + plot_layout(nrow = 5, ncol = 2, byrow = TRUE)
 dev.off()
 
 # clean
-rm(vit_zbin, cit_zbin, gr_zbin, at_zbin, ml_zbin, mp_zbin, mi_zbin, mt_zbin, bl_zbin, mr_zbin)
+rm(zbin1, zbin2, zbin3, zbin4, zbin5, zbin6, zbin7, zbin8, zbin9, zbin10)
 
 ############## model predictions
 library(ggpubr)
 #### Virus richness predictions
-vrich_apreds <- lapply(vfams_brts,function(x) x$predict)
+vrich_apreds <- lapply(vrich_brts,function(x) x$predict)
 vrich_apreds <- do.call(rbind,vrich_apreds)
 
 ## aggregate
@@ -823,14 +776,14 @@ vrich_apreds  <- data.frame(aggregate(pred~species,data=vrich_apreds,mean),
                         aggregate(cpred~species,data=vrich_apreds,mean)['cpred'])
 
 # am assuming if you want to keep richness in there, you have to merge it back by species?
-rich_with <- merge(vrich_apreds, data[c("species","vfam","Synurbic")], by = "species") # add roost status
+rich_with <- merge(vrich_apreds, data[c("species","Virus","Synurbic")], by = "species") # add roost status
 
 # label
 rich_with$type <- "with"
 
 # without synurbic
 # Virus richness predictions
-no_vrich_preds <- lapply(no_vfams_brts,function(x) x$predict)
+no_vrich_preds <- lapply(no_vrich_brts,function(x) x$predict)
 no_vrich_preds <- do.call(rbind,no_vrich_preds)
 
 ## aggregate
@@ -838,7 +791,7 @@ no_vrich_preds <- data.frame(aggregate(pred~species,data=no_vrich_preds,mean),
                         aggregate(cpred~species,data=no_vrich_preds,mean)['cpred'])
 
 # merge to data to get synurbic
-rich_without <- merge(no_vrich_preds, data[c("species","vfam","Synurbic")], by = "species") # add roost status
+rich_without <- merge(no_vrich_preds, data[c("species","Virus","Synurbic")], by = "species") # add roost status
 
 # type
 rich_without$type <- "without"
@@ -847,12 +800,12 @@ rich_without$type <- "without"
 all_rich <- bind_rows(rich_with, rich_without)
 
 # facet by known and unknown
-all_rich$known <- ifelse(all_rich$vfam > 0, "known", "unknown")
+all_rich$known <- ifelse(all_rich$Virus > 0, "known", "unknown")
 
 # scatter plot of values with and without
 # pivot wider
 rich_preds <- all_rich %>% 
-  select(species, cpred, type, Synurbic, vfam, known) %>%
+  select(species, cpred, type, Synurbic, Virus, known) %>%
   pivot_wider(names_from = type, values_from = cpred)
 
 ggplot(rich_preds, aes((with)^(1/3))) +
@@ -875,7 +828,7 @@ ggplot(rich_preds, aes((with)^(1/3))) +
 write.csv(rich_preds, "flat files/richness predictions.csv")
 
 #### zoonotic proportion predictions
-zrich_apreds <- lapply(zfams_brts,function(x) x$predict)
+zrich_apreds <- lapply(zrich_brts,function(x) x$predict)
 zrich_apreds <- do.call(rbind,zrich_apreds)
 
 # aggregate
@@ -888,14 +841,14 @@ zrich_apreds <- data.frame(aggregate(pred~species,data=zrich_apreds,mean),
 #   mutate(zoo_prop = ifelse(is.nan(zoo_prop), 0, zoo_prop))
 
 # merge with data
-zrich_with <- merge(zrich_apreds, data[c("species","zfam","Synurbic")], by = "species") # add roost status
+zrich_with <- merge(zrich_apreds, data[c("species","zVirus","Synurbic")], by = "species") # add roost status
 
 # label
 zrich_with$type <- "with"
 
 # without synurbic
 # zoonotic proportion predictions
-no_zrich_preds <- lapply(no_zfams_brts,function(x) x$predict)
+no_zrich_preds <- lapply(no_zrich_brts,function(x) x$predict)
 no_zrich_preds <- do.call(rbind, no_zrich_preds)
 
 ## aggregate
@@ -903,7 +856,7 @@ no_zrich_preds <- data.frame(aggregate(pred~species,data=no_zrich_preds,mean),
                              aggregate(cpred~species,data=no_zrich_preds,mean)['cpred'])
 
 # merge with data by species - UPDATE TO ZOONOTIC PROP DATA
-zrich_without <- merge(no_zrich_preds, data[c("species","zfam","Synurbic")], by = "species") # add roost status
+zrich_without <- merge(no_zrich_preds, data[c("species","zVirus","Synurbic")], by = "species") # add roost status
 
 # label
 zrich_without$type <- "without"
@@ -912,12 +865,12 @@ zrich_without$type <- "without"
 all_zrich <- bind_rows(zrich_with, zrich_without)
 
 # facet by known and unknown
-all_zrich$known <- ifelse(all_zrich$zfam > 0, "known", "unknown")
+all_zrich$known <- ifelse(all_zrich$zVirus > 0, "known", "unknown")
 
 # scatter plot of values with and without
 # pivot wider
 zrich_preds <- all_zrich %>% 
-  select(species, cpred, type, Synurbic, zfam, known) %>%
+  select(species, cpred, type, Synurbic, zVirus, known) %>%
   pivot_wider(names_from = type, values_from = cpred)
 
 ggplot(zrich_preds, aes((with)^(1/3))) +
@@ -1105,7 +1058,7 @@ dev.off()
 vfam_scatter <- ggplot(rich_preds, aes(with, without)) +
   geom_point(color = "#E78AC3") +
   theme_bw() +
-  labs(x = "with anthropogenic roosting",y = "without anthropogenic roosting")+
+  labs(x = "richness with anthropogenic roosting",y = "richness without anthropogenic roosting")+
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank())
 
@@ -1113,7 +1066,7 @@ vfam_scatter <- ggplot(rich_preds, aes(with, without)) +
 zfam_scatter <- ggplot(zrich_preds, aes(with, without)) +
   geom_point(color = "#FC8D62") +
   theme_bw() +
-  labs(x = "with anthropogenic roosting", y = "without anthropogenic roosting")+
+  labs(x = "richness with anthropogenic roosting", y = "richness without anthropogenic roosting")+
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank())
 
@@ -1124,9 +1077,7 @@ vbin_scatter <- ggplot(vbin_preds, aes(with, without)) +
   labs(x = expression(paste("(",italic(P),") with anthropogenic roosting")), 
        y = expression(paste("(",italic(P),") without anthropogenic roosting"))) +
   theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank()) +
-  xlim(0.13,1) +
-  ylim(0.13,1) 
+        panel.grid.minor = element_blank()) 
 
 zbin_scatter <- ggplot(zbin_preds, aes(with, without)) + 
   geom_point(color = "#8DA0CB") +
@@ -1134,9 +1085,7 @@ zbin_scatter <- ggplot(zbin_preds, aes(with, without)) +
   labs(x = expression(paste("(",italic(P),") with anthropogenic roosting")), 
        y = expression(paste("(",italic(P),") without anthropogenic roosting")))+
   theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank()) +
-  xlim(0.13,1) +
-  ylim(0.13,1)
+        panel.grid.minor = element_blank()) 
 
 # add stats
 vfam_scatter <- vfam_scatter + stat_cor(method="spearman", cor.coef.name = "rho")
