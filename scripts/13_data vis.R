@@ -890,7 +890,7 @@ ggplot(zrich_preds, aes((with)^(1/3))) +
                     values = c("#8470ff","#9DD866","#A0B1BA")) -> den_zrich
 
 # save
-write.csv(zrich_preds, "flat files/zoonotic family predictions.csv")
+write.csv(zrich_preds, "flat files/zoonotic richness predictions.csv")
 
 ## density plots together for supplement
 png("figs/figure 4.png", width=6.5,height=5,units="in",res=300)
